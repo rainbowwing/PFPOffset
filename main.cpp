@@ -42,6 +42,8 @@ typedef CGAL::Constrained_Delaunay_triangulation_2<K2> CDT;
 using namespace std;
 
 shared_ptr <MeshKernel::SurfaceMesh> mesh;
+#define local_id first
+#define global_id second
 
 shared_ptr<CGALPolygon>cgal_polygon;
 
@@ -226,11 +228,13 @@ grid vertex_to_grid(MeshKernel::iGameVertex v) {
 
 struct GridVertex {
     int grid_type;
-    vector <MeshKernel::iGameFaceHandle> face_list;
+    vector<MeshKernel::iGameFaceHandle> face_list;
     vector<MeshKernel::iGameVertex>build_v;
     vector<int>build_v_global;
-    vector<vector<size_t> >build_face;
     vector<K2::Triangle_3> generate_face_list;
+    map<K2::Point_3,pair<int,int> >vertex_map;
+    vector<grid> father;
+    vector<vector<size_t> >build_face;
     GridVertex() {
         grid_type = -1;
     }
@@ -670,7 +674,7 @@ struct ApproximateField {
         set<int >se;
         queue<int>q;
         q.push(0);
-        while(!q.empty()){
+        while(!q.empty()) {
             int id = q.front();
             q.pop();
             if(se.count(id))continue;
@@ -855,7 +859,7 @@ MeshKernel::iGameVertex do_quadratic_error_metric(MeshKernel::iGameVertexHandle 
     }
 }
 double mix_factor = 0.5;
-void mix(int T){
+void mix(int T) {
     for (int times = 0; times < T; times++) {
         std::vector<double> fix_move_dist;
         fix_move_dist.resize(mesh->FaceSize() + 1);
@@ -890,6 +894,12 @@ vector<vector<int> > container_grid_dir{{-1,-1,-1},{-1,-1,0},{-1,-1,1},
                                         {1,0,-1},{1,0,0},{1,0,1},
                                         {1,1,-1},{1,1,0},{1,1,1},};
 
+
+vector<vector<int> >grid_small_neighbor{{0,0,-1},
+                                  {0,-1,0},
+                                  {-1,0,0},
+
+                                  };
 
 void sort_by_polar_order(vector<K2::Point_3>& v,K2::Vector_3 orthogonal_direction){
     K2::Vector_3 center_v(0,0,0);
@@ -931,6 +941,7 @@ void sort_by_polar_order(vector<K2::Point_3>& v,K2::Vector_3 orthogonal_directio
 
 int main(int argc, char* argv[]) {
 
+
     string input_filename(argv[1]);
     FILE *file9 = fopen( (input_filename + "_9.obj").c_str(), "w");
     //FILE *file10 = fopen( (input_filename + "_10.obj").c_str(), "w");
@@ -939,7 +950,8 @@ int main(int argc, char* argv[]) {
 
     FILE *file4 = fopen( (input_filename + "_4.obj").c_str(), "w");
     FILE *file5 = fopen( (input_filename + "_5.obj").c_str(), "w");
-    //FILE *file6 = fopen( (input_filename + "_6.obj").c_str(), "w");
+    FILE *file55 = fopen( (input_filename + "_5.5.obj").c_str(), "w");
+    FILE *file6 = fopen( (input_filename + "_6.obj").c_str(), "w");
     // freopen("../debugoutput.txt","w",stdout);
     default_move = 0.01;
     grid_len = 2.5;
@@ -1017,11 +1029,11 @@ int main(int argc, char* argv[]) {
             f4id+=2;
         }
         else{
-            fprintf(file5, "v %lf %lf %lf\n", mesh->fast_iGameVertex[i].x(), mesh->fast_iGameVertex[i].y(),
+            fprintf(file4, "v %lf %lf %lf\n", mesh->fast_iGameVertex[i].x(), mesh->fast_iGameVertex[i].y(),
                     mesh->fast_iGameVertex[i].z());
-            fprintf(file5, "v %lf %lf %lf\n", field_move_vertex[i].x(), field_move_vertex[i].y(),
+            fprintf(file4, "v %lf %lf %lf\n", field_move_vertex[i].x(), field_move_vertex[i].y(),
                     field_move_vertex[i].z());
-            fprintf(file5, "l %d %d\n", f5id, f5id + 1);
+            fprintf(file4, "l %d %d\n", f5id, f5id + 1);
             f5id+=2;
         }
     }
@@ -1239,7 +1251,7 @@ int main(int argc, char* argv[]) {
     for (auto each_grid= frame_grid_mp.begin(); each_grid != frame_grid_mp.end(); each_grid++) {
        //if(!(each_grid->first.x == 26 && each_grid->first.y == 28 && each_grid->first.z == 9  ))continue;
         //if(!(each_grid->first.x == 19 && each_grid->first.y == 19 && each_grid->first.z == 1 ))continue;
-        if(!(each_grid->first.x == 19 && each_grid->first.y == 18 && each_grid->first.z == 1 ))continue;
+        //if(!(each_grid->first.x == 19 && each_grid->first.y == 18 && each_grid->first.z == 1 ))continue;
         auto small  = getGridVertex(each_grid->first,0);
         auto big  = getGridVertex(each_grid->first,7);
         static int f3_id = 1;
@@ -1630,7 +1642,6 @@ int main(int argc, char* argv[]) {
                                         //flag = true;
                                         positive_side.insert(this_field_belong_id);
                                         //cout <<"f1" << endl;
-
                                     }
                                     if(intersection_v[this_field_belong_id].count(*p)){
                                         if(!is_special.count(this_field_belong_id)){
@@ -1716,11 +1727,7 @@ int main(int argc, char* argv[]) {
                                 //cout <<"GGST" << endl;
                             }
                         }
-                       auto vvv0 = Point_K2_to_iGameVertex(tri.vertex(0));
-                       auto vvv1 = Point_K2_to_iGameVertex(tri.vertex(1));
-                       auto vvv2 = Point_K2_to_iGameVertex(tri.vertex(2));
 
-                       auto ddd = (vvv1 - vvv0) % (vvv2- vvv0);
                        //if(ddd*direct <0)
                        // swap(vvv1,vvv2);
 
@@ -1773,7 +1780,21 @@ int main(int argc, char* argv[]) {
 //                vector<MeshKernel::iGameVertex >gen_vertex;
 //                vector<vector<int> >gen_face;
                 for(auto i : generated_face_list) {
-                    each_grid->second.generate_face_list.push_back(i);
+                    //each_grid->second.generate_face_list.push_back(i);
+                    vector<size_t>this_face;
+                    for(int j=0;j<3;j++) {
+                        auto it = each_grid->second.vertex_map.find(i.vertex(j));
+                        int vid = 0;
+                        if(it == each_grid->second.vertex_map.end()){
+                            vid = each_grid->second.vertex_map.size();
+                            each_grid->second.vertex_map.insert({i.vertex(j),{vid,-1}});
+                            each_grid->second.father.push_back(each_grid->first);
+                        }
+                        else
+                            vid = it->second.local_id;
+                        this_face.push_back(vid);
+                    }
+                    each_grid->second.build_face.push_back(this_face);
                 }
 
             }
@@ -1782,22 +1803,204 @@ int main(int argc, char* argv[]) {
     }
     for(int i=0;i<thread_num;i++)
         each_frame_thread[i]->join();
-   // cout << "qq1 qq2 "<<qq1 <<" "<< qq2 << endl;
+//    int global_vertex_id_db = 0;
+//    for (auto each_grid= frame_grid_mp.begin(); each_grid != frame_grid_mp.end(); each_grid++) {
+//        map<size_t,size_t>local_to_global;
+//        for(auto &j: each_grid->second.vertex_map) {
+//            fprintf(file6,"v %lf %lf %lf\n",CGAL::to_double(j.first.x()),
+//                    CGAL::to_double(j.first.y()),
+//                    CGAL::to_double(j.first.z())
+//            );
+//            local_to_global[j.second.local_id] = ++global_vertex_id_db;
+//        }
+//        for(auto &j: each_grid->second.build_face){
+//            fprintf(file6,"f %d %d %d\n",local_to_global[j[0]],
+//                    local_to_global[j[1]],
+//                    local_to_global[j[2]]);
+//        }
+//    }
 
 
-    for (auto each_grid = frame_grid_mp.begin(); each_grid != frame_grid_mp.end(); each_grid++){
-        for(int i = 0;i < each_grid->second.generate_face_list.size();i++){
-            final_gen_face.push_back({final_gen_vertex.size(),final_gen_vertex.size()+1,final_gen_vertex.size()+2});
-            final_gen_vertex.push_back( each_grid->second.generate_face_list[i].vertex(0));
-            final_gen_vertex.push_back( each_grid->second.generate_face_list[i].vertex(1));
-            final_gen_vertex.push_back( each_grid->second.generate_face_list[i].vertex(2));
+   // exit(0);
+    vector<K2::Point_3> v;
+    vector<grid> grid_list;
+//    for (auto each_grid= frame_grid_mp.begin(); each_grid != frame_grid_mp.end(); each_grid++) {
+//        for(auto &j: each_grid->second.vertex_map)
+//        {
+//            for(auto &k: each_grid->second.vertex_map){
+//                if(j.second.local_id != k.second.local_id) {
+//                    if(CGAL::squared_distance(k.first,j.first) <=CGAL::Epeck::FT(myeps)){
+//                        cout << "dist?!!"<<CGAL::to_double(CGAL::squared_distance(k.first,j.first)) << endl;
+//                    }
+//                }
+//            }
+//        }
+//
+//    }
+//
+
+
+
+
+    for (auto each_grid= frame_grid_mp.begin(); each_grid != frame_grid_mp.end(); each_grid++) {
+        for(auto dir: grid_small_neighbor){
+            grid neighbor{each_grid->first.x + dir[0],each_grid->first.y + dir[1],each_grid->first.z + dir[2] };
+            auto neigh_it = frame_grid_mp.find(neighbor);
+            if(neigh_it != frame_grid_mp.end()) {
+                for(auto &j: each_grid->second.vertex_map) {
+                    map<K2::Point_3,pair<int,int> >::iterator neigh_vertex_it;
+                    if((neigh_vertex_it = neigh_it->second.vertex_map.find(j.first)) != neigh_it->second.vertex_map.end()){
+                        each_grid->second.father[j.second.local_id]=min (neigh_it->second.father[neigh_vertex_it->second.local_id], each_grid->second.father[j.second.local_id]);
+                    }
+                }
+
+
+//TODO DEBUG CODE
+                map<size_t,K2::Point_3>mp;
+                for(auto k: neigh_it->second.vertex_map){
+                  //  cout << k.second.local_id <<" "<< k.first << endl;
+                    mp[k.second.local_id] = k.first;
+                }
+//                for(auto &j: each_grid->second.vertex_map) {
+//                    for(auto k: neigh_it->second.build_face){
+//                        K2::Triangle_3 tri( mp[k[0]], mp[k[1]] ,mp[k[2]]);
+//                        if(CGAL::squared_distance(tri,j.first) <=CGAL::Epeck::FT(myeps)){
+//                            fprintf(file55,"v %lf %lf %lf\n",CGAL::to_double(j.first.x()),
+//                                    CGAL::to_double(j.first.y()),
+//                                    CGAL::to_double(j.first.z()));
+//                            if(CGAL::squared_distance(tri,j.first) !=CGAL::Epeck::FT(0)){
+//                                printf("vGGGG>?? %lf %lf %lf\n",CGAL::to_double(j.first.x()),
+//                                        CGAL::to_double(j.first.y()),
+//                                        CGAL::to_double(j.first.z()));
+//                                cout << "CGAL TO DOUBLE : "<< CGAL::squared_distance(tri,j.first) << endl;
+//                            }
+//
+//                        }
+//                    }
+//                }
+            }
+
         }
+        grid_list.push_back(each_grid->first);
     }
-    cout <<"f v : " << final_gen_face.size() <<" "<< final_gen_vertex.size() << endl;
-    CGAL::Polyhedron_3<K2, CGAL::Polyhedron_items_with_id_3>  pmesh;
-    PMP::repair_polygon_soup(final_gen_vertex, final_gen_face);
 
-    CGAL::Polygon_mesh_processing::polygon_soup_to_polygon_mesh(final_gen_vertex, final_gen_face, pmesh);
+
+
+    sort(grid_list.begin(),grid_list.end());
+
+//    int global_vertex_id_db = 0;
+//    for(int i=0;i<grid_list.size();i++) {
+//        map<size_t,size_t>local_to_global;
+//        GridVertex this_g = frame_grid_mp[grid_list[i]];
+//        for(auto &j: this_g.vertex_map) {
+//            fprintf(file6,"v %lf %lf %lf\n",CGAL::to_double(j.first.x()),
+//                    CGAL::to_double(j.first.y()),
+//                    CGAL::to_double(j.first.z())
+//            );
+//            local_to_global[j.second.local_id] = ++global_vertex_id_db;
+//        }
+//        for(auto &j: this_g.build_face){
+//            fprintf(file6,"f %d %d %d\n",local_to_global[j[0]],
+//                    local_to_global[j[1]],
+//                    local_to_global[j[2]]);
+//        }
+//    }
+//
+//
+
+
+
+
+   // exit(0);
+    vector<K2::Point_3>global_gen_vlist;
+    vector<vector<size_t> >global_gen_flist;
+    int global_vertex_id = 0;
+    for(int i=0;i<grid_list.size();i++) {
+       // cout << "??" <<grid_list[i].x <<" " << grid_list[i].y <<" "<< grid_list[i].z << endl;
+        GridVertex& this_g = frame_grid_mp[grid_list[i]];
+        map<size_t,size_t>local_to_global;
+        for(auto &j: this_g.vertex_map){
+            grid this_father = this_g.father[j.second.local_id];
+            if(this_father == grid_list[i]) {
+                j.second.global_id = ++global_vertex_id;
+                global_gen_vlist.push_back(j.first);
+                local_to_global[j.second.local_id] = j.second.global_id;
+
+
+               // cout << j.second.local_id <<" "<< j.second.global_id << endl;
+            }
+            else {
+//                j.second.global_id = ++global_vertex_id;
+//                global_gen_vlist.push_back(j.first);
+//                local_to_global[j.second.local_id] = j.second.global_id;
+//                static int f5id = 1;
+                fprintf(file5,"v %lf %lf %lf\n",CGAL::to_double(j.first.x()),
+                        CGAL::to_double(j.first.y()),
+                        CGAL::to_double(j.first.z())
+                );
+//                for(auto tt : frame_grid_mp[this_father].vertex_map){
+//                    cout <<"this tt?? "<< tt.second.local_id <<" "<< tt.second.global_id << endl;
+//
+//                }
+
+//                cout  << (grid_list[i] < this_father) << " "<< grid_list[i].x <<" "<< grid_list[i].y <<" "<< grid_list[i].z <<" "
+//                << this_father.x <<" "<< this_father.y <<" "<< this_father.z << endl;
+//                cout <<" "<< global_gen_vlist.size() <<" : "<< frame_grid_mp[this_father].vertex_map[j.first].global_id << " loc "
+//                <<frame_grid_mp[this_father].vertex_map[j.first].local_id <<endl;
+//                cout <<"**?" <<CGAL::to_double(CGAL::squared_distance(global_gen_vlist[frame_grid_mp[this_father].vertex_map[j.first].global_id],j.first)) << endl;
+//
+
+                j.second.global_id = frame_grid_mp[this_father].vertex_map[j.first].global_id;
+                assert( j.second.global_id != -1);
+                local_to_global[j.second.local_id] = j.second.global_id;
+            }
+            //j.second.global_id = global_vertex_id +  j.second.local_id;
+        }
+
+//        for(auto tt : frame_grid_mp[grid_list[i]].vertex_map){
+//            cout <<"this tt?? "<< tt.second.local_id <<" "<< tt.second.global_id << endl;
+//
+//        }
+//
+
+
+        for(vector<size_t> j : this_g.build_face){
+            global_gen_flist.push_back({local_to_global[j[0]],
+                                        local_to_global[j[1]],
+                                        local_to_global[j[2]]});
+            //cout <<" "<<j[0] <<" "<< j[1] <<" "<< j[2] << endl;
+        }
+        //global_vertex_id += this_g.vertex_map.size();
+    }
+
+   // cout << "qq1 qq2 "<<qq1 <<" "<< qq2 << endl;
+//    for (auto each_grid = frame_grid_mp.begin(); each_grid != frame_grid_mp.end(); each_grid++){
+//        for(int i = 0;i < each_grid->second.generate_face_list.size();i++){
+//            final_gen_face.push_back({final_gen_vertex.size(),final_gen_vertex.size()+1,final_gen_vertex.size()+2});
+//            final_gen_vertex.push_back( each_grid->second.generate_face_list[i].vertex(0));
+//            final_gen_vertex.push_back( each_grid->second.generate_face_list[i].vertex(1));
+//            final_gen_vertex.push_back( each_grid->second.generate_face_list[i].vertex(2));
+//        }
+//    }
+//    cout <<"f v : " << final_gen_face.size() <<" "<< final_gen_vertex.size() << endl;
+    cout << global_gen_vlist.size() <<" "<< global_gen_flist.size() << endl;
+    for(int i=0;i<global_gen_vlist.size();i++){
+        fprintf(file6,"v %lf %lf %lf\n",CGAL::to_double(global_gen_vlist[i].x()),
+                CGAL::to_double(global_gen_vlist[i].y()),
+                CGAL::to_double(global_gen_vlist[i].z())
+                );
+    }
+    for(int i=0;i<global_gen_flist.size();i++){
+        fprintf(file6,"f %d %d %d\n",global_gen_flist[i][0],
+                global_gen_flist[i][1],
+                global_gen_flist[i][2]);
+    }
+
+   // exit(0);
+    CGAL::Polyhedron_3<K2, CGAL::Polyhedron_items_with_id_3>  pmesh;
+    PMP::repair_polygon_soup(global_gen_vlist, global_gen_flist);
+
+    CGAL::Polygon_mesh_processing::polygon_soup_to_polygon_mesh(global_gen_vlist, global_gen_flist, pmesh);
     PMP::duplicate_non_manifold_vertices(pmesh);
     PMP::stitch_borders(pmesh);
     PMP::merge_duplicated_vertices_in_boundary_cycles(pmesh);
