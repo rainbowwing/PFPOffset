@@ -1409,7 +1409,7 @@ int main(int argc, char* argv[]) {
 //                }
 
 
-                Tree aabb_tree(field_triangles.begin(),field_triangles.end());
+                Tree aabb_tree(field_triangles_final_round.begin(),field_triangles_final_round.end());
                 std::vector<std::vector<int> >maybe_used_face_source_id;
                 for(auto this_face : field_triangles){
                    std::list< Tree::Intersection_and_primitive_id<K2::Triangle_3>::Type> intersections;
@@ -1667,7 +1667,7 @@ int main(int argc, char* argv[]) {
                                flag_positive = true;
                            }
                        }
-                       if(!flag && flag_positive){
+                       if(!flag && flag_positive) {
                            K2::Ray_3 ray_r(this_center,tri.supporting_plane().orthogonal_vector()*(-1));
                            std::list< Tree::Intersection_and_primitive_id<K2::Ray_3>::Type> intersections_r;
                            aabb_tree_final_round.all_intersections(ray,std::back_inserter(intersections_r));
