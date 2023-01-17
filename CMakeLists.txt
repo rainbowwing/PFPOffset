@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16.3)
 set(CMAKE_CXX_STANDARD 20)
-project(Thicken2)
+project(Thicken2out)
 
 
 include_directories("/opt/homebrew/include")
@@ -33,10 +33,10 @@ file (GLOB CppFile
         MeshKernel/*
         Eigen/*
         )
-add_executable(Thicken2 main.cpp lib_impl.cpp DSU.cpp ${CppFile})
+add_executable(Thicken2out main.cpp lib_impl.cpp DSU.cpp ${CppFile})
 
 if(APPLE)
-    target_link_libraries(Thicken2
+    target_link_libraries(Thicken2out
             /opt/homebrew/lib/libgmp.dylib
             -lpthread
             /opt/homebrew/lib/libmpfr.dylib
@@ -44,7 +44,7 @@ if(APPLE)
             OsqpEigen::OsqpEigen
             )
 else()
-    target_link_libraries(Thicken2
+    target_link_libraries(Thicken2out
             -lgmp
             -lpthread
             -lmpfr
