@@ -41,7 +41,7 @@
 typedef CGAL::Constrained_Delaunay_triangulation_2<K2> CDT;
 //#include "BVH.h"
 
-#define MODEIN
+//#define MODEIN
 
 using namespace std;
 
@@ -4902,7 +4902,8 @@ int main(int argc, char* argv[]) {
 
    // cout << "qq1 qq2 "<<qq1 <<" "<< qq2 << endl;
    vector<K2::Triangle_3>generate_face_final;
-
+    double miny=(1<<30),maxy=-(1<<30);
+    double minz=(1<<30),maxz=-(1<<30);
     unordered_map<size_t ,int> vmp;
     for (auto each_grid = frame_grid_mp.begin(); each_grid != frame_grid_mp.end(); each_grid++){
         for(int i = 0;i < each_grid->second.generate_face_list.size();i++){
@@ -4912,6 +4913,12 @@ int main(int argc, char* argv[]) {
             final_gen_vertex.push_back( each_grid->second.generate_face_list[i].vertex(0));
             final_gen_vertex.push_back( each_grid->second.generate_face_list[i].vertex(1));
             final_gen_vertex.push_back( each_grid->second.generate_face_list[i].vertex(2));
+            for(int k=0;k<3;k++){
+                miny=min(miny, CGAL::to_double(each_grid->second.generate_face_list[i].vertex(k).y()));
+                maxy=max(maxy, CGAL::to_double(each_grid->second.generate_face_list[i].vertex(k).y()));
+                minz=min(minz, CGAL::to_double(each_grid->second.generate_face_list[i].vertex(k).z()));
+                maxz=max(maxz, CGAL::to_double(each_grid->second.generate_face_list[i].vertex(k).z()));
+            }
         }
     }
     cout <<"st build mesh" << endl;
@@ -4944,10 +4951,10 @@ int main(int argc, char* argv[]) {
         int xxid = 1;
 
          auto center = (mesh->BBoxMin + mesh->BBoxMax)/2;
-         K2::Point_3 vmin(center.x(),mesh->BBoxMin.y(),mesh->BBoxMin.z());
-         K2::Point_3 vmax(center.x(),mesh->BBoxMax.y(),mesh->BBoxMax.z());
-         K2::Point_3 vmid1(center.x(),mesh->BBoxMin.y(),mesh->BBoxMax.z());
-         K2::Point_3 vmid2(center.x(),mesh->BBoxMax.y(),mesh->BBoxMin.z());
+        K2::Point_3 vmin(center.x(),miny,minz);
+        K2::Point_3 vmax(center.x(),maxy,maxz);
+        K2::Point_3 vmid1(center.x(),miny,maxz);
+        K2::Point_3 vmid2(center.x(),maxy,minz);
          K2::Plane_3 plane(vmin,vmax,vmid1);
          vector<K2::Segment_3>vs;
         for(int i=0;i<mesh->FaceSize();i++) {
