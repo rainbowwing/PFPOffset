@@ -36,10 +36,10 @@ void Remeshing::run(string file_name) {
         printf("Error reading file  %s\n",file_name.c_str());
         exit(0);
     }
-    float targetLenPerc=1;
+    float targetLenPerc=1.0;
     int iterNum=5;
     float creaseAngle = 30.f;
-    float maxSurfDistPerc = 1;
+    float maxSurfDistPerc = 1.0;
 
 
 
@@ -94,7 +94,7 @@ void Remeshing::run(string file_name) {
     printf(" Input mesh %8i v %8i f\n",toremesh.VN(),toremesh.FN());
     vcg::tri::IsotropicRemeshing<MyMesh>::Do(toremesh, original, params);
     cout<< "remeshing result "<< (file_name+"_remesh.obj").c_str() <<endl;
-    vcg::tri::io::ExporterOBJ<MyMesh>::Save(toremesh, (file_name+"_remesh.obj").c_str(),loadmask);
+    vcg::tri::io::ExporterOBJ<MyMesh>::Save(toremesh, (file_name).c_str(),loadmask);
     printf("Output mesh %8i v %8i f\n",toremesh.VN(),toremesh.FN());
 
     return ;

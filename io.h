@@ -65,4 +65,26 @@ MeshKernel::SurfaceMesh ReadObjFile(const std::string &_InputFile) {
     fclose(inputfile);
     return mesh;
 }
+
+double mix_factor = 0.5;
+
+void mix(int T,shared_ptr <MeshKernel::SurfaceMesh> mesh){
+    for (int times = 0; times < T; times++) {
+        std::vector<double> fix_move_dist;
+        fix_move_dist.resize(mesh->FaceSize() + 1);
+        for (auto i: mesh->allfaces()) {
+            double dist = 0;
+            for (auto j: mesh->NeighborFh(i.first)) {
+                dist += mesh->faces(j).move_dist;
+            }
+            dist /= mesh->NeighborFh(i.first).size();
+            fix_move_dist[i.first] = (1.0 - mix_factor) * i.second.move_dist + mix_factor * dist;
+        }
+        for (auto i: mesh->allfaces()) {
+            mesh->faces(i.first).move_dist = fix_move_dist[i.first];
+        }
+    }
+}
+
+
 #endif //THICKEN2OUT_IO_H
