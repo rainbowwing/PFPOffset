@@ -1,10 +1,10 @@
 ## install bash
 ```bash
+sudo su root
 apt update
 apt upgrade
 apt-get install libcgal-dev
 apt install libeigen3-dev
-
 git clone --recursive https://github.com/osqp/osqp
 cd osqp
 mkdir build
@@ -25,4 +25,6 @@ cd Thickening2
 mkdir build
 cmake ../ -DCMAKE_BUILD_TYPE=Release
 make
+
+
 ```

@@ -36,6 +36,12 @@ void DSU::join(int x, int y) {
     }
     return;
 }
+
+void DSU::append(){
+    int now = pre.size();
+    pre.push_back(now);
+}
+
 std::vector<std::vector<int > > DSU::calculate(){
     std::map<int,int>mp;
     std::vector<std::vector<int > > ret;

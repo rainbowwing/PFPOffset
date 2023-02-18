@@ -11,6 +11,8 @@ include_directories(/opt/homebrew/include/eigen3)
 
 include_directories(/opt/osqp-eigen/include/)
 
+include_directories(vcglib/)
+
 LINK_DIRECTORIES(/usr/local/lib/)
 
 find_package(OsqpEigen REQUIRED)
@@ -33,7 +35,7 @@ file (GLOB CppFile
         MeshKernel/*
         Eigen/*
         )
-add_executable(Thicken2out main.cpp lib_impl.cpp DSU.cpp ${CppFile})
+add_executable(Thicken2out main.cpp CGALPolygon.cpp DSU.cpp remeshing.cpp ${CppFile} vcglib/wrap/ply/plylib.cpp)
 
 if(APPLE)
     target_link_libraries(Thicken2out
@@ -50,5 +52,6 @@ else()
             -lmpfr
             ${Boost_LIBRARY_DIRS}
             OsqpEigen::OsqpEigen
+
             )
 endif()

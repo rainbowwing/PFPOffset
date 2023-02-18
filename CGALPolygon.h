@@ -7,6 +7,8 @@
 
 #define myeps 1e-6
 
+#define merge_eps 1e-5
+
 
 #include <iostream>
 #include <fstream>
@@ -67,41 +69,9 @@ class CGALPolygon {
 
 public:
     CGALPolygon() {}
-
-    CGALPolygon(const shared_ptr <MeshKernel::SurfaceMesh> &mesh) {
-        std::vector<K2::Point_3> ps;
-        std::vector<std::vector<std::size_t> > fs;
-        for (int i = 0; i < mesh->VertexSize(); i++) {
-            ps.emplace_back(mesh->vertices(MeshKernel::iGameVertexHandle(i)).x(),
-                            mesh->vertices(MeshKernel::iGameVertexHandle(i)).y(),
-                            mesh->vertices(MeshKernel::iGameVertexHandle(i)).z());
-
-        }
-        for (int i = 0; i < mesh->FaceSize(); i++) {
-            fs.push_back({static_cast<unsigned long long>(mesh->faces(MeshKernel::iGameFaceHandle(i)).vh(0).idx()),
-                          static_cast<unsigned long long>(mesh->faces(MeshKernel::iGameFaceHandle(i)).vh(1).idx()),
-                          static_cast<unsigned long long>(mesh->faces(MeshKernel::iGameFaceHandle(i)).vh(2).idx())});
-        }
-        poly = new CGAL::Polyhedron_3<K2>();
-        PMP::polygon_soup_to_polygon_mesh(ps, fs, *poly, CGAL::parameters::all_default());
-        inside = new CGAL::Side_of_triangle_mesh<CGAL::Polyhedron_3<K2>, K2>(*poly);
-
-    };
-
-    bool inMesh(K2::Point_3 v) {
-       // CGAL::Side_of_triangle_mesh<CGAL::Polyhedron_3<K2>, K2 > inside(poly);
-        CGAL::Bounded_side res = (*inside)(v);
-        if (res == CGAL::ON_BOUNDED_SIDE)
-            return true;
-        return false;
-    }
-    bool outMesh(K2::Point_3 v) {
-        // CGAL::Side_of_triangle_mesh<CGAL::Polyhedron_3<K2>, K2 > inside(poly);
-        CGAL::Bounded_side res = (*inside)(v);
-        if (res == CGAL::ON_UNBOUNDED_SIDE)
-            return true;
-        return false;
-    }
+    CGALPolygon(const shared_ptr <MeshKernel::SurfaceMesh> &mesh);
+    bool inMesh(K2::Point_3 v);
+    bool outMesh(K2::Point_3 v);
 };
 
 

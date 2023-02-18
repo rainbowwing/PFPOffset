@@ -14,6 +14,7 @@ public:
     DSU(int x);
     void join(int x,int y);
     int find_root(int x);
+    void append();
     std::vector<std::vector<int > >calculate();
 };
 
