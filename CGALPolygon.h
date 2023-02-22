@@ -7,7 +7,7 @@
 
 #define myeps 1e-6
 
-#define merge_eps 1e-5
+#define merge_eps 1e-3
 
 
 #include <iostream>

@@ -16,6 +16,7 @@ struct LocalMesh {
     vector<int> y_min_final;
     vector<int> z_max_final;
     vector<int> z_min_final;
+
 };
 
 #endif //THICKEN2OUT_LOCALMESH_H
