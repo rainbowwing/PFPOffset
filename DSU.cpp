@@ -6,9 +6,6 @@
 #include "DSU.h"
 
 DSU::DSU() {
-    pre.resize(8);
-    for (int i = 0; i < pre.size(); i++)
-        pre[i] = i;
 }
 
 DSU::DSU(int x) {

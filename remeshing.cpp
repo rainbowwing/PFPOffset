@@ -36,7 +36,7 @@ void Remeshing::run(string file_name) {
         printf("Error reading file  %s\n",file_name.c_str());
         exit(0);
     }
-    float targetLenPerc=0.75;
+    float targetLenPerc=0.5;
     int iterNum=5;
     float creaseAngle = 30.f;
     float maxSurfDistPerc = 1.0;
@@ -88,7 +88,7 @@ void Remeshing::run(string file_name) {
 
     params.cleanFlag = true;
     params.userSelectedCreases = false;
-
+    params.surfDistCheck = false;
 
 
     printf(" Input mesh %8i v %8i f\n",toremesh.VN(),toremesh.FN());

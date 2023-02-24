@@ -5,9 +5,9 @@
 #ifndef THICKEN2_LIB_IMPL_H
 #define THICKEN2_LIB_IMPL_H
 
-#define myeps 1e-6
+#define myeps 1e-8
 
-#define merge_eps 1e-3
+const double  merge_eps = 1e-5;
 
 
 #include <iostream>

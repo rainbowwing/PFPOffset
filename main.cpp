@@ -369,10 +369,12 @@ int main(int argc, char* argv[]) {
     };
     int fsize = mesh->FaceSize();
 
-    MeshKernel::iGameVertex debug_v(2.004797,-10.943162, -6.274028);
+    MeshKernel::iGameVertex debug_v(-0.526370 ,2.852676 ,-0.017140);
     grid debug_g =  vertex_to_grid(debug_v);
 
     cout <<"v to g :" <<debug_g.x <<" "<< debug_g.y <<" "<<debug_g.z << endl;
+    auto tmp = (getGridVertex(debug_g,0) + getGridVertex(debug_g,7))/2;
+    cout << tmp.x()<<" "<< tmp.y()<<" "<< tmp.z() << endl;
 
    // return 0;
     cout <<"bfs start \n" << endl;
@@ -1147,22 +1149,22 @@ int main(int argc, char* argv[]) {
                     for(int i=0;i<each_grid->second.generate_face_list.size();i++){
                         for(int j=0;j<3;j++){
                             K2::Point_3 p = each_grid->second.generate_face_list[i].vertex(j);
-                            if(abs(CGAL::to_double(p.x()-small.x())) < merge_eps){
+                            if(abs(CGAL::to_double(p.x()-small.x())) < merge_eps*2){
                                 each_grid->second.x_min_v.push_back(p);
                             }
-                            if(abs(CGAL::to_double(p.x()-big.x())) < merge_eps){
+                            if(abs(CGAL::to_double(p.x()-big.x())) < merge_eps*2){
                                 each_grid->second.x_max_v.push_back(p);
                             }
-                            if(abs(CGAL::to_double(p.y()-small.y())) < merge_eps){
+                            if(abs(CGAL::to_double(p.y()-small.y())) < merge_eps*2){
                                 each_grid->second.y_min_v.push_back(p);
                             }
-                            if(abs(CGAL::to_double(p.y()-big.y())) < merge_eps){
+                            if(abs(CGAL::to_double(p.y()-big.y())) < merge_eps*2){
                                 each_grid->second.y_max_v.push_back(p);
                             }
-                            if(abs(CGAL::to_double(p.z()-small.z())) < merge_eps){
+                            if(abs(CGAL::to_double(p.z()-small.z())) < merge_eps*2){
                                 each_grid->second.z_min_v.push_back(p);
                             }
-                            if(abs(CGAL::to_double(p.z()-big.z())) < merge_eps){
+                            if(abs(CGAL::to_double(p.z()-big.z())) < merge_eps*2){
                                 each_grid->second.z_max_v.push_back(p);
                             }
                         }
@@ -1225,7 +1227,7 @@ int main(int argc, char* argv[]) {
             }
         }
     }
-    map<grid,LocalMesh>local_mesh_mp;
+    unordered_map<grid, LocalMesh, grid_hash, grid_equal>local_mesh_mp;
 
 
 
@@ -1302,11 +1304,12 @@ int main(int argc, char* argv[]) {
                 //printf("st builder each_grid_cnt2 %d/%d/%d\n",now_id,each_grid_cnt,(int)frame_grid_mp.size());
                // if(!(each_grid->first.x == 0 && each_grid->first.y == 0 && each_grid->first.z == -1  ))continue;
                 //cout << "thisbuild: "<<each_grid->first.x <<" "<< each_grid->first.y <<" "<<each_grid->first.z << endl;
-                MeshBuilder builder(each_grid->second.generate_face_list,small,big,neighbor_v);
+                MeshBuilder builder(each_grid->second.generate_face_list,small,big,neighbor_v,each_grid->first.x,each_grid->first.y,each_grid->first.z);
                 //printf("end builder each_grid_cnt2 %d/%d/%d\n",now_id,each_grid_cnt,(int)frame_grid_mp.size());
                 LocalMesh localMesh;
                 localMesh.final_v = builder.generate_v;
                 localMesh.final_f = builder.generate_face;
+                localMesh.built = false;
 //                for(int j=0;j< localMesh.final_v.size();j++){
 //                    if(abs(CGAL::to_double(localMesh.final_v[j].x()-big.x())) < merge_eps){
 //                        localMesh.x_max_final.push_back(j);
@@ -1352,143 +1355,303 @@ int main(int argc, char* argv[]) {
 
     int global_v_id = 0;
     vector<K2::Point_3>global_v;
+    DSU dsu;
     vector<vector<int>>global_face;
     int xxx=0;
-    FILE *file14 = fopen( (input_filename + "_14.obj").c_str(), "w+");
-    FILE *file15 = fopen( (input_filename + "_15.obj").c_str(), "w+");
-    FILE *file16 = fopen( (input_filename + "_16.obj").c_str(), "w+");
+
+
     for (auto each_grid = local_mesh_mp.begin(); each_grid != local_mesh_mp.end(); each_grid++){
         cout << xxx++ <<"/?/"<< local_mesh_mp.size()<<endl;
         K2::Point_3 small = iGameVertex_to_Point_K2(getGridVertex(each_grid->first, 0));
         K2::Point_3 big = iGameVertex_to_Point_K2(getGridVertex(each_grid->first, 7));
-
-        auto xdown = local_mesh_mp.find(grid(each_grid->first.x-1,each_grid->first.y,each_grid->first.z));
-        auto ydown = local_mesh_mp.find(grid(each_grid->first.x,each_grid->first.y-1,each_grid->first.z));
-        auto zdown = local_mesh_mp.find(grid(each_grid->first.x,each_grid->first.y,each_grid->first.z-1));
         for(int j=0;j<each_grid->second.final_v.size();j++){
-            each_grid->second.final_v_global_id.push_back(-1);
+            dsu.append();
+            each_grid->second.final_v_global_id.push_back(global_v_id);
+            global_v.push_back(each_grid->second.final_v[j]);
+            global_v_id++;
         }
+        for(auto j : container_grid_dir){
+            grid neighbor(each_grid->first.x+j[0],each_grid->first.y+j[1],each_grid->first.z+j[2]);
+            auto nit = local_mesh_mp.find(neighbor);
+            if(nit != local_mesh_mp.end()){
+                if(nit->second.built){
+                    for(int k=0;k<each_grid->second.final_v.size();k++){
+                        K2::Point_3 p = each_grid->second.final_v[k];
+//                        if(each_grid->second.final_v_global_id[k] != -1) { // 这里得改成dsu
+//                            //cout << "each_grid->second.final_v_global_id[k]  "<<global_v_id <<" "<< each_grid->second.final_v_global_id[k] <<" ";
+//                            int gid = each_grid->second.final_v_global_id[k];
+//                            //cout <<  CGAL::to_double(global_v[gid].x()) <<" "<< CGAL::to_double(global_v[gid].y()) <<" "<<CGAL::to_double(global_v[gid].z()) << endl;
+//                            continue;
+//                        }
 
-        if(xdown != local_mesh_mp.end()){
-            for(int j=0;j<each_grid->second.final_v.size();j++){
-                K2::Point_3 p = each_grid->second.final_v[j];
-                if(abs(CGAL::to_double(p.x()-small.x())) < merge_eps){
-                    for(int k=0;k<xdown->second.x_max_final.size();k++){
-                        int id2 = xdown->second.x_max_final[k];
-                        if(CGAL::to_double(CGAL::squared_distance(global_v[id2],p)) < merge_eps){
-                            fprintf(file14,"v %lf %lf %lf\n",CGAL::to_double(p.x()),CGAL::to_double(p.y()),CGAL::to_double(p.z()));
-                            fprintf(file15,"v %lf %lf %lf\n",CGAL::to_double(global_v[id2].x()),CGAL::to_double(global_v[id2].y()),CGAL::to_double(global_v[id2].z()));
+                        Fuzzy_circle fc0(p, merge_eps*2);
+                        std::list<K2::Point_3> result0;
+                        nit->second.kdtree->search(std::back_inserter(result0), fc0);
+                        for(const auto l : result0){
+                            if(sqrt(CGAL::to_double(CGAL::squared_distance(p,l))) < merge_eps){
+//                                if(each_grid->second.final_v_global_id[k] != -1) {
+//                                    each_grid->second.final_v_global_id[k] = nit->second.vmp[l.id()];
+//                                }
 
-                            each_grid->second.final_v_global_id[j] = id2;
+                                    dsu.join(each_grid->second.final_v_global_id[k] , nit->second.vmp[l.id()]);
+                                //}
+                                break;
+                            }
                         }
+
                     }
                 }
+
             }
         }
-        if(ydown != local_mesh_mp.end()){
-            for(int j=0;j<each_grid->second.final_v.size();j++){
-                K2::Point_3 p = each_grid->second.final_v[j];
-                if(abs(CGAL::to_double(p.x()-small.y())) < merge_eps){
-                    for(int k=0;k<ydown->second.y_max_final.size();k++){
-                        int id2 = ydown->second.y_max_final[k];
-                        if(CGAL::to_double(CGAL::squared_distance(global_v[id2],p)) < merge_eps){
-                            fprintf(file14,"v %lf %lf %lf\n",CGAL::to_double(p.x()),CGAL::to_double(p.y()),CGAL::to_double(p.z()));
-                            fprintf(file15,"v %lf %lf %lf\n",CGAL::to_double(global_v[id2].x()),CGAL::to_double(global_v[id2].y()),CGAL::to_double(global_v[id2].z()));
-                            each_grid->second.final_v_global_id[j] = id2;
-                        }
-                    }
-                }
-            }
-        }
-        if(zdown != local_mesh_mp.end()){
-            for(int j=0;j<each_grid->second.final_v.size();j++){
-                K2::Point_3 p = each_grid->second.final_v[j];
-                if(abs(CGAL::to_double(p.z()-small.z())) < merge_eps){
-                    for(int k=0;k<zdown->second.z_max_final.size();k++){
-                        int id2 = zdown->second.z_max_final[k];
-                        if(CGAL::to_double(CGAL::squared_distance(global_v[id2],p)) < merge_eps){
-                            fprintf(file14,"v %lf %lf %lf\n",CGAL::to_double(p.x()),CGAL::to_double(p.y()),CGAL::to_double(p.z()));
-                            fprintf(file15,"v %lf %lf %lf\n",CGAL::to_double(global_v[id2].x()),CGAL::to_double(global_v[id2].y()),CGAL::to_double(global_v[id2].z()));
-                            each_grid->second.final_v_global_id[j] = id2;
-                        }
-                    }
-                }
-            }
-        }
-        for(int j=0;j<each_grid->second.final_v.size();j++){
-            if(each_grid->second.final_v_global_id[j] == -1){
-                each_grid->second.final_v_global_id[j] = global_v_id;
-                global_v.push_back(each_grid->second.final_v[j]);
-                global_v_id++;
-            }
-        }
+        each_grid->second.built = true;
+
         for(int j=0;j<each_grid->second.final_f.size();j++){
             if(set<int>{ each_grid->second.final_v_global_id[each_grid->second.final_f[j][0]],
                          each_grid->second.final_v_global_id[each_grid->second.final_f[j][1]],
                          each_grid->second.final_v_global_id[each_grid->second.final_f[j][2]]
-                        }.size() == 3){
+            }.size() == 3){
                 global_face.push_back({ each_grid->second.final_v_global_id[each_grid->second.final_f[j][0]],
                                         each_grid->second.final_v_global_id[each_grid->second.final_f[j][1]],
                                         each_grid->second.final_v_global_id[each_grid->second.final_f[j][2]]
                                       });
-//                int aaa = each_grid->second.final_f[j][0];
-//                int bbb = each_grid->second.final_f[j][1];
-//                int ccc = each_grid->second.final_f[j][2];
-//                cout << CGAL::to_double(CGAL::squared_distance(each_grid->second.final_v[aaa],
-//                                                               each_grid->second.final_v[bbb]))<<" ";
-//                cout << CGAL::to_double(CGAL::squared_distance(each_grid->second.final_v[bbb],
-//                                                               each_grid->second.final_v[ccc]))<<" ";
-//                cout << CGAL::to_double(CGAL::squared_distance(each_grid->second.final_v[ccc],
-//                                                               each_grid->second.final_v[aaa]))<<endl;
+
             }
         }
+        each_grid->second.kdtree = new KDTree();
         for(int j=0;j<each_grid->second.final_v.size();j++){
             int global_id = each_grid->second.final_v_global_id[j];
             K2::Point_3 p = global_v[global_id];
-            if(abs(CGAL::to_double(p.x()-big.x())) < merge_eps){
-                fprintf(file16,"v %lf %lf %lf\n",CGAL::to_double(p.x()),CGAL::to_double(p.y()),CGAL::to_double(p.z()));
-                each_grid->second.x_max_final.push_back(global_id);
+            if(abs(CGAL::to_double(p.x()-big.x())) < merge_eps*2){
+                if(!each_grid->second.vmp.count(p.id())) {
+                    each_grid->second.kdtree->insert(p);
+                    each_grid->second.vmp[p.id()] = global_id;
+                }
+                //  fprintf(file16,"v %lf %lf %lf\n",CGAL::to_double(p.x()),CGAL::to_double(p.y()),CGAL::to_double(p.z()));
+                //each_grid->second.x_max_final.push_back(global_id);
             }
-            if(abs(CGAL::to_double(p.y()-big.y())) < merge_eps){
-                fprintf(file16,"v %lf %lf %lf\n",CGAL::to_double(p.x()),CGAL::to_double(p.y()),CGAL::to_double(p.z()));
-                each_grid->second.y_max_final.push_back(global_id);
+            if(abs(CGAL::to_double(p.y()-big.y())) < merge_eps*2){
+                if(!each_grid->second.vmp.count(p.id())) {
+                    each_grid->second.kdtree->insert(p);
+                    each_grid->second.vmp[p.id()] = global_id;
+                }
+                //  fprintf(file16,"v %lf %lf %lf\n",CGAL::to_double(p.x()),CGAL::to_double(p.y()),CGAL::to_double(p.z()));
+                //each_grid->second.y_max_final.push_back(global_id);
             }
-            if(abs(CGAL::to_double(p.z()-big.z())) < merge_eps){
-                fprintf(file16,"v %lf %lf %lf\n",CGAL::to_double(p.x()),CGAL::to_double(p.y()),CGAL::to_double(p.z()));
-                each_grid->second.z_max_final.push_back(global_id);
+            if(abs(CGAL::to_double(p.z()-big.z())) < merge_eps*2){
+                if(!each_grid->second.vmp.count(p.id())) {
+                    each_grid->second.kdtree->insert(p);
+                    each_grid->second.vmp[p.id()] = global_id;
+                }
+                //  fprintf(file16,"v %lf %lf %lf\n",CGAL::to_double(p.x()),CGAL::to_double(p.y()),CGAL::to_double(p.z()));
+                //each_grid->second.z_max_final.push_back(global_id);
+            }
+
+            if(abs(CGAL::to_double(p.x()-small.x())) < merge_eps*2){
+                if(!each_grid->second.vmp.count(p.id())) {
+                    each_grid->second.kdtree->insert(p);
+                    each_grid->second.vmp[p.id()] = global_id;
+                }
+                //  fprintf(file16,"v %lf %lf %lf\n",CGAL::to_double(p.x()),CGAL::to_double(p.y()),CGAL::to_double(p.z()));
+                //each_grid->second.x_max_final.push_back(global_id);
+            }
+            if(abs(CGAL::to_double(p.y()-small.y())) < merge_eps*2){
+                if(!each_grid->second.vmp.count(p.id())) {
+                    each_grid->second.kdtree->insert(p);
+                    each_grid->second.vmp[p.id()] = global_id;
+                }
+                // fprintf(file16,"v %lf %lf %lf\n",CGAL::to_double(p.x()),CGAL::to_double(p.y()),CGAL::to_double(p.z()));
+                //each_grid->second.y_max_final.push_back(global_id);
+            }
+            if(abs(CGAL::to_double(p.z()-small.z())) < merge_eps*2){
+                if(!each_grid->second.vmp.count(p.id())) {
+                    each_grid->second.kdtree->insert(p);
+                    each_grid->second.vmp[p.id()] = global_id;
+                }
+                //    fprintf(file16,"v %lf %lf %lf\n",CGAL::to_double(p.x()),CGAL::to_double(p.y()),CGAL::to_double(p.z()));
+                //each_grid->second.z_max_final.push_back(global_id);
             }
         }
+
     }
+
+
+//    for (auto each_grid = local_mesh_mp.begin(); each_grid != local_mesh_mp.end(); each_grid++){
+//        cout << xxx++ <<"/?/"<< local_mesh_mp.size()<<endl;
+//        K2::Point_3 small = iGameVertex_to_Point_K2(getGridVertex(each_grid->first, 0));
+//        K2::Point_3 big = iGameVertex_to_Point_K2(getGridVertex(each_grid->first, 7));
+//        for(int j=0;j<each_grid->second.final_v.size();j++){
+//            each_grid->second.final_v_global_id.push_back(-1);
+//        }
+//        for(auto j : container_grid_dir){
+//            grid neighbor(each_grid->first.x+j[0],each_grid->first.y+j[1],each_grid->first.z+j[2]);
+//            auto nit = local_mesh_mp.find(neighbor);
+//            if(nit != local_mesh_mp.end()){
+//                if(nit->second.built){
+//                    for(int k=0;k<each_grid->second.final_v.size();k++){
+//                        K2::Point_3 p = each_grid->second.final_v[k];
+//                        if(each_grid->second.final_v_global_id[k] != -1) { // 这里得改成dsu
+//                            //cout << "each_grid->second.final_v_global_id[k]  "<<global_v_id <<" "<< each_grid->second.final_v_global_id[k] <<" ";
+//                            int gid = each_grid->second.final_v_global_id[k];
+//                            //cout <<  CGAL::to_double(global_v[gid].x()) <<" "<< CGAL::to_double(global_v[gid].y()) <<" "<<CGAL::to_double(global_v[gid].z()) << endl;
+//                            continue;
+//                        }
+//
+//                        Fuzzy_circle fc0(p, merge_eps*2);
+//                        std::list<K2::Point_3> result0;
+//                        nit->second.kdtree->search(std::back_inserter(result0), fc0); //BUG是此处kd书没找到
+//                        for(const auto l : result0){
+//                            if(sqrt(CGAL::to_double(CGAL::squared_distance(p,l))) < merge_eps){
+//                                each_grid->second.final_v_global_id[k] = nit->second.vmp[l.id()];
+//                                break;
+//                            }
+//                        }
+//
+//                    }
+//                }
+//
+//
+//
+//            }
+//        }
+//        each_grid->second.built = true;
+//
+//        for(int j=0;j<each_grid->second.final_v.size();j++){
+//            if(each_grid->second.final_v_global_id[j] == -1){
+////                cout <<"insert: "<< global_v_id <<" "<< each_grid->first.x <<" "<<  each_grid->first.y <<" "<< each_grid->first.z
+////                << CGAL::to_double(each_grid->second.final_v[j].x()) <<" "<<  CGAL::to_double(each_grid->second.final_v[j].y()) <<" "
+////                <<CGAL::to_double(each_grid->second.final_v[j].y()) << endl;
+//
+//                each_grid->second.final_v_global_id[j] = global_v_id;
+//                global_v.push_back(each_grid->second.final_v[j]);
+//                global_v_id++;
+//            }
+//        }
+//        for(int j=0;j<each_grid->second.final_f.size();j++){
+//            if(set<int>{ each_grid->second.final_v_global_id[each_grid->second.final_f[j][0]],
+//                         each_grid->second.final_v_global_id[each_grid->second.final_f[j][1]],
+//                         each_grid->second.final_v_global_id[each_grid->second.final_f[j][2]]
+//                        }.size() == 3){
+//                global_face.push_back({ each_grid->second.final_v_global_id[each_grid->second.final_f[j][0]],
+//                                        each_grid->second.final_v_global_id[each_grid->second.final_f[j][1]],
+//                                        each_grid->second.final_v_global_id[each_grid->second.final_f[j][2]]
+//                                      });
+//
+////                int aaa = each_grid->second.final_f[j][0];
+////                int bbb = each_grid->second.final_f[j][1];
+////                int ccc = each_grid->second.final_f[j][2];
+////                cout << CGAL::to_double(CGAL::squared_distance(each_grid->second.final_v[aaa],
+////                                                               each_grid->second.final_v[bbb]))<<" ";
+////                cout << CGAL::to_double(CGAL::squared_distance(each_grid->second.final_v[bbb],
+////                                                               each_grid->second.final_v[ccc]))<<" ";
+////                cout << CGAL::to_double(CGAL::squared_distance(each_grid->second.final_v[ccc],
+////                                                               each_grid->second.final_v[aaa]))<<endl;
+//            }
+//        }
+//        each_grid->second.kdtree = new KDTree();
+//        for(int j=0;j<each_grid->second.final_v.size();j++){
+//            int global_id = each_grid->second.final_v_global_id[j];
+//            K2::Point_3 p = global_v[global_id];
+//            if(abs(CGAL::to_double(p.x()-big.x())) < merge_eps*2){
+//                if(!each_grid->second.vmp.count(p.id())) {
+//                    each_grid->second.kdtree->insert(p);
+//                    each_grid->second.vmp[p.id()] = global_id;
+//                }
+//              //  fprintf(file16,"v %lf %lf %lf\n",CGAL::to_double(p.x()),CGAL::to_double(p.y()),CGAL::to_double(p.z()));
+//                //each_grid->second.x_max_final.push_back(global_id);
+//            }
+//            if(abs(CGAL::to_double(p.y()-big.y())) < merge_eps*2){
+//                if(!each_grid->second.vmp.count(p.id())) {
+//                    each_grid->second.kdtree->insert(p);
+//                    each_grid->second.vmp[p.id()] = global_id;
+//                }
+//              //  fprintf(file16,"v %lf %lf %lf\n",CGAL::to_double(p.x()),CGAL::to_double(p.y()),CGAL::to_double(p.z()));
+//                //each_grid->second.y_max_final.push_back(global_id);
+//            }
+//            if(abs(CGAL::to_double(p.z()-big.z())) < merge_eps*2){
+//                if(!each_grid->second.vmp.count(p.id())) {
+//                    each_grid->second.kdtree->insert(p);
+//                    each_grid->second.vmp[p.id()] = global_id;
+//                }
+//              //  fprintf(file16,"v %lf %lf %lf\n",CGAL::to_double(p.x()),CGAL::to_double(p.y()),CGAL::to_double(p.z()));
+//                //each_grid->second.z_max_final.push_back(global_id);
+//            }
+//
+//            if(abs(CGAL::to_double(p.x()-small.x())) < merge_eps*2){
+//                if(!each_grid->second.vmp.count(p.id())) {
+//                    each_grid->second.kdtree->insert(p);
+//                    each_grid->second.vmp[p.id()] = global_id;
+//                }
+//              //  fprintf(file16,"v %lf %lf %lf\n",CGAL::to_double(p.x()),CGAL::to_double(p.y()),CGAL::to_double(p.z()));
+//                //each_grid->second.x_max_final.push_back(global_id);
+//            }
+//            if(abs(CGAL::to_double(p.y()-small.y())) < merge_eps*2){
+//                if(!each_grid->second.vmp.count(p.id())) {
+//                    each_grid->second.kdtree->insert(p);
+//                    each_grid->second.vmp[p.id()] = global_id;
+//                }
+//               // fprintf(file16,"v %lf %lf %lf\n",CGAL::to_double(p.x()),CGAL::to_double(p.y()),CGAL::to_double(p.z()));
+//                //each_grid->second.y_max_final.push_back(global_id);
+//            }
+//            if(abs(CGAL::to_double(p.z()-small.z())) < merge_eps*2){
+//                if(!each_grid->second.vmp.count(p.id())) {
+//                    each_grid->second.kdtree->insert(p);
+//                    each_grid->second.vmp[p.id()] = global_id;
+//                }
+//            //    fprintf(file16,"v %lf %lf %lf\n",CGAL::to_double(p.x()),CGAL::to_double(p.y()),CGAL::to_double(p.z()));
+//                //each_grid->second.z_max_final.push_back(global_id);
+//            }
+//        }
+//
+//      //  cout << "each_grid->second "<<each_grid->first.x <<" "<< each_grid->first.y <<" "<<each_grid->first.z << " "<< each_grid->second.vmp.size() << endl;
+//    }
 
 
 
     cout <<"st build mesh" << endl;
 
     FILE *file12 = fopen( (input_filename + "_12.obj").c_str(), "w+");
-
-    int f12id = 1;
-    double avg_len = 0;
+    vector<vector<int> >global_v_dsu(global_v.size());
+    vector<K2::Point_3>global_true_v(global_v.size());
     for(int i=0;i<global_v.size();i++){
-        fprintf(file12,"v %lf %lf %lf\n",CGAL::to_double(global_v[i].x()),
-                    CGAL::to_double(global_v[i].y()),
-                    CGAL::to_double(global_v[i].z())
-                    );
+        global_v_dsu[dsu.find_root(i)].push_back(i);
+    }
+    for(int i=0;i<global_v.size();i++){
+        K2::Point_3 zero(0,0,0);
+        K2::Vector_3 now(0,0,0);
+        for(auto j : global_v_dsu[i]){
+            now += global_v[j] - zero;
+        }
+        now/= CGAL::Epeck::FT(global_v_dsu[i].size()*1.0);
+        global_true_v[i] = zero + now;
+    }
 
+
+    vector<int>global_v_id_new(global_v.size());
+    int id_new = 0;
+    for(int i=0;i<global_v.size();i++){
+        if(dsu.find_root(i) == i){
+            fprintf(file12,"v %lf %lf %lf\n",CGAL::to_double(global_true_v[i].x()),
+                    CGAL::to_double(global_true_v[i].y()),
+                    CGAL::to_double(global_true_v[i].z())
+            );
+            global_v_id_new[i] = id_new++;
+        }
     }
     for(int i=0;i<global_face.size();i++){
-        fprintf(file12,"f %d %d %d\n",global_face[i][0] + 1,
-                global_face[i][1] + 1,
-                global_face[i][2] + 1
+        int id0 = global_v_id_new[dsu.find_root(global_face[i][0])];
+        int id1 = global_v_id_new[dsu.find_root(global_face[i][1])];
+        int id2 = global_v_id_new[dsu.find_root(global_face[i][2])];
+        if(set<int>{id0,id1,id2}.size() !=3)continue;
+
+        fprintf(file12,"f %d %d %d\n",id0+ 1,
+                id1 + 1,
+                id2 + 1
         );
-        avg_len += sqrt(CGAL::to_double(CGAL::squared_distance(global_v[global_face[i][0]],global_v[global_face[i][1]])));
-        avg_len += sqrt(CGAL::to_double(CGAL::squared_distance(global_v[global_face[i][1]],global_v[global_face[i][2]])));
-        avg_len += sqrt(CGAL::to_double(CGAL::squared_distance(global_v[global_face[i][2]],global_v[global_face[i][0]])));
 
     }
-    avg_len/= (global_face.size()*3);
     fclose(file12);
-    fclose(file16);
-    cout << "avg_len" << avg_len<<endl;
+
     Remeshing().run((input_filename + "_12.obj").c_str());
 
     cout <<"f v : " << final_gen_face.size() <<" "<< final_gen_vertex.size() << endl;
