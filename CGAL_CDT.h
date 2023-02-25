@@ -4,6 +4,8 @@
 
 #ifndef THICKEN2OUT_CGAL_CDT_H
 #define THICKEN2OUT_CGAL_CDT_H
+
+
 typedef CGAL::Constrained_Delaunay_triangulation_2<K2> CDT;
 inline K::Point_3 iGameVertex_to_Point(const MeshKernel::iGameVertex& v){
     return K::Point_3(v.x(),v.y(),v.z());

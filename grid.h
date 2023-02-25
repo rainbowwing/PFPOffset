@@ -6,7 +6,7 @@
 #define THICKEN2OUT_GRID_H
 double stx, sty, stz;
 double grid_len = 1e10;
-
+double myeps;
 struct grid {
     int x;
     int y;

@@ -33,9 +33,8 @@ endif()
 
 file (GLOB CppFile
         MeshKernel/*
-        Eigen/*
         )
-add_executable(Thicken2out main.cpp CGALPolygon.cpp DSU.cpp remeshing.cpp ${CppFile} vcglib/wrap/ply/plylib.cpp)
+add_executable(Thicken2out main.cpp CGALPolygon.cpp DSU.cpp remeshing.cpp MeshBuilder.cpp ${CppFile} vcglib/wrap/ply/plylib.cpp)
 
 if(APPLE)
     target_link_libraries(Thicken2out
@@ -44,6 +43,7 @@ if(APPLE)
             /opt/homebrew/lib/libmpfr.dylib
             ${Boost_LIBRARY_DIRS}
             OsqpEigen::OsqpEigen
+            /opt/homebrew/lib/libgflags.dylib
             )
 else()
     target_link_libraries(Thicken2out
@@ -52,6 +52,6 @@ else()
             -lmpfr
             ${Boost_LIBRARY_DIRS}
             OsqpEigen::OsqpEigen
-
+            gflags
             )
 endif()

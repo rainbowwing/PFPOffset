@@ -93,9 +93,9 @@ void Remeshing::run(string file_name) {
 
     printf(" Input mesh %8i v %8i f\n",toremesh.VN(),toremesh.FN());
     vcg::tri::IsotropicRemeshing<MyMesh>::Do(toremesh, original, params);
-    cout<< "remeshing result "<< (file_name+"_remesh.obj").c_str() <<endl;
+    cout<< "remeshing result "<< (file_name).c_str() <<endl;
     //vcg::tri::io::ExporterOBJ<MyMesh>::Save(toremesh, (file_name).c_str(),loadmask);
-    vcg::tri::io::ExporterOBJ<MyMesh>::Save(toremesh, (file_name+"_remesh.obj").c_str(),loadmask);
+    vcg::tri::io::ExporterOBJ<MyMesh>::Save(toremesh, (file_name).c_str(),loadmask);
     printf("Output mesh %8i v %8i f\n",toremesh.VN(),toremesh.FN());
 
     return ;

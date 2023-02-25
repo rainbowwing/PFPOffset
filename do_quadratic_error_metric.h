@@ -4,7 +4,8 @@
 
 #ifndef THICKEN2OUT_DO_QUADRATIC_ERROR_METRIC_H
 #define THICKEN2OUT_DO_QUADRATIC_ERROR_METRIC_H
-
+double max_l_times;
+int running_mode;
 vector<MeshKernel::iGameVertex> min_move_g;
 vector<MeshKernel::iGameVertex> max_move_g;
 
@@ -46,9 +47,9 @@ MeshKernel::iGameVertex do_quadratic_error_metric(shared_ptr <MeshKernel::Surfac
 //
 //        MeshKernel::iGameVertex move_max_v = v + normal * mesh->fast_iGameFace[f].move_dist*1.35;
 //        MeshKernel::iGameVertex move_min_v = v + normal * mesh->fast_iGameFace[f].move_dist*0.8;
-#ifdef MODEIN
-        normal = normal * -1;
-#endif
+        if(running_mode == 2)
+            normal = normal * -1;
+
 
         MeshKernel::iGameVertex new_v = v + normal * avg_move_dist;
         avg_move_vertex += normal * avg_move_dist;
@@ -111,7 +112,7 @@ MeshKernel::iGameVertex do_quadratic_error_metric(shared_ptr <MeshKernel::Surfac
         is_succ = true;
         Eigen::VectorXd QPSolution = solver.getSolution();
         MeshKernel::iGameVertex res(QPSolution.coeffRef(0), QPSolution.coeffRef(1), QPSolution.coeffRef(2));
-        if( (res-v).norm() > 2*avg_move_dist){
+        if( (res-v).norm() > max_l_times*avg_move_dist){
             return v+ (res-v)/(res-v).norm()*(2*avg_move_dist);
             // return avg_move_vertex;
         }
