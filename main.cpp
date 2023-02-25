@@ -139,7 +139,7 @@ int main(int argc, char* argv[]) {
         //grid_len = sum/mesh->FaceSize()*1.5;
         grid_len = avg_input_mesh*2.5;
 
-        cout<<"GL:" <<grid_len << endl;
+        cout<<"Grid Length:" <<grid_len << endl;
     }
 
   //3.59
@@ -175,22 +175,22 @@ int main(int argc, char* argv[]) {
 
     field_move_face.resize(mesh->FaceSize());
     field_move_K2_triangle.resize(mesh->FaceSize());
-
+    cout <<"step 1 start  "<< endl;
     time_path.push_back(std::chrono::system_clock::now());
     for(int i=0;i<mesh->VertexSize();i++){
         bool is_succ = true;
         field_move_vertex[i] = do_quadratic_error_metric(mesh,MeshKernel::iGameVertexHandle(i),is_succ);
     }
     time_path.push_back(std::chrono::system_clock::now());
-
-    cout <<"build st "<< endl;
+    cout <<"step 1 end" << endl;
+    cout <<"step 2 start  "<< endl;
     std::vector <std::shared_ptr<std::thread> > build_thread_pool(thread_num);
     for(int i=0;i<thread_num;i++) {
         build_thread_pool[i] = make_shared<std::thread>([&](int now_id) {
             for(int i=0;i<mesh->FaceSize();i++) {
                 if (i % thread_num != now_id)continue;
                 if(i%500==0)
-                    cout << "build "<< i << endl;
+                    cout << "progress bar of step2 part1  "<< i <<"/" << mesh->FaceSize() << endl;
                 faces_approximate_field[i] = ApproximateField(MeshKernel::iGameFaceHandle(i),field_move_vertex,mesh);
 
                 //continue;
@@ -229,7 +229,7 @@ int main(int argc, char* argv[]) {
             for(int i=0;i<mesh->FaceSize();i++) {
                 if (i % thread_num != now_id)continue;
                 if(i%500==0)
-                    cout << "one_ring_select_thread_pool "<< i << endl;
+                    cout << "progress bar of step2 part2  "<< i <<"/" << mesh->FaceSize() << endl;
 
                 set<int>neighbor_field;
                 for(int j=0;j<3;j++) {
@@ -342,7 +342,7 @@ int main(int argc, char* argv[]) {
     time_path.push_back(std::chrono::system_clock::now());
 
 
-    cout <<"build end "<< endl;
+    cout <<"step2 end "<< endl;
 
     cgal_polygon = make_shared<CGALPolygon>(mesh);
 
@@ -363,9 +363,6 @@ int main(int argc, char* argv[]) {
     stz = mesh->BBoxMin.z() - max_move;
 
 
-
-
-    printf("GL %lf\n", grid_len);
 
     unordered_map <grid, GridVertex, grid_hash, grid_equal> frame_grid_mp;
 
@@ -389,15 +386,15 @@ int main(int argc, char* argv[]) {
     };
     int fsize = mesh->FaceSize();
 
-    MeshKernel::iGameVertex debug_v(-0.526370 ,2.852676 ,-0.017140);
-    grid debug_g =  vertex_to_grid(debug_v);
-
-    cout <<"v to g :" <<debug_g.x <<" "<< debug_g.y <<" "<<debug_g.z << endl;
-    auto tmp = (getGridVertex(debug_g,0) + getGridVertex(debug_g,7))/2;
-    cout << tmp.x()<<" "<< tmp.y()<<" "<< tmp.z() << endl;
+//    MeshKernel::iGameVertex debug_v(-0.526370 ,2.852676 ,-0.017140);
+//    grid debug_g =  vertex_to_grid(debug_v);
+//
+//    cout <<"v to g :" <<debug_g.x <<" "<< debug_g.y <<" "<<debug_g.z << endl;
+//    auto tmp = (getGridVertex(debug_g,0) + getGridVertex(debug_g,7))/2;
+//    cout << tmp.x()<<" "<< tmp.y()<<" "<< tmp.z() << endl;
 
    // return 0;
-    cout <<"bfs start \n" << endl;
+    cout <<"step 3 start  \n" << endl;
     std::mutex bfs_mutex;
     std::vector <std::shared_ptr<std::thread> > bfs_thread_pool(thread_num);
     for(int i=0;i<thread_num;i++) {
@@ -405,7 +402,7 @@ int main(int argc, char* argv[]) {
             for (int face_id = 0; face_id < fsize; face_id++) {
                 if(face_id%thread_num !=  now_id)continue;
                 if (face_id % 1000 == 0)
-                    printf("%d/%d\n", face_id, fsize);
+                    cout << "progress bar of step3  "<< face_id <<"/" << fsize << endl;
                 auto fh = make_pair(MeshKernel::iGameFaceHandle(face_id),
                                     mesh->faces(MeshKernel::iGameFaceHandle(face_id)));
                 MeshKernel::iGameVertex center = (mesh->fast_iGameVertex[fh.second.vh(0)] +
@@ -460,7 +457,7 @@ int main(int argc, char* argv[]) {
     for(int i=0;i<thread_num;i++)
         bfs_thread_pool[i]->join();
 
-    cout <<"bfs end \n" << endl;
+    cout <<"step 3 end  "<< endl;
     auto frame_grid_mp_bk =  frame_grid_mp;
     for(auto i : frame_grid_mp_bk) {
     //    if(i.first.x == 33 && i.first.y == 51 && i.first.z == 7 )
@@ -477,6 +474,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    cout <<"step 4 preparation start\n" << endl;
     std::vector <std::shared_ptr<std::thread> > each_grid_thread_pool(thread_num);
     for(int i=0;i<thread_num;i++) {
         each_grid_thread_pool[i] = make_shared<std::thread>([&](int now_id) {
@@ -484,8 +482,9 @@ int main(int argc, char* argv[]) {
             for (auto each_grid = frame_grid_mp.begin(); each_grid != frame_grid_mp.end(); each_grid++) {
                 each_grid_cnt++;
                 if(each_grid_cnt % thread_num != now_id)continue;
-                if(each_grid_cnt % (thread_num*1000) == now_id)
-                    printf("each_grid_cnt %d/%d\n",each_grid_cnt,(int)frame_grid_mp.size());
+                if(each_grid_cnt % (thread_num*1000) == now_id) {
+                    cout << "progress bar of step4 preparation  "<< each_grid_cnt <<"/" << (int) frame_grid_mp.size() << endl;
+                }
 
                 MeshKernel::iGameVertex grid_vertex = getGridVertex(each_grid->first, 0);
 
@@ -503,7 +502,7 @@ int main(int argc, char* argv[]) {
     for(int i=0;i<thread_num;i++)
         each_grid_thread_pool[i]->join();
 
-    cout << "each_grid_cnt succ " <<endl;
+    //cout << "each_grid_cnt succ " <<endl;
 
     std::function<bool(Plane_3 plane,MeshKernel::iGameVertex,double)> vertex_in_plane
     = [&](Plane_3 pla,MeshKernel::iGameVertex v,double eps){
@@ -511,13 +510,12 @@ int main(int argc, char* argv[]) {
                     return true;
                 }
                 return false;
-    };// 20 10 10 5
+    };
 
     long long  sum_grid = 0;
     vector<vector<size_t> >face_type_012{{0,1,2}};
     map<int,vector<long long > > debug_time_use;
 
-//28 6 5+
 //    FILE *file9 = fopen( (input_filename + "_9.obj").c_str(), "w");
 //    for (auto each_grid= frame_grid_mp.begin(); each_grid != frame_grid_mp.end(); each_grid++) {
 //       //if(!(each_grid->first.x == 26 && each_grid->first.y == 28 && each_grid->first.z == 9  ))continue;
@@ -548,7 +546,7 @@ int main(int argc, char* argv[]) {
 
   //  return 0;
 
-    cout << "each_grid_cnt succ2 " <<endl;
+    cout << "step4 preparation end" <<endl;
     // 上述代码完成距离场建格子的过程 8 ;
    // atomic<int>sum_face_size(0);
    // atomic<int>maxx_face_size(0);
@@ -565,6 +563,7 @@ int main(int argc, char* argv[]) {
 
     //std::atomic<unsigned long long> sttime;
     //std::atomic<unsigned long long> endtime;
+    cout <<"start step 4 & step5 "<<endl;
     for(int i=0;i<thread_num;i++){
         each_frame_thread[i] = make_shared<thread>([&](int id){
             int tt=0;
@@ -574,7 +573,8 @@ int main(int argc, char* argv[]) {
                     unordered_map <grid, GridVertex, grid_hash, grid_equal>::iterator each_grid = q.front();
                     q.pop();
                     if (( frame_grid_mp.size() -q.size()) % (frame_grid_mp.size()/50) == 0) { //2520
-                        cout <<id <<" "<< ( q.size()) << " // " <<" "<< frame_grid_mp.size() << endl;
+                        cout << "progress bar of step4 & step 5 : "<< (int) frame_grid_mp.size()- q.size() <<"/" << (int) frame_grid_mp.size() << endl;
+                        //cout <<id <<" "<< ( q.size()) << " // " <<" "<< frame_grid_mp.size() << endl;
                     }
                     lock.unlock();
 
@@ -1208,7 +1208,7 @@ int main(int argc, char* argv[]) {
         each_frame_thread[i]->join();
     time_path.push_back(std::chrono::system_clock::now());
 
-
+    cout <<"step 4 & step5 end"<<endl;
     FILE *fileans = fopen( (input_filename + "_times.txt").c_str(), "w+");
     for(int i =1;i< time_path.size();i++){
         fprintf(fileans,"%d\t%lf\n",i, (time_path[i].time_since_epoch().count()-time_path[i-1].time_since_epoch().count())*1.0/1000000);
@@ -1218,6 +1218,7 @@ int main(int argc, char* argv[]) {
     //cout <<"sttime " << (endtime - sttime)*1.0/thread_num/1000000 << endl;
 
 
+    cout <<"start step6 "<<endl;
     for(auto i : debug_time_use){
         if(i.second.size()==0)continue;
         double sum = 0;
@@ -1230,8 +1231,7 @@ int main(int argc, char* argv[]) {
 
    // cout << "qq1 qq2 "<<qq1 <<" "<< qq2 << endl;
    vector<K2::Triangle_3>generate_face_final;
-//    double miny=(1<<30),maxy=-(1<<30);
-//    double minz=(1<<30),maxz=-(1<<30);
+
     unordered_map<size_t ,int> vmp;
     for (auto each_grid = frame_grid_mp.begin(); each_grid != frame_grid_mp.end(); each_grid++){
        // cout << each_grid->second.generate_face_list.size()*3 << endl;
@@ -1242,12 +1242,6 @@ int main(int argc, char* argv[]) {
             final_gen_vertex.push_back( each_grid->second.generate_face_list[i].vertex(0));
             final_gen_vertex.push_back( each_grid->second.generate_face_list[i].vertex(1));
             final_gen_vertex.push_back( each_grid->second.generate_face_list[i].vertex(2));
-//            for(int k=0;k<3;k++){
-//                miny=min(miny, CGAL::to_double(each_grid->second.generate_face_list[i].vertex(k).y()));
-//                maxy=max(maxy, CGAL::to_double(each_grid->second.generate_face_list[i].vertex(k).y()));
-//                minz=min(minz, CGAL::to_double(each_grid->second.generate_face_list[i].vertex(k).z()));
-//                maxz=max(maxz, CGAL::to_double(each_grid->second.generate_face_list[i].vertex(k).z()));
-//            }
         }
     }
     if(result_mode == 1){
@@ -1282,8 +1276,9 @@ int main(int argc, char* argv[]) {
 
                 each_grid_cnt++;
                 if(each_grid_cnt % thread_num != now_id)continue;
-                if(each_grid_cnt % (thread_num*10) == now_id)
-                    printf("each_grid_cnt2 %d/%d/%d\n",now_id,each_grid_cnt,(int)frame_grid_mp_bk.size());
+                if(each_grid_cnt % (thread_num*30) == now_id) {
+                    cout << "progress bar of step6 part1: "<< each_grid_cnt <<"/" << (int) frame_grid_mp_bk.size() << endl;
+                }
 
                 vector<K2::Point_3> neighbor_v;
                 unordered_map <grid, GridVertex, grid_hash, grid_equal>::iterator it;
@@ -1366,7 +1361,9 @@ int main(int argc, char* argv[]) {
 
 
     for (auto each_grid = local_mesh_mp.begin(); each_grid != local_mesh_mp.end(); each_grid++){
-        cout << xxx++ <<"/?/"<< local_mesh_mp.size()<<endl;
+        if(xxx%500 ==0 )
+            cout << "progress bar of step6 part2: "<< xxx <<"/" << (int) local_mesh_mp.size() << endl;
+        xxx++;
         K2::Point_3 small = iGameVertex_to_Point_K2(getGridVertex(each_grid->first, 0));
         K2::Point_3 big = iGameVertex_to_Point_K2(getGridVertex(each_grid->first, 7));
         for(int j=0;j<each_grid->second.final_v.size();j++){
@@ -1382,25 +1379,13 @@ int main(int argc, char* argv[]) {
                 if(nit->second.built){
                     for(int k=0;k<each_grid->second.final_v.size();k++){
                         K2::Point_3 p = each_grid->second.final_v[k];
-//                        if(each_grid->second.final_v_global_id[k] != -1) { // 这里得改成dsu
-//                            //cout << "each_grid->second.final_v_global_id[k]  "<<global_v_id <<" "<< each_grid->second.final_v_global_id[k] <<" ";
-//                            int gid = each_grid->second.final_v_global_id[k];
-//                            //cout <<  CGAL::to_double(global_v[gid].x()) <<" "<< CGAL::to_double(global_v[gid].y()) <<" "<<CGAL::to_double(global_v[gid].z()) << endl;
-//                            continue;
-//                        }
-
                         Fuzzy_circle fc0(p, merge_eps*2);
                         std::list<K2::Point_3> result0;
                         nit->second.kdtree->search(std::back_inserter(result0), fc0);
                         for(const auto l : result0){
                             if(sqrt(CGAL::to_double(CGAL::squared_distance(p,l))) < merge_eps){
-//                                if(each_grid->second.final_v_global_id[k] != -1) {
-//                                    each_grid->second.final_v_global_id[k] = nit->second.vmp[l.id()];
-//                                }
-
-                                    dsu.join(each_grid->second.final_v_global_id[k] , nit->second.vmp[l.id()]);
-                                //}
-                                break;
+                                dsu.join(each_grid->second.final_v_global_id[k] , nit->second.vmp[l.id()]);
+                                //break;
                             }
                         }
 
@@ -1480,7 +1465,7 @@ int main(int argc, char* argv[]) {
     }
 
 
-    cout <<"st build mesh" << endl;
+    cout <<"start step 6 part3" << endl;
 
     FILE *file12 = fopen( (input_filename + "_result.obj").c_str(), "w+");
     vector<vector<int> >global_v_dsu(global_v.size());
@@ -1515,17 +1500,15 @@ int main(int argc, char* argv[]) {
         int id1 = global_v_id_new[dsu.find_root(global_face[i][1])];
         int id2 = global_v_id_new[dsu.find_root(global_face[i][2])];
         if(set<int>{id0,id1,id2}.size() !=3)continue;
-
         fprintf(file12,"f %d %d %d\n",id0+ 1,
                 id1 + 1,
                 id2 + 1
         );
-
     }
     fclose(file12);
+    cout <<"start step 6 part4 remeshing:" << endl;
     if(result_mode == 3)
         Remeshing().run((input_filename + "_result.obj").c_str());
-
-
+    cout <<"success!!!   result save in " << (input_filename + "_result.obj") << endl;
     return 0;
 }

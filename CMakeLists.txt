@@ -52,6 +52,6 @@ else()
             -lmpfr
             ${Boost_LIBRARY_DIRS}
             OsqpEigen::OsqpEigen
-            gflags
+            -lgflags
             )
 endif()

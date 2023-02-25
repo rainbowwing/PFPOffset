@@ -33,6 +33,10 @@ make
 NOTE:
 cgal version must be larger than 5.5
 
+在一些极限网格的情况中会出现非常尖锐的偏移，可以适当的减小l，来缓解该情况
+
+当网格复杂都高，运行慢的时候可尝试性在arg中加入 -s 1。此举可能造成网格破洞。
+
 args:
 
 -m 0带remeshing 1带重建 2 都不带 
@@ -45,7 +49,7 @@ args:
 
 -g grid len 修改大小可能可以提高性能，如果不确定多大可以使用默认的
 
--s 当超过多少时使用小格子 
+-s skipmode
 
 -t 线程数目
 
