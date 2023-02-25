@@ -3,9 +3,9 @@
 sudo su root
 apt update
 apt upgrade
-apt install libcgal-dev
-apt install libeigen3-dev
-apt install gflags
+apt install libcgal-dev # brew install cgal
+apt install libeigen3-dev # brew install eigen
+apt install libgflags-dev # brew install gflags
 git clone --recursive https://github.com/osqp/osqp
 cd osqp
 mkdir build

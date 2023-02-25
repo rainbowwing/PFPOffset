@@ -75,7 +75,9 @@ DEFINE_int32(t, 12, "thread num please set this value depend the cpu of you devi
 DEFINE_string(f, "", "file name, which can choose *.obj2 or *.obj.");
 DEFINE_int32(i, 1,  "This arg is a integer means running mode which value can be chose in 1,2. \n 1 is offsetting to the outside of the mesh; 2 is offsetting to the inside of the mesh.");
 DEFINE_double(e, 1e-5,  "This arg is a double means the eps. When the distance of two points is smaller than eps, we will these two point is coincide. ");
+DEFINE_bool(s, false,  "This arg is a bool value which means the program will skip some cell which is most likely useless. It can improve performance, but may cause holes in the result. We suggest not use this function.");
 int result_mode;
+int skip_mode = 0;
 
 int main(int argc, char* argv[]) {
     google::ParseCommandLineFlags(&argc, &argv, true);
@@ -95,6 +97,11 @@ int main(int argc, char* argv[]) {
     }
     thread_num =  FLAGS_t;
     string input_filename(FLAGS_f);
+
+    if(FLAGS_s) {
+        skip_mode = 1;
+        cout <<"skip mode on" << endl;
+    }
 
     merge_eps = FLAGS_e;
 
@@ -617,7 +624,7 @@ int main(int argc, char* argv[]) {
                         int state = 0;
                         for (int i: face_list) {
                             bool useful = false;
-                            for(int j=0;j<0;j++){
+                            for(int j=0;j<skip_mode*8;j++){ // close fast mode
                                 if(faces_approximate_field[i].in_field(ps[j])){
                                     state|=(1<<j);
                                 }
