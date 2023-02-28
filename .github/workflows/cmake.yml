@@ -23,7 +23,7 @@ jobs:
     - name: apt install
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-      run: sudo apt install libcgal-dev,libeigen3-dev,libgflags-dev
+      run: sudo apt update; sudo apt upgrade; sudo apt install libcgal-dev,libeigen3-dev,libgflags-dev
 
 
     - name: Configure CMake
