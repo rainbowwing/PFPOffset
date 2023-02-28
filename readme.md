@@ -12,7 +12,7 @@ This project is a demo to achieve to algorithm of PFP-Thickening.
 
 [![c++20](https://img.shields.io/badge/standard-C++20-blue.svg?style=flat&logo=c%2B%2B)](https://isocpp.org)
 
-![BuildExamplesLinux](https://github.com/cnr-isti-vclab/vcglib/workflows/BuildExamplesLinux/badge.svg)
+![BuildExamplesLinux](https://github.com/rainbowwing/Thickening2/workflows/CMake/badge.svg)
 
 ## 📚 Documentation
 
@@ -43,7 +43,7 @@ This code can be built in Linux and MacOS.
 ## 🛠️ Build
 
 ### Linux
-
+The version of g++ must later than 12.0. We test the g++-7.2, it can't compile successfully.
 ```bash
 sudo su root
 apt update
@@ -68,7 +68,7 @@ make
 make install
 git clone git@github.com:TsukiMiyabiLake/Thickening2.git
 cd Thickening2
-git submodule update --init --recursive
+git clone https://github.com/cnr-isti-vclab/vcglib # add the submodule vcglib
 mkdir build
 cmake ../ -DCMAKE_BUILD_TYPE=Release
 make
@@ -76,7 +76,7 @@ make
 ```
 
 ### MacOS
-
+The version of macOS must later than 13.0.
 ```bash
 sudo su root
 apt update
@@ -84,6 +84,7 @@ apt upgrade
 brew install cgal
 brew install eigen
 brew install gflags
+g++ -v
 git clone --recursive https://github.com/osqp/osqp
 cd osqp
 mkdir build
@@ -101,7 +102,7 @@ make
 make install
 git clone git@github.com:TsukiMiyabiLake/Thickening2.git
 cd Thickening2
-git submodule update --init --recursive
+git clone https://github.com/cnr-isti-vclab/vcglib # add the submodule vcglib 
 mkdir build
 cmake ../ -DCMAKE_BUILD_TYPE=Release
 make
@@ -112,10 +113,19 @@ make
 
 ```bash
 
-USAGE: Thicken2 -f file_name [options]         file_name must *.obj or *.obj2      
+USAGE: Thicken2 -f file_name [options]    file_name must *.obj or *.obj2      
 
 options:
-  -m <value>                                   value is (0|1|2) 
+  -m={1|2|3}                               means result mode which value can be chose in 1,2 and 3. 
+                                           mode 1 get the result without mesh and remeshing;
+                                           mode 2 get the result with building mesh;
+                                           mode 3 get the result with building mesh and remeshing.
+  -d=<num>                                 this number is a double means the expect length of each facet in running invariable thickening.
+                                           Limited in 0.1~1.5. This number does not represent an absolute distance.
+                                           Example -d=0.5, indicating that the offset distance is 0.5 times the average mesh edge length.
+  -l=<num>                                 This number is a double.
+                                           which value indicates how many times the maximum offset distance is the ideal offset distance limited in 1.5~2.7.
+                                           You can set it is 2.0 .
   -r <value>                                   value is (0|1|2) 
   -d <value>                                   value is (0|1|2)
   -l <value>                                   value is (0|1|2) 
@@ -123,6 +133,24 @@ options:
   -s <value>                                   value is (0|1|2) 
   -t <value>                                   value is (0|1|2) 
 ```
+
+DEFINE_int32(m, 3,
+"This arg is a integer means result mode which value can be chose in 1,2,3. \n mode 1  without step 6;mode 2 is with building mesh;mode 3 is with building mesh and remeshing.");
+DEFINE_double(d, 0.5,
+"This arg is a double means the length running invariable thickening limited in 0.1~1.5. Example -d 0.5, Indicating that the offset distance is 0.75 times the average mesh edge length.");
+DEFINE_double(l, 2.0,
+"This arg is a double which value indicates how many times the maximum offset distance is the ideal offset distance limited in 1.5~2.7. .You can set it is 2.0");
+DEFINE_double(g, -1,
+"This arg is a double means the length of edge length of each cell in grid length. If you can't calculate a length with better performance, it can be passed. Then it will use the default value.");
+DEFINE_int32(t, 12, "thread num please set this value depend the cpu of you device.");
+DEFINE_string(f, "", "file name, which can choose *.obj2 or *.obj.");
+DEFINE_int32(i, 1,
+"This arg is a integer means running mode which value can be chose in 1,2. \n 1 is offsetting to the outside of the mesh; 2 is offsetting to the inside of the mesh.");
+DEFINE_double(e, 1e-5,
+"This arg is a double means the eps. When the distance of two points is smaller than eps, we will regard these two point as coinciding. ");
+DEFINE_bool(s, false,
+"This arg is a bool value which means the program will skip some cell which is most likely useless. It can improve performance, but may cause holes in the result. We suggest not use this function.");
+
 
 ### The input file *.obj2 format
 
