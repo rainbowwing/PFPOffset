@@ -1292,6 +1292,7 @@ int main(int argc, char *argv[]) {
             final_gen_vertex.push_back(each_grid->second.generate_face_list[i].vertex(2));
         }
     }
+    cout << "result_mode:" <<result_mode << endl;
     if (result_mode == 1) {
         FILE *file12 = fopen((input_filename + "_result.obj").c_str(), "w+");
         int vid = 1;

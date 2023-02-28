@@ -88,7 +88,6 @@ apt upgrade
 brew install cgal
 brew install eigen
 brew install gflags
-g++ -v
 git clone --recursive https://github.com/osqp/osqp
 cd osqp
 mkdir build
@@ -142,6 +141,11 @@ options:
                     You can set it is 0.00001 or do not set it.
   -s={0|1}          This value is a boolean, when it is 1, the program will skip some cell which is most likely useless.
                     It can improve performance, but may cause holes in the result. We suggest not use this function.
+                    
+
+example:
+./Thickening2  -f ../data/mechanical04.obj -m=3 -i=2 -t=8 -d=0.6        
+./Thickening2  -f ../data/tet.obj2 -m=3 -i=1 -t=8 
 ```
 
 
