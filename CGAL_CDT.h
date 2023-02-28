@@ -111,7 +111,7 @@ vector<vector<K2::Point_3> > CGAL_CDT(vector<K2::Point_3> sorted_bound_vertex, v
 
     CGAL::make_conforming_Gabriel_2(cdt);
 
-    //TODO 约束裁剪 ，，新增德劳内点怎么计算 ！！！！！！这里还有问题
+
     vector<vector<K2::Point_2> > faces;
     for(auto fit = cdt.finite_faces_begin();fit != cdt.finite_faces_end();fit++){
         faces.push_back({cdt.point(fit->vertex(0)),cdt.point(fit->vertex(1)),cdt.point(fit->vertex(2))});

@@ -176,6 +176,10 @@ f 2 3 4 0.02
 
 cgal version must be larger than 5.5
 
+Please do not use this program for thickening with long offset distance. 
+because in this case the speed and the result isn't better than the traditional method.
+It can only use in short offset distance.
+
 In the case of some extreme situations, the result will occur some very sharp parts. 
 The argument -l can be appropriately reduced to alleviate these situations.
 

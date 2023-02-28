@@ -29,7 +29,7 @@ struct ApproximateField {
         origin_vertices.push_back(mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(0)]);
         origin_vertices.push_back(mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(1)]);
         origin_vertices.push_back(mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(2)]);
-        //TODO 注意分解
+
         MeshKernel::iGameVertex normal = ((origin_vertices[1] - origin_vertices[0]) % (origin_vertices[2] - origin_vertices[0])).normalize();
         for(int i=0;i<3;i++){
             //extend_vertices.push_back(field_move_vertex[mesh->fast_iGameFace[fh].vh(i)]);

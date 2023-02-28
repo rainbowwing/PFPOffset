@@ -465,7 +465,7 @@ int main(int argc, char *argv[]) {
                                                   mesh->fast_iGameVertex[fh.second.vh(0)]).norm()
                                                 }.rbegin();
                             if (dist < (grid_len * 1.74 / 2 +
-                                        move_limit)) { //TODO : zheli youhua cheng pianyi juli de shiji jisuan
+                                        move_limit)) {
                                 q.push(j);
                                 is_visit.insert(j);
                             }
@@ -539,28 +539,6 @@ int main(int argc, char *argv[]) {
     vector<vector<size_t> > face_type_012{{0, 1, 2}};
     map<int, vector<long long> > debug_time_use;
 
-//    FILE *file9 = fopen( (input_filename + "_9.obj").c_str(), "w");
-//    for (auto each_grid= frame_grid_mp.begin(); each_grid != frame_grid_mp.end(); each_grid++) {
-//       //if(!(each_grid->first.x == 26 && each_grid->first.y == 28 && each_grid->first.z == 9  ))continue;
-//        //if(!(each_grid->first.x == 19 && each_grid->first.y == 19 && each_grid->first.z == 1 ))continue;
-//       // if(!(each_grid->first.x == 1 && each_grid->first.y == 0 && each_grid->first.z == 3 ))continue;
-//        auto small  = getGridVertex(each_grid->first,0);
-//        auto big  = getGridVertex(each_grid->first,7);
-//        static int f3_id = 1;
-//        for (int ii = 0; ii < 7; ii++) {
-//            for (int jj = 0; jj < DirectedGridEdge[ii].size(); jj++) {
-//                int from = ii;
-//                int to = DirectedGridEdge[ii][jj];
-//                MeshKernel::iGameVertex fv = getGridiGameVertex(small, big, from);
-//                MeshKernel::iGameVertex tv = getGridiGameVertex(small, big, to);
-//                fprintf(file9, "v %lf %lf %lf\n", fv.x(), fv.y(), fv.z());
-//                fprintf(file9, "v %lf %lf %lf\n", tv.x(), tv.y(), tv.z());
-//                fprintf(file9, "l %d %d\n", f3_id, f3_id + 1);
-//                f3_id += 2;
-//            }
-//        }
-//    }
-
     std::vector<std::vector<std::size_t> > each_grid_face_list;
     for (auto each_container_face: container_grid_face) {
         each_grid_face_list.push_back(
@@ -569,14 +547,7 @@ int main(int argc, char *argv[]) {
                 {(size_t) each_container_face[2], (size_t) each_container_face[3], (size_t) each_container_face[0]});
     }
 
-    //  return 0;
-
     cout << "step4 preparation end" << endl;
-    // 上述代码完成距离场建格子的过程 8 ;
-    // atomic<int>sum_face_size(0);
-    // atomic<int>maxx_face_size(0);
-    //atomic<int> qq1(0);
-    // atomic<int> qq2(0);
     std::mutex mu;
     std::vector<std::shared_ptr<std::thread> > each_frame_thread(thread_num);
     vector<K2::Point_3> final_gen_vertex;
@@ -586,9 +557,6 @@ int main(int argc, char *argv[]) {
          i != frame_grid_mp.end(); i++)
         q.push(i);
 
-
-    //std::atomic<unsigned long long> sttime;
-    //std::atomic<unsigned long long> endtime;
     cout << "start step 4 & step5 " << endl;
     for (int i = 0; i < thread_num; i++) {
         each_frame_thread[i] = make_shared<thread>([&](int id) {
@@ -1167,9 +1135,6 @@ int main(int argc, char *argv[]) {
                                 if (flag_positive && flag_negative)
                                     flag = true;
 
-
-                                // 这个地方是不是可以去掉底相交呢？？？？？
-
                                 if (!flag) {
                                     int side_type;
                                     if (running_mode == 2) {
@@ -1180,7 +1145,6 @@ int main(int argc, char *argv[]) {
 
                                     if (side_type != 1) {
                                         flag = true;
-                                        //cout <<"GGST" << endl;
                                     }
                                 }
 
@@ -1209,9 +1173,6 @@ int main(int argc, char *argv[]) {
                         lock2.unlock();
                     };
                     dfs(small, big, face_list, 0);
-
-                    //for(auto i :  each_grid->second.meshBuilder->generate_v)
-                    //each_grid->second.res = MeshBuilder(each_grid->second.generate_face_list,small,big);
 
                     for (int i = 0; i < each_grid->second.generate_face_list.size(); i++) {
                         for (int j = 0; j < 3; j++) {
@@ -1252,16 +1213,7 @@ int main(int argc, char *argv[]) {
     time_path.push_back(std::chrono::system_clock::now());
 
     cout << "step 4 & step5 end" << endl;
-    FILE *fileans = fopen((input_filename + "_times.txt").c_str(), "w+");
-    for (int i = 1; i < time_path.size(); i++) {
-        fprintf(fileans, "%d\t%lf\n", i,
-                (time_path[i].time_since_epoch().count() - time_path[i - 1].time_since_epoch().count()) * 1.0 /
-                1000000);
-        cout << "time point " << i << " "
-             << (time_path[i].time_since_epoch().count() - time_path[i - 1].time_since_epoch().count()) * 1.0 / 1000000
-             << endl;
-    }
-    fclose(fileans);
+
     //cout <<"sttime " << (endtime - sttime)*1.0/thread_num/1000000 << endl;
 
 
@@ -1315,6 +1267,16 @@ int main(int argc, char *argv[]) {
             }
         }
         fclose(file12);
+        FILE *fileans = fopen((input_filename + "_times.txt").c_str(), "w+");
+        for (int i = 1; i < time_path.size(); i++) {
+            fprintf(fileans, "%d\t%lf\n", i,
+                    (time_path[i].time_since_epoch().count() - time_path[i - 1].time_since_epoch().count()) * 1.0 /
+                    1000000);
+            cout << "time point " << i << " "
+                 << (time_path[i].time_since_epoch().count() - time_path[i - 1].time_since_epoch().count()) * 1.0 / 1000000
+                 << endl;
+        }
+        fclose(fileans);
         exit(0);
     }
 
@@ -1334,7 +1296,7 @@ int main(int argc, char *argv[]) {
 
                 each_grid_cnt++;
                 if (each_grid_cnt % thread_num != now_id)continue;
-                if (each_grid_cnt % (thread_num * 30) == now_id) {
+                if (each_grid_cnt % (thread_num * 50) == now_id) {
                     cout << "progress bar of step6 part1: " << each_grid_cnt << "/" << (int) frame_grid_mp_bk.size()
                          << endl;
                 }
@@ -1403,6 +1365,7 @@ int main(int argc, char *argv[]) {
     }
 
 
+    time_path.push_back(std::chrono::system_clock::now());
     for (int i = 0; i < thread_num; i++)
         each_grid_merge_thread_pool[i]->join();
 
@@ -1568,6 +1531,18 @@ int main(int argc, char *argv[]) {
     cout << "start step 6 part4 remeshing:" << endl;
     if (result_mode == 3)
         Remeshing().run((input_filename + "_result.obj").c_str());
+
+    time_path.push_back(std::chrono::system_clock::now());
+    FILE *fileans = fopen((input_filename + "_times.txt").c_str(), "w+");
+    for (int i = 1; i < time_path.size(); i++) {
+        fprintf(fileans, "%d\t%lf\n", i,
+                (time_path[i].time_since_epoch().count() - time_path[i - 1].time_since_epoch().count()) * 1.0 /
+                1000000);
+        cout << "time point " << i << " "
+             << (time_path[i].time_since_epoch().count() - time_path[i - 1].time_since_epoch().count()) * 1.0 / 1000000
+             << endl;
+    }
+    fclose(fileans);
     cout << "success!!!   result save in " << (input_filename + "_result.obj") << endl;
     return 0;
 }
