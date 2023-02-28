@@ -187,3 +187,7 @@ It is necessary to ensure that the mesh is closed, and the normal vectors of all
 If you find bug in the result, you can use result mode 1 and then use meshlab, tetwild or other tools to build topology.
 
 
+## 📝 License
+Materials in this repository are distributed under the following license:
+
+> All software is licensed under the BSD 3-Clause License. See [LICENSE](https://github.com/rainbowwing/Thickening2/blob/main/LICENSE) file for details.
