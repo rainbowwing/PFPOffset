@@ -1,4 +1,5 @@
 # PFP-Thickening
+
 This project is a demo to achieve to algorithm of PFP-Thickening.
 
 [//]: # (|  General  | [![c++14]&#40;https://img.shields.io/badge/standard-C++14-blue.svg?style=flat&logo=c%2B%2B&#41;]&#40;https://isocpp.org&#41; [![License]&#40;https://img.shields.io/badge/License-BSD_3--Clause-orange.svg&#41;]&#40;https://github.com/robotology/osqp-eigen/blob/master/LICENSE&#41; |)
@@ -11,7 +12,7 @@ This project is a demo to achieve to algorithm of PFP-Thickening.
 
 [![c++20](https://img.shields.io/badge/standard-C++20-blue.svg?style=flat&logo=c%2B%2B)](https://isocpp.org)
 
-
+![BuildExamplesLinux](https://github.com/cnr-isti-vclab/vcglib/workflows/BuildExamplesLinux/badge.svg)
 
 ## 📚 Documentation
 
@@ -22,7 +23,8 @@ It can be use to calculate the offset result of a mesh.
 
 This demo only have the code which working in manifold meshes.
 
-Use the mesh kernel which built by [intelligent visual modeling & simulation lab](https://igame.hdu.edu.cn) in Hangzhou Dianzi University
+Use the mesh kernel which built by [intelligent visual modeling & simulation lab](https://igame.hdu.edu.cn) in Hangzhou
+Dianzi University
 
 This code can be built in Linux and MacOS.
 
@@ -38,11 +40,10 @@ This code can be built in Linux and MacOS.
 
 [Vcglib](https://github.com/cnr-isti-vclab/vcglib)
 
-
-
-##  🛠️ Build
+## 🛠️ Build
 
 ### Linux
+
 ```bash
 sudo su root
 apt update
@@ -73,8 +74,8 @@ make
 
 ```
 
-
 ### MacOS
+
 ```bash
 sudo su root
 apt update
@@ -105,8 +106,6 @@ make
 
 ```
 
-
-
 ## Usage:
 
 ```bash
@@ -124,13 +123,12 @@ options:
 ```
 
 ### The input file *.obj2 format
+
 which is same as *.obj.
 
-v x y z 
+v x y z
 
-### NOTE: 
-
-
+### NOTE:
 
 cgal version must be larger than 5.5
 
@@ -140,9 +138,9 @@ cgal version must be larger than 5.5
 
 args:
 
--m 0带remeshing 1带重建 2 都不带 
+-m 0带remeshing 1带重建 2 都不带
 
--r 带remeshing 
+-r 带remeshing
 
 -d 1.5 must in (0.1~1.5) 表示进行等距偏移
 
@@ -153,7 +151,6 @@ args:
 -s skipmode
 
 -t 线程数目
-
 
 obj2 格式：
 
