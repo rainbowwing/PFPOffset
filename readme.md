@@ -14,6 +14,7 @@ This project is a demo to achieve to algorithm of PFP-Thickening.
 
 ![BuildExamplesLinux](https://github.com/rainbowwing/Thickening2/workflows/CMake/badge.svg)
 
+[![License](https://img.shields.io/badge/License-BSD_3--Clause-orange.svg)](https://github.com/rainbowwing/Thickening2/blob/main/LICENSE)
 ## 📚 Documentation
 
 This code is a demo of the paper [PFP-Thickening: a Parallel Feature-preserving Mesh Offsetting Approach
