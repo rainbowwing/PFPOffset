@@ -44,6 +44,8 @@ This code can be built in Linux and MacOS.
 
 ### Linux
 The version of g++ must later than 12.0. We test the g++-7.2, it can't compile successfully.
+
+cgal version must be larger than 5.5.
 ```bash
 sudo su root
 apt update
@@ -77,6 +79,8 @@ make
 
 ### MacOS
 The version of macOS must later than 13.0.
+
+cgal version must be larger than 5.5
 ```bash
 sudo su root
 apt update
@@ -113,79 +117,68 @@ make
 
 ```bash
 
-USAGE: Thicken2 -f file_name [options]    file_name must *.obj or *.obj2      
+USAGE: Thicken2 -f file_name [options]              file_name is *.obj or *.obj2      
 
 options:
-  -m={1|2|3}                               means result mode which value can be chose in 1,2 and 3. 
-                                           mode 1 get the result without mesh and remeshing;
-                                           mode 2 get the result with building mesh;
-                                           mode 3 get the result with building mesh and remeshing.
-  -d=<num>                                 this number is a double means the expect length of each facet in running invariable thickening.
-                                           Limited in 0.1~1.5. This number does not represent an absolute distance.
-                                           Example -d=0.5, indicating that the offset distance is 0.5 times the average mesh edge length.
-  -l=<num>                                 This number is a double.
-                                           which value indicates how many times the maximum offset distance is the ideal offset distance limited in 1.5~2.7.
-                                           You can set it is 2.0 .
-  -r <value>                                   value is (0|1|2) 
-  -d <value>                                   value is (0|1|2)
-  -l <value>                                   value is (0|1|2) 
-  -g <value>                                   value is (0|1|2) 
-  -s <value>                                   value is (0|1|2) 
-  -t <value>                                   value is (0|1|2) 
+  -m={1|2|3}        representing result mode which value can be chose in 1,2 and 3. 
+                    mode 1 get the result without mesh and remeshing;
+                    mode 2 get the result with building mesh;
+                    mode 3 get the result with building mesh and remeshing.
+  -d=<num>          this number is a double represent the expect length of each facet in running invariable thickening.
+                    Limited in 0.1~1.5. This number does not represent an absolute distance.
+                    Example -d=0.5, indicating that the offset distance is 0.5 times the average mesh edge length.
+  -l=<num>          This number is a double.
+                    which value indicates how many times the maximum offset distance is the ideal offset distance limited in 1.5~2.7.
+                    You can set it is 2.0 or do not set it.
+  -g=<num>          This number is a double which means the length of edge length of each cell in grid.
+                    If you can not calculate a length with better performance, it can be passed.
+                    Then it will use the default value.
+  -t=<num>          This number is a integer represent thread num please set this value depend the cpu of you device.
+  -i={1|2}          representing running mode which value can be chose in 1,2. 
+                    1 is offsetting to the outside of the mesh;
+                    2 is offsetting to the inside of the mesh.
+  -e=<num>          This number is a double means the eps.
+                    When the distance of two points is smaller than eps, we will regard these two point as coinciding.
+                    You can set it is 0.00001 or do not set it.
+  -s={0|1}          This value is a boolean, when it is 1, the program will skip some cell which is most likely useless.
+                    It can improve performance, but may cause holes in the result. We suggest not use this function.
 ```
 
-DEFINE_int32(m, 3,
-"This arg is a integer means result mode which value can be chose in 1,2,3. \n mode 1  without step 6;mode 2 is with building mesh;mode 3 is with building mesh and remeshing.");
-DEFINE_double(d, 0.5,
-"This arg is a double means the length running invariable thickening limited in 0.1~1.5. Example -d 0.5, Indicating that the offset distance is 0.75 times the average mesh edge length.");
-DEFINE_double(l, 2.0,
-"This arg is a double which value indicates how many times the maximum offset distance is the ideal offset distance limited in 1.5~2.7. .You can set it is 2.0");
-DEFINE_double(g, -1,
-"This arg is a double means the length of edge length of each cell in grid length. If you can't calculate a length with better performance, it can be passed. Then it will use the default value.");
-DEFINE_int32(t, 12, "thread num please set this value depend the cpu of you device.");
-DEFINE_string(f, "", "file name, which can choose *.obj2 or *.obj.");
-DEFINE_int32(i, 1,
-"This arg is a integer means running mode which value can be chose in 1,2. \n 1 is offsetting to the outside of the mesh; 2 is offsetting to the inside of the mesh.");
-DEFINE_double(e, 1e-5,
-"This arg is a double means the eps. When the distance of two points is smaller than eps, we will regard these two point as coinciding. ");
-DEFINE_bool(s, false,
-"This arg is a bool value which means the program will skip some cell which is most likely useless. It can improve performance, but may cause holes in the result. We suggest not use this function.");
+
+### The input file format
+
+If you want to do invariable thicken. You can use the obj file than set the expect distance by setting the argument -d.
+
+If you want to do variable thicken, you should use the obj2 format.
+
+obj2 format which is same as *.obj. But in the end line of each face, it needs to add a double representing the ideal offsetting value.
 
 
-### The input file *.obj2 format
+example: tet.obj2
+```text
+v 0 0 0
+v 1 0 0
+v 0 1 0
+v -1 -1 1
+f 1 3 2 0.05
+f 1 4 3 0.04
+f 2 4 1 0.03
+f 2 3 4 0.02
 
-which is same as *.obj.
-
-v x y z
+```
 
 ### NOTE:
 
 cgal version must be larger than 5.5
 
-在一些极限网格的情况中会出现非常尖锐的偏移，可以适当的减小l，来缓解该情况
+In the case of some extreme situations, the result will occur some very sharp parts. 
+The argument -l can be appropriately reduced to alleviate these situations.
 
-当网格复杂都高，运行慢的时候可尝试性在arg中加入 -s 1。此举可能造成网格破洞。
+When the mesh complexity is high and the operation is slow, try adding -s=1 to argument.
+This action may cause holes in the grid.
 
-args:
+It is necessary to ensure that the mesh is closed, and the normal vectors of all faces are outward and correct.
 
--m 0带remeshing 1带重建 2 都不带
-
--r 带remeshing
-
--d 1.5 must in (0.1~1.5) 表示进行等距偏移
-
--l 最大长度(1~2.5)过长在极限情况造成边角
-
--g grid len 修改大小可能可以提高性能，如果不确定多大可以使用默认的
-
--s skipmode
-
--t 线程数目
-
-obj2 格式：
-
-需要保证网格封闭，并且所有面的法向量向外且正确，不封闭的话，可以使用工具进行修复。本demo暂未实现。
-
-如果遇到结果的bug，可以使用mode 1 然后再借助meshlab，tetwild等工具建立拓扑。
+If you find bug in the result, you can use result mode 1 and then use meshlab, tetwild or other tools to build topology.
 
 

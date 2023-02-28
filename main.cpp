@@ -75,7 +75,7 @@ DEFINE_double(d, 0.5,
 DEFINE_double(l, 2.0,
               "This arg is a double which value indicates how many times the maximum offset distance is the ideal offset distance limited in 1.5~2.7. .You can set it is 2.0");
 DEFINE_double(g, -1,
-              "This arg is a double means the length of edge length of each cell in grid length. If you can't calculate a length with better performance, it can be passed. Then it will use the default value.");
+              "This arg is a double means the length of edge length of each cell in grid. If you can't calculate a length with better performance, it can be passed. Then it will use the default value.");
 DEFINE_int32(t, 12, "thread num please set this value depend the cpu of you device.");
 DEFINE_string(f, "", "file name, which can choose *.obj2 or *.obj.");
 DEFINE_int32(i, 1,
