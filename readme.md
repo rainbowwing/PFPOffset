@@ -2,11 +2,18 @@
 
 This project is a demo to achieve to algorithm of PFP-Thickening.
 
+[//]: # (|  General  | [![c++14]&#40;https://img.shields.io/badge/standard-C++14-blue.svg?style=flat&logo=c%2B%2B&#41;]&#40;https://isocpp.org&#41; [![License]&#40;https://img.shields.io/badge/License-BSD_3--Clause-orange.svg&#41;]&#40;https://github.com/robotology/osqp-eigen/blob/master/LICENSE&#41; |)
+
+[//]: # (| :-------: | :----------------------------------------------------------: |)
+
+[//]: # (| **CI/CD** | [![Codacy Badge]&#40;https://app.codacy.com/project/badge/Grade/a18710c10f1c4df19bc2759fd50e9cf5&#41;]&#40;https://www.codacy.com/gh/robotology/osqp-eigen/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=robotology/osqp-eigen&amp;utm_campaign=Badge_Grade&#41; [![CI]&#40;https://github.com/robotology/osqp-eigen/workflows/C++%20CI%20Workflow/badge.svg&#41;]&#40;https://github.com/robotology/osqp-eigen/workflows/C++%20CI%20Workflow/badge.svg&#41; [![Azure]&#40;https://dev.azure.com/conda-forge/feedstock-builds/_apis/build/status/osqp-eigen-feedstock?branchName=master&#41;]&#40;https://dev.azure.com/conda-forge/feedstock-builds/_build/results?buildId=341091&view=results&#41; |)
+
+[//]: # (| **conda** | [![Conda Recipe]&#40;https://img.shields.io/badge/recipe-osqp--eigen-green.svg&#41;]&#40;https://anaconda.org/conda-forge/osqp-eigen&#41;  [![Conda Downloads]&#40;https://img.shields.io/conda/dn/conda-forge/osqp-eigen.svg&#41;]&#40;https://anaconda.org/conda-forge/osqp-eigen&#41;  [![Conda Version]&#40;https://img.shields.io/conda/vn/conda-forge/osqp-eigen.svg&#41;]&#40;https://anaconda.org/conda-forge/osqp-eigen&#41;  [![Conda Platforms]&#40;https://img.shields.io/conda/pn/conda-forge/osqp-eigen.svg&#41;]&#40;https://anaconda.org/conda-forge/osqp-eigen&#41; |)
+
 [![c++20](https://img.shields.io/badge/standard-C++20-blue.svg?style=flat&logo=c%2B%2B)](https://isocpp.org)
 
-![BuildExamplesLinux](https://github.com/rainbowwing/Thickening2/workflows/CMake/badge.svg)
+![BuildExamplesLinux](https://github.com/cnr-isti-vclab/vcglib/workflows/BuildExamplesLinux/badge.svg)
 
-[![License](https://img.shields.io/badge/License-BSD_3--Clause-orange.svg)](https://github.com/rainbowwing/Thickening2/blob/main/LICENSE)
 ## 📚 Documentation
 
 This code is a demo of the paper [PFP-Thickening: a Parallel Feature-preserving Mesh Offsetting Approach
@@ -36,9 +43,7 @@ This code can be built in Linux and MacOS.
 ## 🛠️ Build
 
 ### Linux
-The version of g++ must later than 12.0. We test the g++-7.2, it can't compile successfully.
 
-cgal version must be larger than 5.5.
 ```bash
 sudo su root
 apt update
@@ -63,7 +68,6 @@ make
 make install
 git clone git@github.com:TsukiMiyabiLake/Thickening2.git
 cd Thickening2
-git clone https://github.com/cnr-isti-vclab/vcglib # add the submodule vcglib
 mkdir build
 cmake ../ -DCMAKE_BUILD_TYPE=Release
 make
@@ -71,9 +75,7 @@ make
 ```
 
 ### MacOS
-The version of macOS must later than 13.0.
 
-cgal version must be larger than 5.5
 ```bash
 sudo su root
 apt update
@@ -98,7 +100,6 @@ make
 make install
 git clone git@github.com:TsukiMiyabiLake/Thickening2.git
 cd Thickening2
-git clone https://github.com/cnr-isti-vclab/vcglib # add the submodule vcglib 
 mkdir build
 cmake ../ -DCMAKE_BUILD_TYPE=Release
 make
@@ -109,81 +110,52 @@ make
 
 ```bash
 
-USAGE: Thicken -f file_name [options]              file_name is *.obj or *.obj2      
+USAGE: Thicken2 -f file_name [options]         file_name must *.obj or *.obj2      
 
 options:
-  -m={1|2|3}        representing result mode which value can be chose in 1,2 and 3. 
-                    mode 1 get the result without mesh and remeshing;
-                    mode 2 get the result with building mesh;
-                    mode 3 get the result with building mesh and remeshing.
-  -d=<num>          this number is a double represent the expect length of each facet in running invariable thickening.
-                    Limited in 0.1~1.5. This number does not represent an absolute distance.
-                    Example -d=0.5, indicating that the offset distance is 0.5 times the average mesh edge length.
-  -l=<num>          This number is a double.
-                    which value indicates how many times the maximum offset distance is the ideal offset distance limited in 1.5~2.7.
-                    You can set it is 2.0 or do not set it.
-  -g=<num>          This number is a double which means the length of edge length of each cell in grid.
-                    If you can not calculate a length with better performance, it can be passed.
-                    Then it will use the default value.
-  -t=<num>          This number is a integer represent thread num please set this value depend the cpu of you device.
-  -i={1|2}          representing running mode which value can be chose in 1,2. 
-                    1 is offsetting to the outside of the mesh;
-                    2 is offsetting to the inside of the mesh.
-  -e=<num>          This number is a double means the eps.
-                    When the distance of two points is smaller than eps, we will regard these two point as coinciding.
-                    You can set it is 0.00001 or do not set it.
-  -s={0|1}          This value is a boolean, when it is 1, the program will skip some cell which is most likely useless.
-                    It can improve performance, but may cause holes in the result. We suggest not use this function.
-                    
-
-example:
-./Thicken  -f ../data/mechanical04.obj -m=3 -i=2 -t=8 -d=0.6        
-./Thicken  -f ../data/tet.obj2 -m=3 -i=1 -t=8 
+  -m <value>                                   value is (0|1|2) 
+  -r <value>                                   value is (0|1|2) 
+  -d <value>                                   value is (0|1|2)
+  -l <value>                                   value is (0|1|2) 
+  -g <value>                                   value is (0|1|2) 
+  -s <value>                                   value is (0|1|2) 
+  -t <value>                                   value is (0|1|2) 
 ```
 
+### The input file *.obj2 format
 
-### The input file format
+which is same as *.obj.
 
-If you want to do invariable thicken. You can use the obj file than set the expect distance by setting the argument -d.
-
-If you want to do variable thicken, you should use the obj2 format.
-
-obj2 format which is same as *.obj. But in the end line of each face, it needs to add a double representing the ideal offsetting value.
-
-
-example: tet.obj2
-```text
-v 0 0 0
-v 1 0 0
-v 0 1 0
-v -1 -1 1
-f 1 3 2 0.05
-f 1 4 3 0.04
-f 2 4 1 0.03
-f 2 3 4 0.02
-
-```
+v x y z
 
 ### NOTE:
 
 cgal version must be larger than 5.5
 
-Please do not use this program for thickening with long offset distance. 
-because in this case the speed and the result isn't better than the traditional method.
-It can only use in short offset distance.
+在一些极限网格的情况中会出现非常尖锐的偏移，可以适当的减小l，来缓解该情况
 
-In the case of some extreme situations, the result will occur some very sharp parts. 
-The argument -l can be appropriately reduced to alleviate these situations.
+当网格复杂都高，运行慢的时候可尝试性在arg中加入 -s 1。此举可能造成网格破洞。
 
-When the mesh complexity is high and the operation is slow, try adding -s=1 to argument.
-This action may cause holes in the grid.
+args:
 
-It is necessary to ensure that the mesh is closed, and the normal vectors of all faces are outward and correct.
+-m 0带remeshing 1带重建 2 都不带
 
-If you find bug in the result, you can use result mode 1 and then use meshlab, tetwild or other tools to build topology.
+-r 带remeshing
+
+-d 1.5 must in (0.1~1.5) 表示进行等距偏移
+
+-l 最大长度(1~2.5)过长在极限情况造成边角
+
+-g grid len 修改大小可能可以提高性能，如果不确定多大可以使用默认的
+
+-s skipmode
+
+-t 线程数目
+
+obj2 格式：
+
+需要保证网格封闭，并且所有面的法向量向外且正确，不封闭的话，可以使用工具进行修复。本demo暂未实现。
+
+如果遇到结果的bug，可以使用mode 1 然后再借助meshlab，tetwild等工具建立拓扑。
 
 
-## 📝 License
-Materials in this repository are distributed under the following license:
-
-> All software is licensed under the BSD 3-Clause License. See [LICENSE](https://github.com/rainbowwing/Thickening2/blob/main/LICENSE) file for details.
