@@ -32,6 +32,10 @@ jobs:
       
         sudo apt install libgflags-dev
         
+        git clone https://github.com/cnr-isti-vclab/vcglib
+        
+        pwd
+        
         git clone --recursive https://github.com/osqp/osqp
         
         cd osqp
@@ -61,6 +65,8 @@ jobs:
         make
         
         make install
+        
+        
     
 
     - name: Configure CMake
@@ -70,7 +76,8 @@ jobs:
 
     - name: Build
       # Build your program with the given configuration
-      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+      run: |
+        cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
 
     - name: Test
       working-directory: ${{github.workspace}}/build

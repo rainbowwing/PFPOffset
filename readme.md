@@ -68,6 +68,7 @@ make
 make install
 git clone git@github.com:TsukiMiyabiLake/Thickening2.git
 cd Thickening2
+git submodule update --init --recursive
 mkdir build
 cmake ../ -DCMAKE_BUILD_TYPE=Release
 make
@@ -100,6 +101,7 @@ make
 make install
 git clone git@github.com:TsukiMiyabiLake/Thickening2.git
 cd Thickening2
+git submodule update --init --recursive
 mkdir build
 cmake ../ -DCMAKE_BUILD_TYPE=Release
 make
