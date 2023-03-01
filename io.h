@@ -40,7 +40,7 @@ MeshKernel::SurfaceMesh ReadObjFile(const std::string &_InputFile) {
                 size_t idx = 0;
                 while (idx < vex[i].length() && std::isdigit(vex[i][idx])) idx++;
                 int vh = std::stoi(vex[i].substr(0, idx)) - 1;//  obj start v from 1
-                face[i] = (MeshKernel::iGameVertexHandle)(vh);
+                face[i] = (MeshKernel::iGameVertexHandle) (vh);
                 if (vh >= vertices.size()) {
                     std::cerr << vh << " " << vertices.size() << std::endl;
                 }
@@ -68,7 +68,7 @@ MeshKernel::SurfaceMesh ReadObjFile(const std::string &_InputFile) {
 
 double mix_factor = 0.5;
 
-void mix(int T,shared_ptr <MeshKernel::SurfaceMesh> mesh){
+void mix(int T, shared_ptr<MeshKernel::SurfaceMesh> mesh) {
     for (int times = 0; times < T; times++) {
         std::vector<double> fix_move_dist;
         fix_move_dist.resize(mesh->FaceSize() + 1);

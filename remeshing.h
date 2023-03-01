@@ -6,12 +6,14 @@
 #define THICKEN2OUT_REMESHING_H
 
 #include <string>
+
 class Remeshing {
 
 
 public:
     void run(std::string file_name);
-    Remeshing(){}
+
+    Remeshing() {}
 };
 
 

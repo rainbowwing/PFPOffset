@@ -6,8 +6,6 @@
 #define THICKEN2_LIB_IMPL_H
 
 
-
-
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -20,7 +18,6 @@
 #include <algorithm>
 #include <bitset>
 #include "MeshKernel/Mesh.h"
-
 
 
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
@@ -50,7 +47,7 @@ typedef CGAL::Polyhedron_3<K> Polyhedron;
 typedef K::Ray_3 Ray;
 typedef K::Line_3 Line;
 typedef CGAL::Exact_predicates_exact_constructions_kernel K2;
-typedef std::list< K2::Triangle_3>::iterator Iterator;
+typedef std::list<K2::Triangle_3>::iterator Iterator;
 typedef CGAL::AABB_triangle_primitive<K2, Iterator> Primitive;
 typedef CGAL::AABB_traits<K2, Primitive> AABB_triangle_traits;
 typedef CGAL::AABB_tree<AABB_triangle_traits> Tree;
@@ -62,18 +59,22 @@ using namespace std;
 
 
 class CGALPolygon {
-    CGAL::Polyhedron_3<K2> * poly;
-    CGAL::Side_of_triangle_mesh<CGAL::Polyhedron_3<K2>, K2 > * inside;
+    CGAL::Polyhedron_3<K2> *poly;
+    CGAL::Side_of_triangle_mesh<CGAL::Polyhedron_3<K2>, K2> *inside;
 
 public:
     CGALPolygon() {}
-    CGALPolygon(const shared_ptr <MeshKernel::SurfaceMesh> &mesh);
+
+    CGALPolygon(const shared_ptr<MeshKernel::SurfaceMesh> &mesh);
+
     bool inMesh(K2::Point_3 v);
+
     bool outMesh(K2::Point_3 v);
 };
 
 
-double cgal_vertex_triangle_dist(MeshKernel::iGameFace f, MeshKernel::iGameVertex v, std::shared_ptr<MeshKernel::SurfaceMesh>mesh) ;
+double cgal_vertex_triangle_dist(MeshKernel::iGameFace f, MeshKernel::iGameVertex v,
+                                 std::shared_ptr<MeshKernel::SurfaceMesh> mesh);
 
 
 #endif //THICKEN2_LIB_IMPL_H

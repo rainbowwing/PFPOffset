@@ -4,18 +4,24 @@
 
 #ifndef IGAMEVIEW_DSU_H
 #define IGAMEVIEW_DSU_H
+
 #include <vector>
 
 class DSU {
 private:
-    std::vector<int>pre;
+    std::vector<int> pre;
 public:
     DSU();
+
     DSU(int x);
-    void join(int x,int y);
+
+    void join(int x, int y);
+
     int find_root(int x);
+
     void append();
-    std::vector<std::vector<int > >calculate();
+
+    std::vector<std::vector<int> > calculate();
 };
 
 

@@ -8,8 +8,8 @@
 
 struct GridVertex {
     int grid_type;
-    vector <MeshKernel::iGameFaceHandle> face_list;
-    vector <int> final_global_id;
+    vector<MeshKernel::iGameFaceHandle> face_list;
+    vector<int> final_global_id;
 
     vector<K2::Triangle_3> generate_face_list;
 

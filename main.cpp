@@ -409,7 +409,7 @@ int main(int argc, char *argv[]) {
                 }
 
                 queue<grid> q;
-                unordered_set < grid, grid_hash, grid_equal > is_visit;
+                unordered_set<grid, grid_hash, grid_equal> is_visit;
                 vector<grid> center_neighbor = get_neighbor(now);
                 for (auto bfs_start_node: center_neighbor) {
                     is_visit.insert(bfs_start_node);
@@ -1165,7 +1165,7 @@ int main(int argc, char *argv[]) {
             final_gen_vertex.push_back(each_grid->second.generate_face_list[i].vertex(2));
         }
     }
-    cout << "result_mode:" <<result_mode << endl;
+    cout << "result_mode:" << result_mode << endl;
     if (result_mode == 1) {
         FILE *file12 = fopen((input_filename + "_result.obj").c_str(), "w+");
         int vid = 1;
@@ -1194,7 +1194,8 @@ int main(int argc, char *argv[]) {
                     (time_path[i].time_since_epoch().count() - time_path[i - 1].time_since_epoch().count()) * 1.0 /
                     1000000);
             cout << "time point " << i << " "
-                 << (time_path[i].time_since_epoch().count() - time_path[i - 1].time_since_epoch().count()) * 1.0 / 1000000
+                 << (time_path[i].time_since_epoch().count() - time_path[i - 1].time_since_epoch().count()) * 1.0 /
+                    1000000
                  << endl;
         }
         fclose(fileans);
@@ -1286,7 +1287,6 @@ int main(int argc, char *argv[]) {
     }
 
 
-    time_path.push_back(std::chrono::system_clock::now());
     for (int i = 0; i < thread_num; i++)
         each_grid_merge_thread_pool[i]->join();
 
@@ -1441,10 +1441,18 @@ int main(int argc, char *argv[]) {
     time_path.push_back(std::chrono::system_clock::now());
     FILE *fileans = fopen((input_filename + "_times.txt").c_str(), "w+");
     for (int i = 1; i < time_path.size(); i++) {
-        fprintf(fileans, "%d\t%lf\n", i,
+        string id = std::to_string(i);
+        if (i == 4) {
+            id = "4 and 5";
+        } else if (i == 5) {
+            id = "6";
+        }
+
+
+        fprintf(fileans, "%s\t%lf\n", id.c_str(),
                 (time_path[i].time_since_epoch().count() - time_path[i - 1].time_since_epoch().count()) * 1.0 /
                 1000000);
-        cout << "step" << i << " time cost: "
+        cout << "step" << id << " time cost: "
              << (time_path[i].time_since_epoch().count() - time_path[i - 1].time_since_epoch().count()) * 1.0 / 1000000
              << endl;
     }

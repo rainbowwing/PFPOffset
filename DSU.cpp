@@ -34,21 +34,20 @@ void DSU::join(int x, int y) {
     return;
 }
 
-void DSU::append(){
+void DSU::append() {
     int now = pre.size();
     pre.push_back(now);
 }
 
-std::vector<std::vector<int > > DSU::calculate(){
-    std::map<int,int>mp;
-    std::vector<std::vector<int > > ret;
-    for(int i=0;i<pre.size();i++){
-        std::map<int,int>::iterator it = mp.find(find_root(i));
-        if(it == mp.end()){
-            mp.insert(std::make_pair(find_root(i),mp.size()));
+std::vector<std::vector<int> > DSU::calculate() {
+    std::map<int, int> mp;
+    std::vector<std::vector<int> > ret;
+    for (int i = 0; i < pre.size(); i++) {
+        std::map<int, int>::iterator it = mp.find(find_root(i));
+        if (it == mp.end()) {
+            mp.insert(std::make_pair(find_root(i), mp.size()));
             ret.push_back(std::vector<int>{(i)});
-        }
-        else{
+        } else {
             ret[it->second].push_back(i);
         }
     }
