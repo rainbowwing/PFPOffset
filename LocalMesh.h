@@ -20,10 +20,6 @@ struct LocalMesh {
     map<size_t, int> vmp;
     KDTree *kdtree;
     bool built;
-
-    ~LocalMesh() {
-        delete kdtree;
-    }
 };
 
 #endif //THICKEN2OUT_LOCALMESH_H

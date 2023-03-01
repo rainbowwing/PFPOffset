@@ -59,7 +59,7 @@ using namespace std;
 shared_ptr<MeshKernel::SurfaceMesh> mesh;
 
 shared_ptr<CGALPolygon> cgal_polygon;
-int thread_num = 16;
+int thread_num = 20;
 vector<MeshKernel::iGameVertex> field_move_vertex;
 vector<vector<MeshKernel::iGameVertex> > field_move_face;
 vector<K2::Triangle_3> field_move_K2_triangle;
@@ -409,7 +409,7 @@ int main(int argc, char *argv[]) {
                 }
 
                 queue<grid> q;
-                unordered_set<grid, grid_hash, grid_equal> is_visit;
+                unordered_set < grid, grid_hash, grid_equal > is_visit;
                 vector<grid> center_neighbor = get_neighbor(now);
                 for (auto bfs_start_node: center_neighbor) {
                     is_visit.insert(bfs_start_node);
@@ -1165,7 +1165,7 @@ int main(int argc, char *argv[]) {
             final_gen_vertex.push_back(each_grid->second.generate_face_list[i].vertex(2));
         }
     }
-    cout << "result_mode:" << result_mode << endl;
+    cout << "result_mode:" <<result_mode << endl;
     if (result_mode == 1) {
         FILE *file12 = fopen((input_filename + "_result.obj").c_str(), "w+");
         int vid = 1;
@@ -1190,12 +1190,21 @@ int main(int argc, char *argv[]) {
         fclose(file12);
         FILE *fileans = fopen((input_filename + "_times.txt").c_str(), "w+");
         for (int i = 1; i < time_path.size(); i++) {
-            fprintf(fileans, "%d\t%lf\n", i,
-                    (time_path[i].time_since_epoch().count() - time_path[i - 1].time_since_epoch().count()) * 1.0 /
-                    1000000);
-            cout << "time point " << i << " "
-                 << (time_path[i].time_since_epoch().count() - time_path[i - 1].time_since_epoch().count()) * 1.0 /
-                    1000000
+            uint64_t pretime = std::chrono::duration_cast<std::chrono::milliseconds>(time_path[i-1].time_since_epoch()).count();
+            uint64_t thistime = std::chrono::duration_cast<std::chrono::milliseconds>(time_path[i].time_since_epoch()).count();
+            string id = std::to_string(i);
+            if(i == 4){
+                id ="4 and 5";
+            }
+            else if(i == 5){
+                id = "6";
+            }
+
+
+            fprintf(fileans, "%s\t%.1lfu\n", id.c_str(),
+                    (pretime - thistime)*1.0/1000);
+            cout << "step" << id << " time cost: "
+                 <<  (thistime - pretime)/1000
                  << endl;
         }
         fclose(fileans);
@@ -1331,10 +1340,8 @@ int main(int argc, char *argv[]) {
                                 //break;
                             }
                         }
-
                     }
                 }
-
             }
         }
         each_grid->second.built = true;
@@ -1441,19 +1448,21 @@ int main(int argc, char *argv[]) {
     time_path.push_back(std::chrono::system_clock::now());
     FILE *fileans = fopen((input_filename + "_times.txt").c_str(), "w+");
     for (int i = 1; i < time_path.size(); i++) {
+        uint64_t pretime = std::chrono::duration_cast<std::chrono::milliseconds>(time_path[i-1].time_since_epoch()).count();
+        uint64_t thistime = std::chrono::duration_cast<std::chrono::milliseconds>(time_path[i].time_since_epoch()).count();
         string id = std::to_string(i);
-        if (i == 4) {
-            id = "4 and 5";
-        } else if (i == 5) {
+        if(i == 4){
+            id ="4 and 5";
+        }
+        else if(i == 5){
             id = "6";
         }
 
 
-        fprintf(fileans, "%s\t%lf\n", id.c_str(),
-                (time_path[i].time_since_epoch().count() - time_path[i - 1].time_since_epoch().count()) * 1.0 /
-                1000000);
+        fprintf(fileans, "%s\t%.1lfu\n", id.c_str(),
+                (pretime - thistime)/1000);
         cout << "step" << id << " time cost: "
-             << (time_path[i].time_since_epoch().count() - time_path[i - 1].time_since_epoch().count()) * 1.0 / 1000000
+             <<  (thistime - pretime)*1.0/1000
              << endl;
     }
     fclose(fileans);
