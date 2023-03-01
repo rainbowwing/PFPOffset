@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16.3)
 set(CMAKE_CXX_STANDARD 20)
-project(Thicken2out)
+project(Thicken)
 
 
 include_directories("/opt/homebrew/include")
@@ -34,10 +34,10 @@ endif()
 file (GLOB CppFile
         MeshKernel/*
         )
-add_executable(Thicken2out main.cpp CGALPolygon.cpp DSU.cpp remeshing.cpp MeshBuilder.cpp ${CppFile} vcglib/wrap/ply/plylib.cpp)
+add_executable(Thicken main.cpp CGALPolygon.cpp DSU.cpp remeshing.cpp MeshBuilder.cpp ${CppFile} vcglib/wrap/ply/plylib.cpp)
 
 if(APPLE)
-    target_link_libraries(Thicken2out
+    target_link_libraries(Thicken
             /opt/homebrew/lib/libgmp.dylib
             -lpthread
             /opt/homebrew/lib/libmpfr.dylib
@@ -46,7 +46,7 @@ if(APPLE)
             /opt/homebrew/lib/libgflags.dylib
             )
 else()
-    target_link_libraries(Thicken2out
+    target_link_libraries(Thicken
             -lgmp
             -lpthread
             -lmpfr

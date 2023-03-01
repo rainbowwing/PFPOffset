@@ -2,14 +2,6 @@
 
 This project is a demo to achieve to algorithm of PFP-Thickening.
 
-[//]: # (|  General  | [![c++14]&#40;https://img.shields.io/badge/standard-C++14-blue.svg?style=flat&logo=c%2B%2B&#41;]&#40;https://isocpp.org&#41; [![License]&#40;https://img.shields.io/badge/License-BSD_3--Clause-orange.svg&#41;]&#40;https://github.com/robotology/osqp-eigen/blob/master/LICENSE&#41; |)
-
-[//]: # (| :-------: | :----------------------------------------------------------: |)
-
-[//]: # (| **CI/CD** | [![Codacy Badge]&#40;https://app.codacy.com/project/badge/Grade/a18710c10f1c4df19bc2759fd50e9cf5&#41;]&#40;https://www.codacy.com/gh/robotology/osqp-eigen/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=robotology/osqp-eigen&amp;utm_campaign=Badge_Grade&#41; [![CI]&#40;https://github.com/robotology/osqp-eigen/workflows/C++%20CI%20Workflow/badge.svg&#41;]&#40;https://github.com/robotology/osqp-eigen/workflows/C++%20CI%20Workflow/badge.svg&#41; [![Azure]&#40;https://dev.azure.com/conda-forge/feedstock-builds/_apis/build/status/osqp-eigen-feedstock?branchName=master&#41;]&#40;https://dev.azure.com/conda-forge/feedstock-builds/_build/results?buildId=341091&view=results&#41; |)
-
-[//]: # (| **conda** | [![Conda Recipe]&#40;https://img.shields.io/badge/recipe-osqp--eigen-green.svg&#41;]&#40;https://anaconda.org/conda-forge/osqp-eigen&#41;  [![Conda Downloads]&#40;https://img.shields.io/conda/dn/conda-forge/osqp-eigen.svg&#41;]&#40;https://anaconda.org/conda-forge/osqp-eigen&#41;  [![Conda Version]&#40;https://img.shields.io/conda/vn/conda-forge/osqp-eigen.svg&#41;]&#40;https://anaconda.org/conda-forge/osqp-eigen&#41;  [![Conda Platforms]&#40;https://img.shields.io/conda/pn/conda-forge/osqp-eigen.svg&#41;]&#40;https://anaconda.org/conda-forge/osqp-eigen&#41; |)
-
 [![c++20](https://img.shields.io/badge/standard-C++20-blue.svg?style=flat&logo=c%2B%2B)](https://isocpp.org)
 
 ![BuildExamplesLinux](https://github.com/rainbowwing/Thickening2/workflows/CMake/badge.svg)
@@ -117,7 +109,7 @@ make
 
 ```bash
 
-USAGE: Thicken2 -f file_name [options]              file_name is *.obj or *.obj2      
+USAGE: Thicken -f file_name [options]              file_name is *.obj or *.obj2      
 
 options:
   -m={1|2|3}        representing result mode which value can be chose in 1,2 and 3. 
@@ -145,8 +137,8 @@ options:
                     
 
 example:
-./Thickening2  -f ../data/mechanical04.obj -m=3 -i=2 -t=8 -d=0.6        
-./Thickening2  -f ../data/tet.obj2 -m=3 -i=1 -t=8 
+./Thicken  -f ../data/mechanical04.obj -m=3 -i=2 -t=8 -d=0.6        
+./Thicken  -f ../data/tet.obj2 -m=3 -i=1 -t=8 
 ```
 
 
