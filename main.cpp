@@ -401,14 +401,14 @@ int main(int argc, char *argv[]) {
     };
     int fsize = mesh->FaceSize();
 
-//    MeshKernel::iGameVertex debug_v(-0.526370 ,2.852676 ,-0.017140);
+//    MeshKernel::iGameVertex debug_v(-2.759372,137.330994,19.121923);
 //    grid debug_g =  vertex_to_grid(debug_v);
 //
 //    cout <<"v to g :" <<debug_g.x <<" "<< debug_g.y <<" "<<debug_g.z << endl;
 //    auto tmp = (getGridVertex(debug_g,0) + getGridVertex(debug_g,7))/2;
 //    cout << tmp.x()<<" "<< tmp.y()<<" "<< tmp.z() << endl;
 
-    // return 0;
+     //return 0;
     cout << "step 3 start  \n" << endl;
     std::mutex bfs_mutex;
     std::vector<std::shared_ptr<std::thread> > bfs_thread_pool(thread_num);

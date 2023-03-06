@@ -25,6 +25,7 @@ if(${CMAKE_BUILD_TYPE} MATCHES "Release")
     set(CMAKE_C_FLAGS "$ENV{CFLAGS} -DNODEBUG -O3 -Wall")
     set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -DNODEBUG -O3 -Wall")
 else()
+
     message(STATUS "Debug版本")
     set(BuildType "Debug")
     set(CMAKE_C_FLAGS "$ENV{CFLAGS} -O0 -g -Wall")
@@ -34,6 +35,7 @@ endif()
 file (GLOB CppFile
         MeshKernel/*
         )
+
 add_executable(Thicken main.cpp CGALPolygon.cpp DSU.cpp remeshing.cpp MeshBuilder.cpp ${CppFile} vcglib/wrap/ply/plylib.cpp)
 
 if(APPLE)
