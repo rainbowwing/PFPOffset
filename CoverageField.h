@@ -7,7 +7,9 @@
 struct CoverageField {
     vector<K2::Point_3 > bound_face_vertex_exact;
     vector<K::Point_3 > bound_face_vertex_inexact;
+    vector<RoughVertex> bound_face_vertex_rough;
     vector<vector<int> > bound_face_id;
+
     vector<vector<grid> >  bound_face_cross_field_list;
     vector<vector<K2::Segment_3> > bound_face_cutting_segment;
     vector<vector<K2::Point_3> > bound_face_cutting_point;
@@ -113,6 +115,7 @@ struct CoverageField {
     vector<int>renumber_bound_face_vertex_global_id;
     vector<int>renumber_bound_face_global_id;
     vector<bool>renumber_bound_face_useful;
+
     std::unordered_map<unsigned long long,int> encode_map;
     int get_kdtree_id(K::Point_3 p){
         std::vector<Point> result;
@@ -121,6 +124,7 @@ struct CoverageField {
         //  cout <<"result.size() : " << result.size() << endl;
         return encode_map[unique_hash_value(*result.begin())];
     };
+    MeshKernel::iGameVertex bbox_min,bbox_max;
     void renumber(){
         std::vector<K::Point_3> kd_tree_points;
         DSU dsu;
@@ -216,36 +220,63 @@ struct CoverageField {
         }
         renumber_bound_face_global_id.resize(renumber_bound_face_id.size());
     }
+    vector<RoughVertex> extend_vertex;
+    unordered_set<RoughVertex,rough_vertex_hash,rough_vertex_equal>rough_vertex_set;
+    bool done;
+    MeshKernel::iGameFaceHandle fh;
+    CoverageField(MeshKernel::iGameFaceHandle fh){
+        this->fh = fh;
+        rebuild();
+    }
 
-    CoverageField(MeshKernel::iGameFaceHandle fh) {
-        bound_face_vertex_inexact.emplace_back(mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(0)].x(),
-                                               mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(0)].y(),
-                                               mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(0)].z()
-        );
-        bound_face_vertex_inexact.emplace_back(mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(1)].x(),
-                                               mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(1)].y(),
-                                               mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(1)].z()
-        );
-        bound_face_vertex_inexact.emplace_back(mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(2)].x(),
-                                               mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(2)].y(),
-                                               mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(2)].z()
-        );
-        for(auto v: field_move_vertices[mesh->fast_iGameFace[fh].vh(0)])
-            bound_face_vertex_inexact.emplace_back(v.x(),v.y(),v.z());
-        for(auto v: field_move_vertices[mesh->fast_iGameFace[fh].vh(1)])
-            bound_face_vertex_inexact.emplace_back(v.x(),v.y(),v.z());
-        for(auto v: field_move_vertices[mesh->fast_iGameFace[fh].vh(2)])
-            bound_face_vertex_inexact.emplace_back(v.x(),v.y(),v.z());
+    void rebuild() {
+        done = true;
+        bound_face_vertex_rough.clear();
+        bound_face_vertex_exact.clear();
+        bound_face_vertex_inexact.clear();
+        rough_vertex_set.clear();
+        for(int i=0;i<3;i++){
+           bound_face_vertex_rough.push_back(mesh_vertex_rough[mesh->fast_iGameFace[fh].vh(i)]);
+        }
+        for(int i=0;i<3;i++){
+            for(auto v :field_move_vertices_rough[mesh->fast_iGameFace[fh].vh(i)]){
+                bound_face_vertex_rough.push_back(v);
+            }
+        }
 
 
         map<size_t,int> mp;
-        for(int i=0;i<bound_face_vertex_inexact.size();i++){
+        for(int i=0;i<bound_face_vertex_rough.size();i++){
 
+            bound_face_vertex_exact.emplace_back(bound_face_vertex_rough[i].exact());
+            bound_face_vertex_inexact.emplace_back(CGAL::to_double(bound_face_vertex_exact[i].x()),
+                                                   CGAL::to_double(bound_face_vertex_exact[i].y()),
+                                                   CGAL::to_double(bound_face_vertex_exact[i].z())
+                                                   );
             mp[unique_hash_value(bound_face_vertex_inexact[i])] = i;
-            bound_face_vertex_exact.emplace_back(bound_face_vertex_inexact[i].x(),
-                                                 bound_face_vertex_inexact[i].y(),
-                                                 bound_face_vertex_inexact[i].z());
         }
+        bbox_min = bbox_max = Point_K_to_iGameVertex(bound_face_vertex_inexact[0]);
+
+
+        int base_vertex_size = bound_face_vertex_rough.size();
+        for(int i=0;i<extend_vertex.size();i++){
+            bound_face_vertex_rough.push_back(extend_vertex[i]);
+            bound_face_vertex_exact.push_back(bound_face_vertex_rough.rbegin()->exact());
+            bound_face_vertex_inexact.emplace_back(CGAL::to_double(bound_face_vertex_exact.rbegin()->x()),
+                                      CGAL::to_double(bound_face_vertex_exact.rbegin()->y()),
+                                      CGAL::to_double(bound_face_vertex_exact.rbegin()->z()));
+            mp[unique_hash_value(*bound_face_vertex_inexact.rbegin())] = (int)bound_face_vertex_rough.size();
+
+        }
+        for(int i=1;i<extend_vertex.size();i++){
+            bbox_min.x() = min(bbox_min.x(),bound_face_vertex_inexact[i].x());
+            bbox_min.y() = min(bbox_min.y(),bound_face_vertex_inexact[i].y());
+            bbox_min.z() = min(bbox_min.z(),bound_face_vertex_inexact[i].z());
+            bbox_max.x() = max(bbox_max.x(),bound_face_vertex_inexact[i].x());
+            bbox_max.y() = max(bbox_max.y(),bound_face_vertex_inexact[i].y());
+            bbox_max.z() = max(bbox_max.z(),bound_face_vertex_inexact[i].z());
+        }
+
         Delaunay3D dt;
         dt.insert(bound_face_vertex_inexact.begin(), bound_face_vertex_inexact.end());
         std::vector<K::Triangle_3> surface_triangles;
@@ -256,18 +287,48 @@ struct CoverageField {
                 }
             }
         }
-
+        bound_face_id.clear();
+        bound_face_useful.clear();
+        extend_vertex.clear();
 
         K2::Vector_3 center_vec = {0,0,0};
+
         for (const auto& triangle : surface_triangles) {
             int v0_id = mp[unique_hash_value(triangle.vertex(0))];
             int v1_id = mp[unique_hash_value(triangle.vertex(1))];
             int v2_id = mp[unique_hash_value(triangle.vertex(2))];
 
+            rough_vertex_set.insert(bound_face_vertex_rough[v0_id]);
+            rough_vertex_set.insert(bound_face_vertex_rough[v1_id]);
+            rough_vertex_set.insert(bound_face_vertex_rough[v2_id]);
             bound_face_id.push_back({v0_id, v1_id, v2_id});
             center_vec += (centroid(K2::Triangle_3(bound_face_vertex_exact[v0_id],
                                                    bound_face_vertex_exact[v1_id],
                                                    bound_face_vertex_exact[v2_id])) - K2::Point_3(0,0,0)) ;
+        }
+
+
+        for(int i=base_vertex_size;i<bound_face_vertex_rough.size();i++){
+            if(rough_vertex_set.count(bound_face_vertex_rough[i])){
+                extend_vertex.push_back(bound_face_vertex_rough[i]);
+            }
+        }
+        if(!surface_triangles.size()){
+            cout <<"okkk?"<<endl;
+            for(auto i : bound_face_vertex_inexact){
+                cout << "v" <<" "<< i <<endl;
+                /*
+                 * v 49.969 314.912 57.9381
+v 49.969 322.912 52.9381
+v 49.969 318.912 55.4381
+v 53.969 314.912 57.9381
+v 53.969 322.912 52.9381
+v 53.969 318.912 55.4381
+                 */
+            }
+            cout << bound_face_vertex_inexact.size() << endl;
+            cout <<"okkk"<<endl;
+            //exit(0); // 找这里的bug
         }
         center =  K2::Point_3(0,0,0) + (center_vec / surface_triangles.size());
 
@@ -302,8 +363,13 @@ public:
         return false;
     }
     CGAL::Polyhedron_3<K2> * poly;
+    vector<int>nearly_field;
     CGAL::Side_of_triangle_mesh<CGAL::Polyhedron_3<K2>, K2> * inside_ptr;
+
+
 };
+
+
 
 vector<CoverageField> coverage_field_list;
 #endif //THICKEN2_COVERAGEFIELD_H
