@@ -30,7 +30,7 @@ void subdivide(vector<int>v,std::vector<K::Point_3>& kd_tree_points_new){
         min_z = min(min_z, kd_tree_points_new[v[i]].z());
     }
     double dist = sqrt((max_x-min_x)*(max_x-min_x) + (max_y-min_y)*(max_y-min_y) + (max_z-min_z)*(max_z-min_z));
-    if(dist > move_dist_avg){
+    if(dist /2> move_dist_avg){
         vector<vector<int> >subdivide_next(8);
         for(int i=0;i<=1;i++){
             for(int j=0;j<=1;j++){

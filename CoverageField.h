@@ -245,7 +245,7 @@ struct CoverageField {
         }
 
 
-        map<size_t,int> mp;
+        unordered_map<RoughVertex,int,rough_vertex_hash,rough_vertex_equal> mp;
         for(int i=0;i<bound_face_vertex_rough.size();i++){
 
             bound_face_vertex_exact.emplace_back(bound_face_vertex_rough[i].exact());
@@ -253,7 +253,7 @@ struct CoverageField {
                                                    CGAL::to_double(bound_face_vertex_exact[i].y()),
                                                    CGAL::to_double(bound_face_vertex_exact[i].z())
                                                    );
-            mp[unique_hash_value(bound_face_vertex_inexact[i])] = i;
+            mp[bound_face_vertex_rough[i]] = i;
         }
         bbox_min = bbox_max = Point_K_to_iGameVertex(bound_face_vertex_inexact[0]);
 
@@ -265,7 +265,8 @@ struct CoverageField {
             bound_face_vertex_inexact.emplace_back(CGAL::to_double(bound_face_vertex_exact.rbegin()->x()),
                                       CGAL::to_double(bound_face_vertex_exact.rbegin()->y()),
                                       CGAL::to_double(bound_face_vertex_exact.rbegin()->z()));
-            mp[unique_hash_value(*bound_face_vertex_inexact.rbegin())] = (int)bound_face_vertex_rough.size();
+
+            mp[extend_vertex[i]] = (int)bound_face_vertex_rough.size()-1;
 
         }
         for(int i=1;i<extend_vertex.size();i++){
@@ -277,9 +278,9 @@ struct CoverageField {
             bbox_max.z() = max(bbox_max.z(),bound_face_vertex_inexact[i].z());
         }
 
-        Delaunay3D dt;
-        dt.insert(bound_face_vertex_inexact.begin(), bound_face_vertex_inexact.end());
-        std::vector<K::Triangle_3> surface_triangles;
+        Delaunay3D_K2 dt;
+        dt.insert(bound_face_vertex_exact.begin(), bound_face_vertex_exact.end());
+        std::vector<K2::Triangle_3> surface_triangles; // 这里存在一个精度问题
         for (auto fit = dt.finite_cells_begin(); fit != dt.finite_cells_end(); ++fit) {
             for (int i = 0; i < 4; ++i) {
                 if (dt.is_infinite(fit->neighbor(i))) {
@@ -294,14 +295,21 @@ struct CoverageField {
         K2::Vector_3 center_vec = {0,0,0};
 
         for (const auto& triangle : surface_triangles) {
-            int v0_id = mp[unique_hash_value(triangle.vertex(0))];
-            int v1_id = mp[unique_hash_value(triangle.vertex(1))];
-            int v2_id = mp[unique_hash_value(triangle.vertex(2))];
-
+            if(mp.count(transfer(triangle.vertex(0)))+ mp.count(transfer(triangle.vertex(1)))+mp.count(transfer(triangle.vertex(2)))!=3)
+                cout <<"mdzz3"<<endl;
+            int v0_id = mp[transfer(triangle.vertex(0))];
+            int v1_id = mp[transfer(triangle.vertex(1))];
+            int v2_id = mp[transfer(triangle.vertex(2))];
+            if(triangle.is_degenerate())cout <<"mdzz"<<endl;
             rough_vertex_set.insert(bound_face_vertex_rough[v0_id]);
             rough_vertex_set.insert(bound_face_vertex_rough[v1_id]);
             rough_vertex_set.insert(bound_face_vertex_rough[v2_id]);
             bound_face_id.push_back({v0_id, v1_id, v2_id});
+            if(K2::Triangle_3(bound_face_vertex_exact[v0_id],
+                              bound_face_vertex_exact[v1_id],
+                              bound_face_vertex_exact[v2_id]).is_degenerate()){
+                cout <<"mdzz2"<<endl;
+            }
             center_vec += (centroid(K2::Triangle_3(bound_face_vertex_exact[v0_id],
                                                    bound_face_vertex_exact[v1_id],
                                                    bound_face_vertex_exact[v2_id])) - K2::Point_3(0,0,0)) ;
@@ -347,6 +355,9 @@ v 53.969 318.912 55.4381
         inside_ptr = new CGAL::Side_of_triangle_mesh<CGAL::Polyhedron_3<K2>, K2>(*poly);
 
     }
+
+
+
 public:
     bool in_field(K2::Point_3 v) {
         //CGAL::Side_of_triangle_mesh<CGAL::Polyhedron_3<K2>, K2> inside(*poly);

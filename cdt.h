@@ -32,6 +32,7 @@ typedef CGAL::Kd_tree<STraitsK2> Kd_tree_K2;
 typedef CGAL::Fuzzy_iso_box<STraitsK2> FuzzyBoxK2;
 
 typedef CGAL::Delaunay_triangulation_3<K> Delaunay3D;
+typedef CGAL::Delaunay_triangulation_3<K2> Delaunay3D_K2;
 
 typedef CGAL::Constrained_Delaunay_triangulation_2<K2> CDT;
 
