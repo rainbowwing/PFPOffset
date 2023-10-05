@@ -62,6 +62,271 @@
 #include "merge_initial.h"
 #include "one_ring_select.h"
 
+#include <CGAL/Polyhedron_3.h>
+#include <CGAL/Polygon_mesh_processing/corefinement.h>
+#include <CGAL/Polygon_mesh_processing/IO/polygon_mesh_io.h>
+#include <CGAL/IO/write_off_points.h>
+#include <CGAL/Polygon_mesh_processing/orient_polygon_soup_extension.h>
+#include <CGAL/Boolean_set_operations_2.h>
+#include "MeshBool.h"
+#include <CGAL/Surface_mesh_simplification/edge_collapse.h>
+#include <CGAL/Surface_mesh_simplification/Policies/Edge_collapse/Count_ratio_stop_predicate.h>
+#include <CGAL/Polygon_mesh_processing/remesh.h>
+namespace SMS = CGAL::Surface_mesh_simplification;
+namespace PMP = CGAL::Polygon_mesh_processing;
+int compute_genus(const  CGAL::Polyhedron_3<K2> & P) {
+    int V = P.size_of_vertices();
+    int E = P.size_of_halfedges() / 2;  // 每条边有两个半边
+    int F = P.size_of_facets();
+
+    return 1 + (V - E + F) / 2;
+}
+CGAL::Polyhedron_3<K2> solve( CGAL::Polyhedron_3<K2> mesh) {
+    unsigned int nb_iter = 3;
+    bool protect = false;  // If you have features to protect, set this to true
+    double target_edge_length = 0.5;
+    PMP::isotropic_remeshing(
+            faces(mesh),
+            target_edge_length,
+            mesh,
+            PMP::parameters::number_of_iterations(nb_iter)
+                    .protect_constraints(protect)
+    );
+
+    return mesh;
+}
+
+void polygon_merge(){
+    FILE * file12 = fopen("../data/mergedMeshddd.obj","w+");
+    int f12id = 1;
+    for(int id=0;id<0;id++){
+        CGAL::Polyhedron_3<K2> merged_mesh= *coverage_field_list[id].poly ;
+        for(int i=0;i<coverage_field_list[id].nearly_field.size();i++){
+            int near_id = coverage_field_list[id].nearly_field[i];
+            if(near_id == id)continue;
+            cout <<CGAL::Polygon_mesh_processing::corefine_and_compute_union(merged_mesh, *coverage_field_list[near_id].poly, merged_mesh)<<endl;
+            cout << "亏格:"<<compute_genus(merged_mesh) << endl;
+        }
+        cout <<"id: "<<id <<" "<<coverage_field_list[id].poly->size_of_facets() <<" "<< merged_mesh.size_of_facets()<<endl;
+        for (CGAL::Polyhedron_3<K2>::Facet_iterator facet_it = merged_mesh.facets_begin(); facet_it != merged_mesh.facets_end(); ++facet_it) {
+            if (facet_it->is_triangle()) {
+                CGAL::Polyhedron_3<K2>::Halfedge_around_facet_circulator hfc = facet_it->facet_begin();
+                //std::cout << "Triangle: ";
+                vector<K2::Point_3> plist;
+                do {
+                    // 输出顶点坐标
+                    //std::cout << "(" << hfc->vertex()->point().id() << ") ";
+                    plist.push_back( hfc->vertex()->point());
+                    ++hfc;
+                } while (hfc != facet_it->facet_begin());
+                //std::cout << std::endl;
+                if(coverage_field_list[id].side(plist[0]) == 0 && coverage_field_list[id].side(plist[1]) == 0 && coverage_field_list[id].side(plist[2]) == 0){
+
+                    fprintf(file12, "v %lf %lf %lf\n", CGAL::to_double(plist[0].x()),  CGAL::to_double(plist[0].y()),
+                            CGAL::to_double(plist[0].z()));
+                    fprintf(file12, "v %lf %lf %lf\n", CGAL::to_double(plist[1].x()),  CGAL::to_double(plist[1].y()),
+                            CGAL::to_double(plist[1].z()));
+                    fprintf(file12, "v %lf %lf %lf\n", CGAL::to_double(plist[2].x()),  CGAL::to_double(plist[2].y()),
+                            CGAL::to_double(plist[2].z()));
+                    fprintf(file12, "f %d %d %d\n", f12id, f12id + 1, f12id + 2);
+                    f12id+=3;
+
+                }
+                //cout <<coverage_field_list[id].side(plist[0]) <<" "<< coverage_field_list[id].side(plist[1])<<" "<<coverage_field_list[id].side(plist[2])<<endl;
+            }
+        }
+        cout <<"finish"<<endl;
+
+    }
+
+
+    for(int id=0;id<mesh->FaceSize();id++){
+        CGAL::Polyhedron_3<K2> merged_mesh= *coverage_field_list[id].poly ;
+        for(int i=0;i<coverage_field_list[id].nearly_field.size();i++){
+            int near_id = coverage_field_list[id].nearly_field[i];
+            if(near_id == id)continue;
+//            if(i==11){
+//                std::ofstream oroo("../data/mergedMeshbugchushi.off");
+//                std::ofstream or11("../data/mergedMeshbug11.off");
+//                std::ofstream ornow("../data/mergedMeshbugnow.off");
+//                oroo << *coverage_field_list[id].poly;
+//                cout << "亏格:"<<compute_genus(merged_mesh) << endl;
+//                or11 << merged_mesh;
+//                ornow << *coverage_field_list[near_id].poly;
+//                exit(0);
+//            }
+
+            try {
+                cout <<"start"<<id<<" "<<i<<" value1: "<<CGAL::is_valid_polygon_mesh(merged_mesh)
+                <<" value2: "<<CGAL::is_valid_polygon_mesh(*coverage_field_list[near_id].poly)<<endl;
+                cout << CGAL::Polygon_mesh_processing::corefine_and_compute_union(merged_mesh,
+                                                                                  *coverage_field_list[near_id].poly,
+                                                                                  merged_mesh) << endl;
+                solve(merged_mesh);
+                cout <<"end" <<endl;
+            }catch (exception e){
+                std::ofstream oroo("../data/mergedMeshbugchushi.off");
+                std::ofstream or11("../data/mergedMeshbug11.off");
+                std::ofstream ornow("../data/mergedMeshbugnow.off");
+                ornow << *coverage_field_list[near_id].poly;
+                oroo << *coverage_field_list[id].poly;
+                or11 << merged_mesh;
+                cout <<"catch on"<< i << endl;
+                cout << e.what() << endl;
+                exit(0);
+            }
+        }
+        cout <<"id: "<<id <<" "<<coverage_field_list[id].poly->size_of_facets() <<" "<< merged_mesh.size_of_facets()<<endl;
+        for (CGAL::Polyhedron_3<K2>::Facet_iterator facet_it = merged_mesh.facets_begin(); facet_it != merged_mesh.facets_end(); ++facet_it) {
+            if (facet_it->is_triangle()) {
+                CGAL::Polyhedron_3<K2>::Halfedge_around_facet_circulator hfc = facet_it->facet_begin();
+                //std::cout << "Triangle: ";
+                vector<K2::Point_3> plist;
+                do {
+                    // 输出顶点坐标
+                    //std::cout << "(" << hfc->vertex()->point().id() << ") ";
+                    plist.push_back( hfc->vertex()->point());
+                    ++hfc;
+                } while (hfc != facet_it->facet_begin());
+                //std::cout << std::endl;
+                if(coverage_field_list[id].side(plist[0]) == 0 && coverage_field_list[id].side(plist[1]) == 0 && coverage_field_list[id].side(plist[2]) == 0){
+
+                    fprintf(file12, "v %lf %lf %lf\n", CGAL::to_double(plist[0].x()),  CGAL::to_double(plist[0].y()),
+                            CGAL::to_double(plist[0].z()));
+                    fprintf(file12, "v %lf %lf %lf\n", CGAL::to_double(plist[1].x()),  CGAL::to_double(plist[1].y()),
+                            CGAL::to_double(plist[1].z()));
+                    fprintf(file12, "v %lf %lf %lf\n", CGAL::to_double(plist[2].x()),  CGAL::to_double(plist[2].y()),
+                            CGAL::to_double(plist[2].z()));
+                    fprintf(file12, "f %d %d %d\n", f12id, f12id + 1, f12id + 2);
+                    f12id+=3;
+
+                }
+                //cout <<coverage_field_list[id].side(plist[0]) <<" "<< coverage_field_list[id].side(plist[1])<<" "<<coverage_field_list[id].side(plist[2])<<endl;
+            }
+        }
+        cout <<"finish"<<endl;
+
+    }
+    return ;
+
+    int id = 4000;
+    CGAL::Polyhedron_3<K2> merged_mesh= *coverage_field_list[id].poly ;
+    std::ofstream ori("../data/mergedMeshbugorigin.off");
+    ori << merged_mesh;
+    std::ofstream oo("../data/mergedMeshbugoo.off");
+    for(int i=0;i<coverage_field_list[id].nearly_field.size();i++){
+        int near_id = coverage_field_list[id].nearly_field[i];
+        if(near_id == id)continue;
+       // if( CGAL::Polygon_mesh_processing::do_intersect(*coverage_field_list[id].poly,*coverage_field_list[near_id].poly)){
+            cout <<CGAL::Polygon_mesh_processing::corefine_and_compute_union(merged_mesh, *coverage_field_list[near_id].poly, merged_mesh)<<endl;
+       // }
+    }
+    CGAL::Polyhedron_3<K2> P = merged_mesh;
+    for (CGAL::Polyhedron_3<K2>::Facet_iterator facet_it = P.facets_begin(); facet_it != P.facets_end(); ++facet_it) {
+        // 确保面是三角形
+        if (facet_it->is_triangle()) {
+            CGAL::Polyhedron_3<K2>::Halfedge_around_facet_circulator hfc = facet_it->facet_begin();
+            std::cout << "Triangle: ";
+            vector<K2::Point_3> plist;
+            do {
+                // 输出顶点坐标
+                std::cout << "(" << hfc->vertex()->point().id() << ") ";
+                plist.push_back( hfc->vertex()->point());
+                ++hfc;
+            } while (hfc != facet_it->facet_begin());
+            std::cout << std::endl;
+            cout <<coverage_field_list[id].side(plist[0]) <<" "<< coverage_field_list[id].side(plist[1])<<" "<<coverage_field_list[id].side(plist[2])<<endl;
+        }
+    }
+    oo<<merged_mesh;
+
+};
+
+
+void polygon_merge0(){
+    CGAL::Polyhedron_3<K2> merged_mesh= *coverage_field_list[0].poly ;
+    std::ofstream output("../data/mergedMesh.off");
+    output << *coverage_field_list[0].poly;
+    std::ofstream output2("../data/mergedMesh2.off");
+    vector<bool>visit(mesh->FaceSize());
+    queue<int>q;
+    q.push(0);
+    fill(visit.begin(),visit.end(),false);
+    for(auto i : mesh->NeighborFh(MeshKernel::iGameFaceHandle(0))){
+        q.push(i);
+    }
+    int cnt = 0;
+    while(!q.empty()){
+        int now = q.front();
+        cout <<cnt <<" "<< now << endl;
+        q.pop();
+        if(cnt ++ == 1772) {
+            std::ofstream output3("../data/mergedMesh1772.off");
+            output3 << *coverage_field_list[now].poly;
+            std::ofstream output4("../data/mergedMesh1772_4.off");
+            CGAL::Polyhedron_3<K2> merged_mesh4;
+            cout <<"succ?" << CGAL::Polygon_mesh_processing::corefine_and_compute_union(merged_mesh, *coverage_field_list[now].poly, merged_mesh4)<< endl;
+            cout <<  CGAL::Polygon_mesh_processing::does_self_intersect(merged_mesh)<<" "
+                 <<CGAL::Polygon_mesh_processing::does_self_intersect(*coverage_field_list[now].poly) <<" "
+            <<endl;
+            output4<<merged_mesh4;
+            break;
+        }
+        CGAL::Polygon_mesh_processing::corefine_and_compute_union(merged_mesh, *coverage_field_list[now].poly, merged_mesh);
+        for(auto j : mesh->NeighborFh(MeshKernel::iGameFaceHandle(now))){
+            if(!visit[j]){
+                visit[j] = true;
+                q.push(j);
+            }
+        }
+    }
+
+
+
+//    for(auto i: mesh->NeighborFh(MeshKernel::iGameFaceHandle(0))){
+//        CGAL::Polygon_mesh_processing::corefine_and_compute_union(merged_mesh, *coverage_field_list[i].poly, merged_mesh);
+//
+//    }
+
+
+//    for(auto i: coverage_field_list[0].nearly_field){
+//        cout <<"near:" <<i << endl;
+//        CGAL::Polyhedron_3<K2> merged_mesh_new;
+//
+//        if (!CGAL::Polygon_mesh_processing::corefine_and_compute_union(merged_mesh, *coverage_field_list[i].poly, merged_mesh_new))
+//        {
+//            std::ofstream outputbug1("../data/bug1.off");
+//            std::ofstream outputbug2("../data/bug2.off");
+//            outputbug1<< merged_mesh;
+//            outputbug2<< *coverage_field_list[i].poly;
+//
+//            CGAL::Polygon_mesh_processing::corefine_and_compute_union(merged_mesh, *coverage_field_list[i].poly, merged_mesh_new);
+//            std::cerr << "Error during corefinement." << std::endl;
+//            return ;
+//        }
+//        merged_mesh = merged_mesh_new;
+//    }
+
+    output2 << merged_mesh;
+//    std::ofstream output3("../data/mergedMesh3.off");
+//
+//    CGAL::Polygon_mesh_processing::corefine_and_compute_union(*coverage_field_list[0].poly, *coverage_field_list[942].poly, merged_mesh);
+//    output3 <<merged_mesh;
+
+//    for(int i=1;i<mesh->FaceSize();i++){
+//        CGAL::Polyhedron_3<K2> merged_mesh_new;
+//        if (!CGAL::Polygon_mesh_processing::corefine_and_compute_union(*coverage_field_list[i].poly, merged_mesh, merged_mesh_new))
+//        {
+//            std::cerr << "Error during corefinement." << std::endl;
+//            return ;
+//        }
+//        merged_mesh = merged_mesh_new;
+//        cout << merged_mesh.size_of_facets() << endl;
+//    }
+//    std::ofstream output("../data/mergedMesh.off");
+//    output << merged_mesh;
+
+};
 
 
 
@@ -78,6 +343,7 @@ int main(int argc, char* argv[]) {
     FILE *file12 = fopen( (input_filename + "_12.obj").c_str(), "w");
 
     FILE *file14 = fopen( (input_filename + "_14.obj").c_str(), "w");
+    FILE *file30 = fopen( (input_filename + "_30.obj").c_str(), "w");
 
     default_move = 0.01;
     grid_len = 2.5;
@@ -232,29 +498,49 @@ int main(int argc, char* argv[]) {
                     printf("thread num :%d find_near_thread %d/%d\n",now_id,i,mesh->FaceSize());
 
                 std::list< Tree::Intersection_and_primitive_id<K2::Triangle_3>::Type> intersections;
+                unordered_set<int>se;
+                for(int k=0;k< coverage_field_list[i].bound_face_id.size();k++){
+                    int v0_id = coverage_field_list[i].bound_face_id[k][0];
+                    int v1_id = coverage_field_list[i].bound_face_id[k][1];
+                    int v2_id = coverage_field_list[i].bound_face_id[k][2];
+                    K2::Triangle_3 this_tri(coverage_field_list[i].bound_face_vertex_exact[v0_id],
+                                            coverage_field_list[i].bound_face_vertex_exact[v1_id],
+                                            coverage_field_list[i].bound_face_vertex_exact[v2_id]);
+                    this_grid_aabb_tree.all_intersections(this_tri,std::back_inserter(intersections));
+                    for(auto item : intersections) {
+                        map<size_t, pair<int, int> >::iterator iter = face_hash_id_map.find(item.second->id());
+                        if(const K2::Point_3 * p = boost::get<K2::Point_3>(&(item.first))){
+                            continue;
+                        }
+                        se.insert(iter->second.first);
+                    }
 
-                CGAL::Epeck::FT delta = resolution*2;
-//                cout << coverage_field_list[i].bbox_min <<" "<< coverage_field_list[i].bbox_max<<endl;
-//                CGAL::Epeck::FT xx = coverage_field_list[i].bbox_min.x();
-//                cout << xx - CGAL::Epeck::FT(0.05) << endl;
-                K2::Iso_cuboid_3 bbox2(
-                        coverage_field_list[i].bbox_min.x() - delta,
-                        coverage_field_list[i].bbox_min.y() - delta,
-                        coverage_field_list[i].bbox_min.z() - delta,
-                        coverage_field_list[i].bbox_max.x() + delta,
-                        coverage_field_list[i].bbox_max.y() + delta,
-                        coverage_field_list[i].bbox_max.z() + delta
-                );
-                this_grid_aabb_tree.all_intersections(bbox2,std::back_inserter(intersections));
-
-                std::unordered_set<int>se;
-                for(auto item : intersections) {
-                    map<size_t, pair<int, int> >::iterator iter = face_hash_id_map.find(item.second->id());
-                    se.insert(iter->second.first);
                 }
                 for(auto j:se){
                     coverage_field_list[i].nearly_field.push_back(j);
                 }
+
+
+//                K2::Iso_cuboid_3 bbox2(
+//                        coverage_field_list[i].bbox_min.x() - delta,
+//                        coverage_field_list[i].bbox_min.y() - delta,
+//                        coverage_field_list[i].bbox_min.z() - delta,
+//                        coverage_field_list[i].bbox_max.x() + delta,
+//                        coverage_field_list[i].bbox_max.y() + delta,
+//                        coverage_field_list[i].bbox_max.z() + delta
+//                );
+//                this_grid_aabb_tree.all_intersections(bbox2,std::back_inserter(intersections));
+//
+//                std::unordered_set<int>se;
+//                for(auto item : intersections) {
+//                    map<size_t, pair<int, int> >::iterator iter = face_hash_id_map.find(item.second->id());
+//                    se.insert(iter->second.first);
+//                }
+//                for(auto j:se){
+//                    coverage_field_list[i].nearly_field.push_back(j);
+//                }
+
+
             }
             cout << "each_grid_cnt end thread num:"<< now_id<<endl;
         }, i);
@@ -262,6 +548,9 @@ int main(int argc, char* argv[]) {
 
     for(int i=0;i<thread_num;i++)
         find_near_thread[i]->join();
+
+    polygon_merge();
+    exit(0);
 
     for(int times=0;times<0;times++) {
         cout<<"timing:"<< times<<endl;
@@ -324,6 +613,7 @@ int main(int argc, char* argv[]) {
                     for(int k=0;k<intersection_vertex.size();k++){
                         RoughVertex rough_vertex = transfer(intersection_vertex[k]);
                         if(!coverage_field_list[field_id].rough_vertex_set.count(rough_vertex)){
+
                             coverage_field_list[field_id].done = false;
                             coverage_field_list[field_id].rough_vertex_set.insert(rough_vertex);
                             coverage_field_list[field_id].extend_vertex.push_back(rough_vertex);
@@ -521,6 +811,7 @@ int main(int argc, char* argv[]) {
     }
 
     fclose(file14);
+    exit(0);
     cout <<"final one_ring_select"<<endl;
 
     one_ring_select();

@@ -343,7 +343,7 @@ v 53.969 318.912 55.4381
         std::vector<std::vector<std::size_t> > faces_list;
 
         for (auto i: bound_face_id) {
-            faces_list.push_back({std::size_t(i[0]), std::size_t(i[1]), std::size_t(i[2])});
+            faces_list.push_back({std::size_t(i[0]), std::size_t(i[2]), std::size_t(i[1])});
             bound_face_useful.push_back(true);
         }
         bound_face_cross_field_list.resize(bound_face_id.size());
@@ -372,6 +372,12 @@ public:
         if (side== CGAL::ON_BOUNDED_SIDE || side == CGAL::ON_BOUNDARY)
             return true;
         return false;
+    }
+
+    int side(K2::Point_3 v) {
+        //CGAL::Side_of_triangle_mesh<CGAL::Polyhedron_3<K2>, K2> inside(*poly);
+        auto side = (*inside_ptr)(v);
+        return side;
     }
     CGAL::Polyhedron_3<K2> * poly;
     vector<int>nearly_field;
