@@ -32,6 +32,30 @@ jobs:
       
         sudo apt install libgflags-dev
 
+        cd TetWild
+        
+        mkdir build
+        
+        cd build
+        
+        cmake .. -DCMAKE_BUILD_TYPE=Release
+        
+        make
+        
+        cd ../..
+        
+        cd fTetWild
+        
+        mkdir build
+        
+        cd build
+        
+        cmake .. -DCMAKE_BUILD_TYPE=Release
+        
+        make
+        
+        cd ../..
+
         pwd
         
         git clone --recursive https://github.com/osqp/osqp
