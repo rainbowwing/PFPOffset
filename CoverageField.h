@@ -22,6 +22,7 @@ struct CoverageField {
     vector<vector<int> > renumber_bound_face_id;
     vector<vector<grid> > renumber_bound_face_cross_field_list;
     bool useful;
+    bool self_face_delete_flag;
     int field_id;
 
 
@@ -191,6 +192,7 @@ struct CoverageField {
     double x_max;
     double y_max;
     double z_max;
+    K2::Iso_cuboid_3 iso_cuboid_3;
 
     CoverageField(MeshKernel::iGameFaceHandle fh) {
 
@@ -248,7 +250,7 @@ struct CoverageField {
         x_max+=x_delta;
         y_max+=y_delta;
         z_max+=z_delta;
-
+        iso_cuboid_3 = K2::Iso_cuboid_3(x_min,y_min,z_min,x_max,y_max,z_max);
 
         if(field_move_vertices[mesh->fast_iGameFace[fh].vh(0)].size()==0||
            field_move_vertices[mesh->fast_iGameFace[fh].vh(1)].size()==0||
@@ -319,6 +321,12 @@ public:
             return true;
         return false;
     }
+
+    CGAL::Bounded_side bounded_side(K2::Point_3 v) {
+        //CGAL::Side_of_triangle_mesh<CGAL::Polyhedron_3<K2>, K2> inside(*poly);
+        return (*inside_ptr)(v);
+    }
+
 
     bool in_or_on_field(K2::Point_3 v) {
         //CGAL::Side_of_triangle_mesh<CGAL::Polyhedron_3<K2>, K2> inside(*poly);
