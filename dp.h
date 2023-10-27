@@ -5,7 +5,7 @@
 #ifndef THICKEN2_DP_H
 #define THICKEN2_DP_H
 #include <random>
-double avg_edge_limit = 1e-10;
+double avg_edge_limit = 1e-9;
 vector<int> get_sub_state(int state,int face_list_size){
     vector<int> ret;
     function<void(int,int,int)> dfs = [&](int state,int pos,int change){
@@ -33,6 +33,7 @@ vector<MeshKernel::iGameVertex> run(MeshKernel::iGameVertexHandle vh,vector<Mesh
 //        cout << "neighbor_face_list.size()=" <<neighbor_face_list.size() <<">21 : this mesh please do remeshing before" << endl;
 //        exit(0);
 //    }
+
     vector<double>dp;
     vector<int>dp_source;
     vector<MeshKernel::iGameVertex>dp_osqp_answer;
@@ -51,7 +52,7 @@ vector<MeshKernel::iGameVertex> run(MeshKernel::iGameVertexHandle vh,vector<Mesh
         bool succ = false;
         double exceed_dist = 0;
         double self_value = 1e100;
-        for(int times=0;times<4;times++) { //避免osqp求解器的不稳定性,多尝试几次
+        for(int times=0;times<1;times++) { //避免osqp求解器的不稳定性,多尝试几次
             MeshKernel::iGameVertex v_new = do_quadratic_error_metric_check(vh, local_neighbor_face_list, succ,
                                                                             exceed_dist);
             if (succ) {
@@ -62,10 +63,11 @@ vector<MeshKernel::iGameVertex> run(MeshKernel::iGameVertexHandle vh,vector<Mesh
                 dp_osqp_answer[state] = v_new;
                 dp_source[state] = 0;
                 self_value = dp[state];
+                break;
             }
         }
         double minx = 1e100;
-        if(neighbor_face_list.size() >=3) {
+        if(neighbor_face_list.size() >=1) {
             vector<int> sub_state = std::move(get_sub_state(state, neighbor_face_list.size()));
             int from = -1;
             for (auto next: sub_state) {
@@ -85,13 +87,17 @@ vector<MeshKernel::iGameVertex> run(MeshKernel::iGameVertexHandle vh,vector<Mesh
         }
         return min(minx,self_value);
     };
+    // cout <<"stdfs"<< endl;
     dfs((1<<neighbor_face_list.size())-1);
     queue<int>q;
     vector<MeshKernel::iGameVertex>ret;
 
     q.push((1<<neighbor_face_list.size())-1);
+    //cout <<"**"<< endl;
     while(!q.empty()){
         int now = q.front();
+        //cout << now <<" "<<dp_source[now] << endl;
+
         q.pop();
         if(dp_source[now] == 0){
             //ret.push_back(now);
@@ -125,6 +131,7 @@ vector<MeshKernel::iGameVertex> solve_by_dp(MeshKernel::iGameVertexHandle vh,vec
         if(len_list[0] + len_list[1]> len_list[2] + avg_edge_limit/100){
             neighbor_face_list.push_back(f);
         }
+
 //
 //
 //        if(flag) {
@@ -160,23 +167,25 @@ vector<MeshKernel::iGameVertex> solve_by_dp(MeshKernel::iGameVertexHandle vh,vec
     }
     //exit(0);
     //cout <<"determine "<< neighbor_face_list.size() << endl;
-
+    if(neighbor_face_list.empty()){
+        return {};
+    }
 
     //cout << vh << endl;
-    if(neighbor_face_list.size()<=16) {
+    if(neighbor_face_list.size()<=10) {
         //cout <<"?? now : " << neighbor_face_list.size() << endl;
         return run(vh,neighbor_face_list);
     }
     else{
         //cout<<"1-ring size: "<< neighbor_face_list.size() <<" meeting limit 16 do random subdivide"<< endl;
-
-        int cnt = ((int)neighbor_face_list.size() - 1)/16 + 1;
+        int s = (int)neighbor_face_list.size();
+        int cnt = ((int)neighbor_face_list.size() - 1)/8 + 1;
         int each = neighbor_face_list.size() / cnt + 1;
         //if(each > 16)exit(0);
         //cout <<"each "<< each<< endl;
         double ans = 1e100;
         vector<MeshKernel::iGameVertex> ret;
-        for(int times=0;times<10;times++){
+        for(int times=0;times<2;times++){
             vector<MeshKernel::iGameVertex> now;
             std::shuffle(neighbor_face_list.begin(), neighbor_face_list.end(), mt);
             vector<MeshKernel::iGameFaceHandle> que;

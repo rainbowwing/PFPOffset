@@ -62,6 +62,11 @@
 
 using namespace std;
 int main(int argc, char* argv[]) {
+    std::streambuf* original_cerr = std::cerr.rdbuf();
+
+    // Redirect cerr to a file (or /dev/null)
+    std::ofstream nullstream("/dev/null");
+    std::cerr.rdbuf(nullstream.rdbuf());
 
     google::ParseCommandLineFlags(&argc, &argv, true);
     flag_parser();
@@ -84,6 +89,7 @@ int main(int argc, char* argv[]) {
     double x_len = (mesh->BBoxMax - mesh->BBoxMin).x();
     double y_len = (mesh->BBoxMax - mesh->BBoxMin).y();
     double z_len = (mesh->BBoxMax - mesh->BBoxMin).z();
+    double min_bbox_len = min(min(x_len,y_len),z_len);
     {
         double sum = 0;
         for(int i=0;i<mesh->FaceSize();i++){
@@ -101,7 +107,7 @@ int main(int argc, char* argv[]) {
         }
         avg_edge_limit = sum/mesh->FaceSize();
         if(default_move <= 0) {
-            default_move = sum/mesh->FaceSize()/2;
+            default_move = min_bbox_len/200;
             cout <<"default_move_dist:" <<default_move << endl;
             //exit(0);
         }
@@ -155,8 +161,88 @@ int main(int argc, char* argv[]) {
 
     cout <<"st do_quadratic_error_metric" << endl;
 
+    std::vector <std::shared_ptr<std::thread> > build_neighbor(thread_num);
+    for(int i=0;i<thread_num;i++) {
+        //for (int i = 50; i < 51; i++) {
+        build_neighbor[i] = make_shared<std::thread>([&](int now_id) {
+            std::list<K2::Triangle_3> tri_list;
+            std::unordered_map<unsigned long long ,int> mp;
+            for (int i = 0; i < mesh->FaceSize(); i++) {
+                auto v0 = mesh->fast_iGameVertex[mesh->fast_iGameFace[MeshKernel::iGameFaceHandle(i)].vh(0)];
+                auto v1 = mesh->fast_iGameVertex[mesh->fast_iGameFace[MeshKernel::iGameFaceHandle(i)].vh(1)];
+                auto v2 = mesh->fast_iGameVertex[mesh->fast_iGameFace[MeshKernel::iGameFaceHandle(i)].vh(2)];
+                K2::Triangle_3 tri(iGameVertex_to_Point_K2(v0),
+                                   iGameVertex_to_Point_K2(v1),
+                                   iGameVertex_to_Point_K2(v2)
+                );
+                mp[tri.id()] = i;
+                tri_list.push_back(tri);
+            }
+            Tree aabb(tri_list.begin(),tri_list.end());
+            for (int i = 0; i < mesh->VertexSize(); i++) {
+                if (i % thread_num != now_id)continue;
+                if (i % 20 == 0)
+                    cout << "build near: " << i << "/"<<mesh->VertexSize()<< endl;
+                CGAL::Epeck::FT r(min_bbox_len/1000);
+                std::list<Primitive> intersected_primitives;
+                std::list< Tree::Intersection_and_primitive_id<K2::Triangle_3>::Type> intersections;
+                K2::Point_3 this_vertex = iGameVertex_to_Point_K2(mesh->fast_iGameVertex[i]);
+//                cout << coverage_field_list[i].bbox_min <<" "<< coverage_field_list[i].bbox_max<<endl;
+//                CGAL::Epeck::FT xx = coverage_field_list[i].bbox_min.x();
+//                cout << xx - CGAL::Epeck::FT(0.05) << endl;
+                K2::Iso_cuboid_3 bbox2(
+                        this_vertex.x() - r,
+                        this_vertex.y() - r,
+                        this_vertex.z() - r,
+                        this_vertex.x() + r,
+                        this_vertex.y() + r,
+                        this_vertex.z() + r
+                );
+                aabb.all_intersections(bbox2,std::back_inserter(intersections));
+                cout << "intersectionssize:"<< intersections.size() << endl;
+                for(auto item : intersections) {
+//                    cout <<"v " <<item.second->vertex(0) << endl;
+//                    cout <<"v " <<item.second->vertex(1) << endl;
+//                    cout <<"v " <<item.second->vertex(2) << endl;
+                    auto iter = mp.find(item.second->id());
+                    if(iter == mp.end()) exit(0);// 异常错误
+                    mesh->FastNeighborFhOfVertex_[i].insert(MeshKernel::iGameFaceHandle(iter->second));
+                }
+            }
+        }, i);
+    }
+
+    for(int i=0;i<thread_num;i++)
+        build_neighbor[i]->join();
+    for (int i = 0; i < mesh->VertexSize(); i++) {
+        cout << i <<" "<< mesh->FastNeighborFhOfVertex_[i].size() << endl;
+    }
+
+   // exit(0);
+    for(int i =0;i< mesh->FastNeighborFhOfVertex_.size();i++){
+        for(auto j : mesh->FastNeighborFhOfVertex_[i]){
+            std::set<int>se;
+            se.insert(mesh->fast_iGameFace[j].vh(0));
+            se.insert(mesh->fast_iGameFace[j].vh(1));
+            se.insert(mesh->fast_iGameFace[j].vh(2));
+            for(auto k: mesh->FastNeighborFhOfVertex_[i])
+            {
+                if(j==k)continue;
+                int cnt = se.count(mesh->fast_iGameFace[k].vh(0)) +
+                        se.count(mesh->fast_iGameFace[k].vh(1)) +
+                        se.count(mesh->fast_iGameFace[k].vh(2));
+                if(cnt == 2){
+                    mesh->FastNeighborFhOfFace_[j].insert(k);
+                }
+            }
+        }
+    }
+
 
     merge_limit.resize(mesh->VertexSize());
+
+
+
     std::vector <std::shared_ptr<std::thread> > dp_thread_pool(thread_num);
     for(int i=0;i<thread_num;i++) {
         dp_thread_pool[i] = make_shared<std::thread>([&](int now_id) {
@@ -170,6 +256,7 @@ int main(int argc, char* argv[]) {
                 for(auto j : mesh->FastNeighborFhOfVertex_[i]){
                     neighbor_list.push_back(j);
                 }
+                if(neighbor_list.size() == 0) continue;
                 // cout <<i<<"//"<<mesh->VertexSize()<<" dp_result.size(): " <<"start" << endl;
                 vector<MeshKernel::iGameVertex> dp_result = solve_by_dp(MeshKernel::iGameVertexHandle(i),neighbor_list);
                 //cout <<i<<"//"<<mesh->VertexSize()<<" dp_result.size(): " <<dp_result.size() << endl;
@@ -191,6 +278,15 @@ int main(int argc, char* argv[]) {
 
     for(int i=0;i<mesh->FaceSize();i++){
         coverage_field_list.push_back(CoverageField(MeshKernel::iGameFaceHandle(i)));
+        vector<double>len_list;
+        for(int j=0;j<3;j++) {
+            len_list.push_back((mesh->fast_iGameVertex[mesh->fast_iGameFace[i].vh(j)]
+                                - mesh->fast_iGameVertex[mesh->fast_iGameFace[i].vh((j+1)%3)]).norm());
+        }
+        sort(len_list.begin(),len_list.end());
+        if(len_list[0] + len_list[1]< len_list[2] + avg_edge_limit/100) {
+            coverage_field_list[i].useful = false;
+        }
     }
     int pre_cnt = 0;
     for(int i=0;i<mesh->FaceSize();i++){
@@ -219,12 +315,23 @@ int main(int argc, char* argv[]) {
                 if (i % thread_num != now_id)continue;
                 if(i%500==0)
                     cout << "one_ring_select_thread_pool "<< i << endl;
+                vector<double>len_list;
+                for(int j=0;j<3;j++) {
+                    len_list.push_back((mesh->fast_iGameVertex[mesh->fast_iGameFace[i].vh(j)]
+                                        - mesh->fast_iGameVertex[mesh->fast_iGameFace[i].vh((j+1)%3)]).norm());
+                }
+                sort(len_list.begin(),len_list.end());
+                if(len_list[0] + len_list[1]< len_list[2] + avg_edge_limit/100){
+                    continue;
+                }
+
 
                 set<int>neighbor_field;
 
                 for (auto neighbor_id: mesh->FastNeighborFhOfFace_[i]) {
                     if(neighbor_id == i)continue;
-                    neighbor_field.insert(neighbor_id);
+                    if(coverage_field_list[neighbor_id].useful)
+                        neighbor_field.insert(neighbor_id);
                 }
 
 
@@ -367,71 +474,34 @@ int main(int argc, char* argv[]) {
     cout <<"bfs start \n" << endl;
     std::mutex bfs_mutex;
     std::vector <std::shared_ptr<std::thread> > bfs_thread_pool(thread_num);
-    for(int i=0;i<thread_num;i++) {
-        bfs_thread_pool[i] = make_shared<std::thread>([&](int now_id) {
-            for (int face_id = 0; face_id < fsize; face_id++) {
-                if(face_id % thread_num !=  now_id)continue;
-                if (face_id % 1000 == 0)
-                    printf("%d/%d\n", face_id, fsize);
-                auto fh = make_pair(MeshKernel::iGameFaceHandle(face_id),
-                                    mesh->fast_iGameFace[face_id]);
-                MeshKernel::iGameVertex center = (mesh->fast_iGameVertex[fh.second.vh(0)] +
-                                                  mesh->fast_iGameVertex[fh.second.vh(1)] +
-                                                  mesh->fast_iGameVertex[fh.second.vh(2)]) / 3;
-
-                double move_limit = 0;
-                for(int j=0;j<3;j++){
-                    for(int k=0;k<field_move_vertices[j].size();k++){
-                        move_limit = max(move_limit,(Point_K_to_iGameVertex(field_move_vertices[fh.second.vh(j)][k]) - mesh->fast_iGameVertex[fh.second.vh(j)]).norm());
-                    }
-                }
-
-                grid now = vertex_to_grid(center);
-                vector <MeshKernel::iGameFaceHandle> face_and_neighbor;
-                face_and_neighbor.push_back(fh.first);
-                for (auto i: mesh->FastNeighborFhOfFace_[fh.first]) {
-                    face_and_neighbor.push_back(i);
-                }
-
-
-                queue <grid> q;
-                unordered_set <grid,grid_hash,grid_equal> is_visit;
-                vector <grid> center_neighbor = get_neighbor(now);
-                for (auto bfs_start_node: center_neighbor) {
-                    is_visit.insert(bfs_start_node);
-                    q.push(bfs_start_node);
-                }
-                while (!q.empty()) {
-                    now = q.front();
-                    q.pop();
-                    //cout << now.x <<" "<< now.y <<""
-                    std::unique_lock<std::mutex>lock1(bfs_mutex,std::defer_lock);
-                    lock1.lock();
+    for (int face_id = 0; face_id < fsize; face_id++) {
+        if (face_id % 1000 == 0)
+            printf("%d/%d\n", face_id, fsize);
+        if(!coverage_field_list[face_id].useful)continue;
+        MeshKernel::iGameVertex min_point(coverage_field_list[face_id].x_min,
+                                    coverage_field_list[face_id].y_min,
+                                    coverage_field_list[face_id].z_min
+                                    );
+        MeshKernel::iGameVertex max_point(coverage_field_list[face_id].x_max,
+                                          coverage_field_list[face_id].y_max,
+                                          coverage_field_list[face_id].z_max
+        );
+        grid g_min = vertex_to_grid(min_point);
+        grid g_max = vertex_to_grid(max_point);
+        for(int i=g_min.x;i<=g_max.x;i++){
+            for(int j=g_min.y;j<=g_max.y;j++){
+                for(int k=g_min.z;k<=g_max.z;k++){
+                    grid now(i,j,k);
                     auto iter = frame_grid_mp.find(now);
                     if (iter == frame_grid_mp.end()) {
                         iter = frame_grid_mp.insert(make_pair(now, GridVertex())).first;
                     }
-                    iter->second.field_list.push_back(fh.first);
-                    lock1.unlock();
-                    vector <grid> neighbor = get_neighbor(now);
-                    for (auto j: neighbor) {
-                        if (!is_visit.count(j)) {
-                            double dist = cgal_vertex_triangle_dist(fh.second, getGridVertex(j, 0), mesh);
-
-                            if (dist <  (grid_len*1.74/2+move_limit) ) { //TODO : zheli youhua cheng pianyi juli de shiji jisuan
-                                q.push(j);
-                                is_visit.insert(j);
-                            }
-                        }
-                    }
+                    iter->second.field_list.push_back(MeshKernel::iGameFaceHandle(face_id));
                 }
             }
-        },i);
+        }
     }
 
-    for(int i=0;i<thread_num;i++)
-        bfs_thread_pool[i]->join();
-    cout <<"bfs end \n" << endl;
 
     auto frame_grid_mp_bk =  frame_grid_mp;
     for(auto i : frame_grid_mp_bk) {

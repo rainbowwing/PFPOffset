@@ -21,7 +21,10 @@ struct CoverageField {
     vector<K2::Point_3 > renumber_bound_face_vertex;
     vector<vector<int> > renumber_bound_face_id;
     vector<vector<grid> > renumber_bound_face_cross_field_list;
+    bool useful;
     int field_id;
+
+
     void do_cdt(){
         //            vector<K2::Point_3> sorted_bound_vertex;
 //            vector<K2::Segment_3> cs;
@@ -181,7 +184,25 @@ struct CoverageField {
         renumber_bound_face_global_id.resize(renumber_bound_face_id.size());
     }
 
+    double x_min;
+    double y_min;
+    double z_min;
+
+    double x_max;
+    double y_max;
+    double z_max;
+
     CoverageField(MeshKernel::iGameFaceHandle fh) {
+
+
+        x_min = mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(0)].x();
+        y_min = mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(0)].y();
+        z_min = mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(0)].z();
+
+        x_max = mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(0)].x();
+        y_max = mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(0)].y();
+        z_max = mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(0)].z();
+
         bound_face_vertex_inexact.emplace_back(mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(0)].x(),
                                                mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(0)].y(),
                                                mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(0)].z()
@@ -194,6 +215,8 @@ struct CoverageField {
                                                mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(2)].y(),
                                                mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(2)].z()
         );
+
+
         for(auto v: field_move_vertices[mesh->fast_iGameFace[fh].vh(0)])
             bound_face_vertex_inexact.emplace_back(v.x(),v.y(),v.z());
         for(auto v: field_move_vertices[mesh->fast_iGameFace[fh].vh(1)])
@@ -203,13 +226,43 @@ struct CoverageField {
 
 
         map<size_t,int> mp;
-        for(int i=0;i<bound_face_vertex_inexact.size();i++){
+        for(int i=0;i<bound_face_vertex_inexact.size();i++) {
+            x_min = min(bound_face_vertex_inexact[i].x(),x_min);
+            y_min = min(bound_face_vertex_inexact[i].y(),y_min);
+            z_min = min(bound_face_vertex_inexact[i].z(),z_min);
+            x_max = max(bound_face_vertex_inexact[i].x(),x_max);
+            y_max = max(bound_face_vertex_inexact[i].y(),y_max);
+            z_max = max(bound_face_vertex_inexact[i].z(),z_max);
 
             mp[unique_hash_value(bound_face_vertex_inexact[i])] = i;
             bound_face_vertex_exact.emplace_back(bound_face_vertex_inexact[i].x(),
                                                  bound_face_vertex_inexact[i].y(),
                                                  bound_face_vertex_inexact[i].z());
         }
+        double x_delta = ((x_max - x_min)/50);
+        double y_delta = ((y_max - y_min)/50);
+        double z_delta = ((z_max - z_min)/50);
+        x_min-=x_delta;
+        y_min-=y_delta;
+        z_min-=z_delta;
+        x_max+=x_delta;
+        y_max+=y_delta;
+        z_max+=z_delta;
+
+
+        if(field_move_vertices[mesh->fast_iGameFace[fh].vh(0)].size()==0||
+           field_move_vertices[mesh->fast_iGameFace[fh].vh(1)].size()==0||
+           field_move_vertices[mesh->fast_iGameFace[fh].vh(2)].size()==0
+                ){
+            center = centroid(K2::Triangle_3(iGameVertex_to_Point_K2(mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(0)]),
+                                    iGameVertex_to_Point_K2(mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(1)]),
+                                    iGameVertex_to_Point_K2(mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(2)])
+                                    ));
+            useful  = false;
+            return;
+        }
+        useful = true;
+
         Delaunay3D dt;
         dt.insert(bound_face_vertex_inexact.begin(), bound_face_vertex_inexact.end());
         std::vector<K::Triangle_3> surface_triangles;
@@ -220,6 +273,15 @@ struct CoverageField {
                 }
             }
         }
+        if(surface_triangles.size()<4){
+            center = centroid(K2::Triangle_3(iGameVertex_to_Point_K2(mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(0)]),
+                                             iGameVertex_to_Point_K2(mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(1)]),
+                                             iGameVertex_to_Point_K2(mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(2)])
+            ));
+            useful  = false;
+            return;
+        }
+
 
 
         K2::Vector_3 center_vec = {0,0,0};
