@@ -217,7 +217,11 @@ struct CoverageField {
                                                mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(2)].y(),
                                                mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(2)].z()
         );
-
+        K2::Triangle_3 origin_tri(
+                K2::Point_3 (bound_face_vertex_inexact[0].x(),bound_face_vertex_inexact[0].y(),bound_face_vertex_inexact[0].z()),
+                K2::Point_3 (bound_face_vertex_inexact[1].x(),bound_face_vertex_inexact[1].y(),bound_face_vertex_inexact[1].z()),
+                K2::Point_3 (bound_face_vertex_inexact[2].x(),bound_face_vertex_inexact[2].y(),bound_face_vertex_inexact[2].z())
+        );
 
         for(auto v: field_move_vertices[mesh->fast_iGameFace[fh].vh(0)])
             bound_face_vertex_inexact.emplace_back(v.x(),v.y(),v.z());
@@ -227,7 +231,8 @@ struct CoverageField {
             bound_face_vertex_inexact.emplace_back(v.x(),v.y(),v.z());
 
 
-        map<size_t,int> mp;
+
+        map<K2::Point_3 ,int> mp;
         for(int i=0;i<bound_face_vertex_inexact.size();i++) {
             x_min = min(bound_face_vertex_inexact[i].x(),x_min);
             y_min = min(bound_face_vertex_inexact[i].y(),y_min);
@@ -235,11 +240,12 @@ struct CoverageField {
             x_max = max(bound_face_vertex_inexact[i].x(),x_max);
             y_max = max(bound_face_vertex_inexact[i].y(),y_max);
             z_max = max(bound_face_vertex_inexact[i].z(),z_max);
-
-            mp[unique_hash_value(bound_face_vertex_inexact[i])] = i;
-            bound_face_vertex_exact.emplace_back(bound_face_vertex_inexact[i].x(),
-                                                 bound_face_vertex_inexact[i].y(),
-                                                 bound_face_vertex_inexact[i].z());
+            K2::Point_3 vertex_exact(bound_face_vertex_inexact[i].x(),
+                                     bound_face_vertex_inexact[i].y(),
+                                     bound_face_vertex_inexact[i].z());
+            //mp[unique_hash_value(bound_face_vertex_inexact[i])] = i;
+            bound_face_vertex_exact.emplace_back(vertex_exact);
+            mp[vertex_exact] = i;
         }
         double x_delta = ((x_max - x_min)/50);
         double y_delta = ((y_max - y_min)/50);
@@ -254,20 +260,21 @@ struct CoverageField {
 
         if(field_move_vertices[mesh->fast_iGameFace[fh].vh(0)].size()==0||
            field_move_vertices[mesh->fast_iGameFace[fh].vh(1)].size()==0||
-           field_move_vertices[mesh->fast_iGameFace[fh].vh(2)].size()==0
+           field_move_vertices[mesh->fast_iGameFace[fh].vh(2)].size()==0 ||
+           origin_tri.is_degenerate()
                 ){
             center = centroid(K2::Triangle_3(iGameVertex_to_Point_K2(mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(0)]),
-                                    iGameVertex_to_Point_K2(mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(1)]),
-                                    iGameVertex_to_Point_K2(mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(2)])
-                                    ));
+                                             iGameVertex_to_Point_K2(mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(1)]),
+                                             iGameVertex_to_Point_K2(mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(2)])
+            ));
             useful  = false;
             return;
         }
         useful = true;
 
-        Delaunay3D dt;
-        dt.insert(bound_face_vertex_inexact.begin(), bound_face_vertex_inexact.end());
-        std::vector<K::Triangle_3> surface_triangles;
+        Delaunay3DK2 dt;
+        dt.insert(bound_face_vertex_exact.begin(), bound_face_vertex_exact.end());
+        std::vector<K2::Triangle_3> surface_triangles;
         for (auto fit = dt.finite_cells_begin(); fit != dt.finite_cells_end(); ++fit) {
             for (int i = 0; i < 4; ++i) {
                 if (dt.is_infinite(fit->neighbor(i))) {
@@ -288,9 +295,9 @@ struct CoverageField {
 
         K2::Vector_3 center_vec = {0,0,0};
         for (const auto& triangle : surface_triangles) {
-            int v0_id = mp[unique_hash_value(triangle.vertex(0))];
-            int v1_id = mp[unique_hash_value(triangle.vertex(1))];
-            int v2_id = mp[unique_hash_value(triangle.vertex(2))];
+            int v0_id = mp[(triangle.vertex(0))];
+            int v1_id = mp[(triangle.vertex(1))];
+            int v2_id = mp[(triangle.vertex(2))];
 
             bound_face_id.push_back({v0_id, v1_id, v2_id});
             center_vec += (centroid(K2::Triangle_3(bound_face_vertex_exact[v0_id],
