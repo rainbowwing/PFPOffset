@@ -72,7 +72,7 @@ int main(int argc, char* argv[]) {
 
     cout <<"CGAL_RELEASE_DATE:" << CGAL_RELEASE_DATE << endl;
     mesh = make_shared<MeshKernel::SurfaceMesh>(ReadObjFile(input_filename)); grid_len = 0.1;
-    //update_model();
+   // update_model();
     input_filename = input_filename.substr(0,input_filename.size()-4);
     input_filename+= string("_") + (running_mode==1?"offset_outward":"offset_inward");
     FILE *file11 = fopen( (input_filename + "_grid.obj").c_str(), "w");
@@ -326,7 +326,7 @@ int main(int argc, char* argv[]) {
 //    fclose(file14);
 //    exit(0);
     vector<set<int> > coverage_intersection(mesh->FaceSize());
-    if(0){
+    if(1){
         std::vector <std::shared_ptr<std::thread> > find_near(thread_num);
         for(int i=0;i<thread_num;i++)  {
             find_near[i] = make_shared<std::thread>([&](int now_id) {
