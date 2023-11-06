@@ -75,9 +75,19 @@ void merge_initial(){
     std::vector<double>kd_tree_points_move_limit;
     unordered_map<unsigned long long, int > mp;
     for(int i=0;i<mesh->VertexSize();i++){
+        K::Point_3 pp = Point_K2_to_Point_K(origin_mesh_vertices[i]);
+        mp[unique_hash_value(pp)] = kd_tree_which_source.size();
+        kd_tree_points.push_back(pp);
+        kd_tree_points_move_limit.push_back(merge_limit[i]);
+        kd_tree_list.emplace_back();
+        kd_tree_which_source.emplace_back(-1,i);
+    }
+
+    for(int i=0;i<mesh->VertexSize();i++){
         for(int j=0;j<field_move_vertices[i].size();j++){
-            mp[unique_hash_value(field_move_vertices[i][j])] = kd_tree_which_source.size();
-            kd_tree_points.push_back(field_move_vertices[i][j]);
+            K::Point_3 pp = Point_K2_to_Point_K(field_move_vertices[i][j]);
+            mp[unique_hash_value(pp)] = kd_tree_which_source.size();
+            kd_tree_points.push_back(pp);
             kd_tree_points_move_limit.push_back(merge_limit[i]);
             kd_tree_list.emplace_back();
             kd_tree_which_source.emplace_back(i,j);
@@ -131,7 +141,10 @@ void merge_initial(){
         int source_id = mp[dsu.find_root(hash_value)];
         pair<int,int>which = kd_tree_which_source[i];
 //        cout <<i<<"point"<< kd_tree_points[i].x() <<" "<< kd_tree_points[i].y()<<" "<< kd_tree_points[i].z()<<" "<<i<<"hashvalue"<<hash_value <<"root"<<dsu.find_root(hash_value) <<" "<<source_id <<" "<<which.first <<" "<< which.second << endl;
-        field_move_vertices[which.first][which.second] =  kd_tree_points_new[source_id] ;
+        field_move_vertices[which.first][which.second] =  K2::Point_3(kd_tree_points_new[source_id].x(),
+                                                                      kd_tree_points_new[source_id].y(),
+                                                                      kd_tree_points_new[source_id].z()
+                                                                      );
     }
 }
 

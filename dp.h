@@ -56,7 +56,7 @@ vector<MeshKernel::iGameVertex> run(MeshKernel::iGameVertexHandle vh,vector<Mesh
         bool succ = false;
         double exceed_dist = 0;
         double self_value = 1e100;
-        for(int times=0;times<3;times++) { //避免osqp求解器的不稳定性,多尝试几次
+        for(int times=0;times<2;times++) { //避免osqp求解器的不稳定性,多尝试几次
             MeshKernel::iGameVertex v_new = do_quadratic_error_metric_check(vh, local_neighbor_face_list, succ,
                                                                             exceed_dist);
             if (succ) {
@@ -205,14 +205,14 @@ vector<MeshKernel::iGameVertex> solve_by_dp(MeshKernel::iGameVertexHandle vh,vec
     }
 
     //cout << vh << endl;
-    if(neighbor_face_list.size()<=12) {
+    if(neighbor_face_list.size()<=10) {
         //cout <<"?? now : " << neighbor_face_list.size() << endl;
         return run(vh,neighbor_face_list);
     }
     else{
         //cout<<"1-ring size: "<< neighbor_face_list.size() <<" meeting limit 16 do random subdivide"<< endl;
         int s = (int)neighbor_face_list.size();
-        int cnt = ((int)neighbor_face_list.size() - 1)/12 + 1;
+        int cnt = ((int)neighbor_face_list.size() - 1)/10 + 1;
         int each = neighbor_face_list.size() / cnt + 1;
         //if(each > 16)exit(0);
         //cout <<"each "<< each<< endl;

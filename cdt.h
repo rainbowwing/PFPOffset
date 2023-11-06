@@ -26,6 +26,7 @@ typedef CGAL::Search_traits_3<K> STraits;
 typedef CGAL::Fuzzy_sphere<STraits> Fuzzy_circle;
 typedef CGAL::Kd_tree<STraits> Kd_tree;
 
+
 typedef CGAL::Search_traits_3<K2> STraitsK2;
 typedef CGAL::Fuzzy_sphere<STraitsK2> Fuzzy_circle_K2;
 typedef CGAL::Kd_tree<STraitsK2> Kd_tree_K2;

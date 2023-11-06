@@ -6,7 +6,6 @@
 #define THICKEN2_COVERAGEFIELD_H
 struct CoverageField {
     vector<K2::Point_3 > bound_face_vertex_exact;
-    vector<K::Point_3 > bound_face_vertex_inexact;
     vector<vector<int> > bound_face_id;
     vector<vector<grid> >  bound_face_cross_field_list;
     vector<vector<K2::Segment_3> > bound_face_cutting_segment;
@@ -81,26 +80,25 @@ struct CoverageField {
                                bound_face_vertex_exact[bound_face_id[i][1]],
                                bound_face_vertex_exact[bound_face_id[i][2]]);
 
-            for(auto j : bound_face_cutting_point[i]){
-                if(j != bound_face_vertex_exact[bound_face_id[i][0]] &&
-                   j != bound_face_vertex_exact[bound_face_id[i][1]] &&
-                   j != bound_face_vertex_exact[bound_face_id[i][2]]
-                        )
-                    sorted_bound_vertex.push_back(j);
-            }
-            sort(sorted_bound_vertex.begin(),sorted_bound_vertex.end(),[&](const K2::Point_3& a, const K2::Point_3& b){
-                if(a.x() != b.x()){
-                    return a.x() < b.x();
-                }
-                else if(a.y() != b.y()){
-                    return a.y() < b.y();
-                }
-                return a.z() < b.z();
-            });
+//            for(auto j : bound_face_cutting_point[i]){
+//                if(j != bound_face_vertex_exact[bound_face_id[i][0]] &&
+//                   j != bound_face_vertex_exact[bound_face_id[i][1]] &&
+//                   j != bound_face_vertex_exact[bound_face_id[i][2]]
+//                        )
+//                    sorted_bound_vertex.push_back(j);
+//            }
+//            sort(sorted_bound_vertex.begin(),sorted_bound_vertex.end(),[&](const K2::Point_3& a, const K2::Point_3& b){
+//                if(a.x() != b.x()){
+//                    return a.x() < b.x();
+//                }
+//                else if(a.y() != b.y()){
+//                    return a.y() < b.y();
+//                }
+//                return a.z() < b.z();
+//            });
             sorted_bound_vertex.resize(std::unique(sorted_bound_vertex.begin(),sorted_bound_vertex.end())-sorted_bound_vertex.begin());
-
+            //cout << field_id <<" "<<i<<" "<<cs.size() << endl;
             vector<vector<K2::Point_3> > res = CGAL_CDT_NEW(sorted_bound_vertex,cs,tri);
-
             for(int j=0;j<res.size();j++){
                 cdt_result.push_back(res[j]);
                 cdt_result_cross_field_list_id.push_back(i);
@@ -197,56 +195,45 @@ struct CoverageField {
     CoverageField(MeshKernel::iGameFaceHandle fh) {
 
 
-        x_min = mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(0)].x();
-        y_min = mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(0)].y();
-        z_min = mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(0)].z();
+        x_min = CGAL::to_double(origin_mesh_vertices[mesh->fast_iGameFace[fh].vh(0)].x());
+        y_min = CGAL::to_double(origin_mesh_vertices[mesh->fast_iGameFace[fh].vh(0)].y());
+        z_min = CGAL::to_double(origin_mesh_vertices[mesh->fast_iGameFace[fh].vh(0)].z());
 
-        x_max = mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(0)].x();
-        y_max = mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(0)].y();
-        z_max = mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(0)].z();
+        x_max = CGAL::to_double(origin_mesh_vertices[mesh->fast_iGameFace[fh].vh(0)].x());
+        y_max = CGAL::to_double(origin_mesh_vertices[mesh->fast_iGameFace[fh].vh(0)].y());
+        z_max = CGAL::to_double(origin_mesh_vertices[mesh->fast_iGameFace[fh].vh(0)].z());
 
-        bound_face_vertex_inexact.emplace_back(mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(0)].x(),
-                                               mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(0)].y(),
-                                               mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(0)].z()
-        );
-        bound_face_vertex_inexact.emplace_back(mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(1)].x(),
-                                               mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(1)].y(),
-                                               mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(1)].z()
-        );
-        bound_face_vertex_inexact.emplace_back(mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(2)].x(),
-                                               mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(2)].y(),
-                                               mesh->fast_iGameVertex[mesh->fast_iGameFace[fh].vh(2)].z()
-        );
+        bound_face_vertex_exact.emplace_back(origin_mesh_vertices[mesh->fast_iGameFace[fh].vh(0)]);
+
+        bound_face_vertex_exact.emplace_back(origin_mesh_vertices[mesh->fast_iGameFace[fh].vh(1)]);
+
+        bound_face_vertex_exact.emplace_back(origin_mesh_vertices[mesh->fast_iGameFace[fh].vh(2)]);
         K2::Triangle_3 origin_tri(
-                K2::Point_3 (bound_face_vertex_inexact[0].x(),bound_face_vertex_inexact[0].y(),bound_face_vertex_inexact[0].z()),
-                K2::Point_3 (bound_face_vertex_inexact[1].x(),bound_face_vertex_inexact[1].y(),bound_face_vertex_inexact[1].z()),
-                K2::Point_3 (bound_face_vertex_inexact[2].x(),bound_face_vertex_inexact[2].y(),bound_face_vertex_inexact[2].z())
+                bound_face_vertex_exact[0],
+                bound_face_vertex_exact[1],
+                bound_face_vertex_exact[2]
         );
 
         for(auto v: field_move_vertices[mesh->fast_iGameFace[fh].vh(0)])
-            bound_face_vertex_inexact.emplace_back(v.x(),v.y(),v.z());
+            bound_face_vertex_exact.push_back(v);
         for(auto v: field_move_vertices[mesh->fast_iGameFace[fh].vh(1)])
-            bound_face_vertex_inexact.emplace_back(v.x(),v.y(),v.z());
+            bound_face_vertex_exact.push_back(v);
         for(auto v: field_move_vertices[mesh->fast_iGameFace[fh].vh(2)])
-            bound_face_vertex_inexact.emplace_back(v.x(),v.y(),v.z());
+            bound_face_vertex_exact.push_back(v);
 
 
 
         map<K2::Point_3 ,int> mp;
-        for(int i=0;i<bound_face_vertex_inexact.size();i++) {
-            x_min = min(bound_face_vertex_inexact[i].x(),x_min);
-            y_min = min(bound_face_vertex_inexact[i].y(),y_min);
-            z_min = min(bound_face_vertex_inexact[i].z(),z_min);
-            x_max = max(bound_face_vertex_inexact[i].x(),x_max);
-            y_max = max(bound_face_vertex_inexact[i].y(),y_max);
-            z_max = max(bound_face_vertex_inexact[i].z(),z_max);
-            K2::Point_3 vertex_exact(bound_face_vertex_inexact[i].x(),
-                                     bound_face_vertex_inexact[i].y(),
-                                     bound_face_vertex_inexact[i].z());
-            //mp[unique_hash_value(bound_face_vertex_inexact[i])] = i;
-            bound_face_vertex_exact.emplace_back(vertex_exact);
-            mp[vertex_exact] = i;
+        for(int i=0;i<bound_face_vertex_exact.size();i++) {
+            x_min = min(CGAL::to_double(bound_face_vertex_exact[i].x()),x_min);
+            y_min = min(CGAL::to_double(bound_face_vertex_exact[i].y()),y_min);
+            z_min = min(CGAL::to_double(bound_face_vertex_exact[i].z()),z_min);
+            x_max = max(CGAL::to_double(bound_face_vertex_exact[i].x()),x_max);
+            y_max = max(CGAL::to_double(bound_face_vertex_exact[i].y()),y_max);
+            z_max = max(CGAL::to_double(bound_face_vertex_exact[i].z()),z_max);
+            mp[bound_face_vertex_exact[i]] = i;
         }
+
         double x_delta = ((x_max - x_min)/50);
         double y_delta = ((y_max - y_min)/50);
         double z_delta = ((z_max - z_min)/50);
