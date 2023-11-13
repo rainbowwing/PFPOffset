@@ -7,6 +7,8 @@
 struct CoverageField {
     vector<K2::Point_3 > bound_face_vertex_exact;
     vector<vector<int> > bound_face_id;
+    vector<vector<K2::Point_3> > bound_face_sampling_point;
+    vector<vector<int> > bound_face_sampling_point_state;
     vector<vector<grid> >  bound_face_cross_field_list;
     vector<vector<K2::Segment_3> > bound_face_cutting_segment;
     vector<vector<K2::Point_3> > bound_face_cutting_point;
@@ -285,8 +287,9 @@ struct CoverageField {
             int v0_id = mp[(triangle.vertex(0))];
             int v1_id = mp[(triangle.vertex(1))];
             int v2_id = mp[(triangle.vertex(2))];
-
             bound_face_id.push_back({v0_id, v1_id, v2_id});
+            bound_face_sampling_point.push_back(get_sampling_point(triangle));
+            bound_face_sampling_point_state.emplace_back(bound_face_sampling_point.rbegin()->size(),0);
             center_vec += (centroid(K2::Triangle_3(bound_face_vertex_exact[v0_id],
                                                    bound_face_vertex_exact[v1_id],
                                                    bound_face_vertex_exact[v2_id])) - K2::Point_3(0,0,0)) ;

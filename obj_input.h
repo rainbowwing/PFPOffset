@@ -5,6 +5,7 @@
 #ifndef THICKEN2_OBJ_INPUT_H
 #define THICKEN2_OBJ_INPUT_H
 double default_move = -1;
+double min_near_limit = 1e-5;
 int thread_num = 12;
 double max_distance_limit = 1.30;
 double min_distance_limit = 1.0;
@@ -68,4 +69,30 @@ MeshKernel::SurfaceMesh ReadObjFile(const std::string &_InputFile) {
     return mesh;
 }
 shared_ptr <MeshKernel::SurfaceMesh> mesh;
+string input_filename;
+
+
+void update_model(){
+    FILE *file_update = fopen( (input_filename + "_update.obj").c_str(), "w");
+    mesh->initBBox();
+    double stx = mesh->BBoxMin.x() + (mesh->BBoxMax.x() - mesh->BBoxMin.x())/2;
+    double sty = mesh->BBoxMin.y() + (mesh->BBoxMax.y() - mesh->BBoxMin.y())/2;
+    double stz = mesh->BBoxMin.z() + (mesh->BBoxMax.z() - mesh->BBoxMin.z())/2;
+
+    for(int i=0;i<mesh->VertexSize();i++){
+        fprintf(file_update,"v %lf %lf %lf\n",
+                mesh->fast_iGameVertex[i].x()-stx,
+                mesh->fast_iGameVertex[i].y()-sty,
+                mesh->fast_iGameVertex[i].z()-stz);
+    }
+    for(int i=0;i<mesh->FaceSize();i++){
+        fprintf(file_update,"f %d %d %d\n",
+                mesh->fast_iGameFace[i].vh(0)+1,
+                mesh->fast_iGameFace[i].vh(1)+1,
+                mesh->fast_iGameFace[i].vh(2)+1);
+    }
+    fclose(file_update);
+
+    exit(0);
+}
 #endif //THICKEN2_OBJ_INPUT_H

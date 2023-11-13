@@ -141,10 +141,18 @@ void merge_initial(){
         int source_id = mp[dsu.find_root(hash_value)];
         pair<int,int>which = kd_tree_which_source[i];
 //        cout <<i<<"point"<< kd_tree_points[i].x() <<" "<< kd_tree_points[i].y()<<" "<< kd_tree_points[i].z()<<" "<<i<<"hashvalue"<<hash_value <<"root"<<dsu.find_root(hash_value) <<" "<<source_id <<" "<<which.first <<" "<< which.second << endl;
-        field_move_vertices[which.first][which.second] =  K2::Point_3(kd_tree_points_new[source_id].x(),
-                                                                      kd_tree_points_new[source_id].y(),
-                                                                      kd_tree_points_new[source_id].z()
-                                                                      );
+        if(which.first >= 0) {
+            field_move_vertices[which.first][which.second] = K2::Point_3(kd_tree_points_new[source_id].x(),
+                                                                         kd_tree_points_new[source_id].y(),
+                                                                         kd_tree_points_new[source_id].z()
+            );
+        }
+        else{
+            origin_mesh_vertices[which.second] = K2::Point_3(kd_tree_points_new[source_id].x(),
+                                                              kd_tree_points_new[source_id].y(),
+                                                              kd_tree_points_new[source_id].z()
+            );
+        }
     }
 }
 

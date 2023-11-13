@@ -80,8 +80,8 @@ inline bool is_same_triangle(K::Point_3 p0,K::Point_3 p1,K::Point_3 p2,K::Point_
     check+=( sqrt(CGAL::to_double(squared_distance(q0,p0))) < eps || sqrt(CGAL::to_double(squared_distance(q0,p1))) <eps || sqrt(CGAL::to_double(squared_distance(q0,p2)))<eps );
     check+=( sqrt(CGAL::to_double(squared_distance(q1,p0))) < eps || sqrt(CGAL::to_double(squared_distance(q1,p1))) <eps || sqrt(CGAL::to_double(squared_distance(q1,p2)))<eps );
     check+=( sqrt(CGAL::to_double(squared_distance(q2,p0))) < eps || sqrt(CGAL::to_double(squared_distance(q2,p1))) <eps || sqrt(CGAL::to_double(squared_distance(q2,p2)))<eps );
-    if(check)
-        cout << "check "<< check <<endl;
+//    if(check)
+//        cout << "check "<< check <<endl;
     return check == 6;
 
 }

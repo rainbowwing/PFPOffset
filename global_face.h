@@ -16,6 +16,21 @@ struct GlobalFace{
 
     std::unordered_map<int,vector<pair<K2::Point_3,int> > > ray_detect_map;//field 交点 int
 };
+
+vector<K2::Point_3> get_sampling_point(K2::Triangle_3 tri){
+    vector<K2::Point_3> ret;
+    K2::Point_3 center = centroid(tri);
+    ret.push_back(center);
+    for(int i=0;i<3;i++){
+        K2::Vector_3 vec = (center - tri.vertex(i))/10;
+        ret.push_back(tri.vertex(i) + vec);
+    }
+    for(int i=0;i<3;i++){
+        ret.push_back(centroid(K2::Triangle_3(tri.vertex(i),tri.vertex((i+1)%3),center)));
+    }
+    return ret;
+}
+
 vector<MeshKernel::iGameVertex> field_move_vertex;
 
 vector<vector<K2::Point_3> > field_move_vertices;

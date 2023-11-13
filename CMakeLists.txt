@@ -6,11 +6,13 @@ project(PFPOffset)
 include_directories("/opt/homebrew/include")
 
 include_directories(/usr/local/include/osqp/)
+include_directories(/opt/homebrew/Cellar/libomp/17.0.2/include)
 
 include_directories(/opt/homebrew/include/eigen3)
 
 include_directories(/opt/osqp-eigen/include/)
 include_directories(vcglib/)
+include_directories(libigl/include)
 LINK_DIRECTORIES(/usr/local/lib/)
 
 find_package(OsqpEigen REQUIRED)
@@ -43,12 +45,14 @@ if(APPLE)
             ${Boost_LIBRARY_DIRS}
             OsqpEigen::OsqpEigen
             /opt/homebrew/lib/libgflags.dylib
+            /opt/homebrew/Cellar/libomp/17.0.2/lib/libomp.dylib
             )
 else()
     target_link_libraries(PFPOffset
             -lgmp
             -lpthread
             -lmpfr
+            -fopenmp
             ${Boost_LIBRARY_DIRS}
             OsqpEigen::OsqpEigen
             -lgflags

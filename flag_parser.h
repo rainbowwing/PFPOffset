@@ -31,7 +31,7 @@ DEFINE_double(E, -1,
 //DEFINE_double(e, 1e-4,
 //              "This arg is a double means the eps. When the distance of two points is smaller than eps, we will regard these two point as coinciding. ");
 int result_mode;
-string input_filename;
+
 double tetwild_l = -1;
 double tetwild_e = -1;
 void flag_parser() {
