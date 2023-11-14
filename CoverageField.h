@@ -12,12 +12,12 @@ struct CoverageField {
     vector<vector<grid> >  bound_face_cross_field_list;
     vector<vector<K2::Segment_3> > bound_face_cutting_segment;
     vector<vector<K2::Point_3> > bound_face_cutting_point;
-    vector<bool> bound_face_useful;
+    vector<int> bound_face_useful;// 0  表示确定无用 1表示确定有用 2表示大概率无用
 
     K2::Point_3 center;
     std::vector<std::vector<K2::Point_3> > cdt_result;
     vector<int>cdt_result_cross_field_list_id;
-    vector<bool>cdt_result_cross_field_list_useful;
+    vector<int>cdt_result_useful;
 
     vector<K2::Point_3 > renumber_bound_face_vertex;
     vector<vector<int> > renumber_bound_face_id;
@@ -36,10 +36,11 @@ struct CoverageField {
                                                     bound_face_vertex_exact[bound_face_id[i][1]],
                                                     bound_face_vertex_exact[bound_face_id[i][2]]
             };
-            if(!bound_face_useful[i]) {
+            //cout << "bound_face_useful[i]"<<bound_face_useful[i]<<endl;
+            if(bound_face_useful[i] != 1) {
                 cdt_result.push_back(sorted_bound_vertex);
                 cdt_result_cross_field_list_id.push_back(i);
-                cdt_result_cross_field_list_useful.push_back(false);
+                cdt_result_useful.push_back(bound_face_useful[i]);
                 continue;
             }
 
@@ -104,7 +105,7 @@ struct CoverageField {
             for(int j=0;j<res.size();j++){
                 cdt_result.push_back(res[j]);
                 cdt_result_cross_field_list_id.push_back(i);
-                cdt_result_cross_field_list_useful.push_back(true);
+                cdt_result_useful.push_back(bound_face_useful[i]);
             }
 
         }
@@ -114,7 +115,7 @@ struct CoverageField {
 
     vector<int>renumber_bound_face_vertex_global_id;
     vector<int>renumber_bound_face_global_id;
-    vector<bool>renumber_bound_face_useful;
+    vector<int>renumber_bound_face_useful;
     std::unordered_map<unsigned long long,int> encode_map;
 
     void renumber(){
@@ -144,7 +145,7 @@ struct CoverageField {
             if(set<int>{id0,id1,id2}.size() != 3)continue;
             renumber_bound_face_id.push_back({id0,id1,id2});
             renumber_bound_face_cross_field_list.push_back(bound_face_cross_field_list[cdt_result_cross_field_list_id[i]]);
-            renumber_bound_face_useful.push_back(cdt_result_cross_field_list_useful[i]);
+            renumber_bound_face_useful.push_back(cdt_result_useful[i]);
 
         }
         std::list<K2::Triangle_3>tri_list;
@@ -155,7 +156,7 @@ struct CoverageField {
         }
         Tree aabb_tree(tri_list.begin(),tri_list.end());
         auto iter = tri_list.begin();
-        for(int i=0;i<renumber_bound_face_id.size();i++,iter++){
+        for(int i=0;i<renumber_bound_face_id.size();i++,iter++){ //这里似乎可以加速
             K2::Point_3 tri_center = CGAL::centroid(*iter);
             K2::Ray_3 ray(tri_center,iter->supporting_plane().orthogonal_vector());
             std::list< Tree::Intersection_and_primitive_id<K2::Ray_3>::Type> intersections;
@@ -300,7 +301,7 @@ struct CoverageField {
 
         for (auto i: bound_face_id) {
             faces_list.push_back({std::size_t(i[0]), std::size_t(i[1]), std::size_t(i[2])});
-            bound_face_useful.push_back(true);
+            bound_face_useful.push_back(1);
         }
         bound_face_cross_field_list.resize(bound_face_id.size());
         bound_face_cutting_segment.resize(bound_face_id.size());
