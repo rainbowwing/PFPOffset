@@ -212,13 +212,13 @@ vector<MeshKernel::iGameVertex> solve_by_dp(MeshKernel::iGameVertexHandle vh,vec
     else{
         //cout<<"1-ring size: "<< neighbor_face_list.size() <<" meeting limit 16 do random subdivide"<< endl;
         int s = (int)neighbor_face_list.size();
-        int cnt = ((int)neighbor_face_list.size() - 1)/10 + 1;
+        int cnt = ((int)neighbor_face_list.size() - 1)/8 + 1;
         int each = neighbor_face_list.size() / cnt + 1;
         //if(each > 16)exit(0);
         //cout <<"each "<< each<< endl;
         double ans = 1e100;
         vector<MeshKernel::iGameVertex> ret;
-        for(int times=0;times<2;times++){
+        for(int times=0;times<1;times++){
             vector<MeshKernel::iGameVertex> now;
             std::shuffle(neighbor_face_list.begin(), neighbor_face_list.end(), mt);
             vector<MeshKernel::iGameFaceHandle> que;

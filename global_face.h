@@ -19,12 +19,26 @@ struct GlobalFace{
 
 vector<K2::Point_3> get_sampling_point(K2::Triangle_3 tri){
     vector<K2::Point_3> ret;
+//    for(int i=0;i<3;i++){
+//        ret.push_back(tri.vertex(i));
+//    }
+
+
+
+
+
     K2::Point_3 center = centroid(tri);
     ret.push_back(center);
     for(int i=0;i<3;i++){
-        K2::Vector_3 vec = (center - tri.vertex(i))/10;
+        K2::Vector_3 vec = (center - tri.vertex(i))/CGAL::Epeck::FT(5000.0);
         ret.push_back(tri.vertex(i) + vec);
     }
+    for(int i=0;i<3;i++){
+        K2::Point_3 mid = midpoint((K2::Segment_3 (tri.vertex(i),tri.vertex((i+1)%3) )));
+        K2::Vector_3 vec = (center - mid)/CGAL::Epeck::FT(5000.0);
+        ret.push_back(mid + vec);
+    }
+
     for(int i=0;i<3;i++){
         ret.push_back(centroid(K2::Triangle_3(tri.vertex(i),tri.vertex((i+1)%3),center)));
     }
