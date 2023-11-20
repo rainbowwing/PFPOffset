@@ -34,9 +34,7 @@ struct grid {
         return a.x == b.x && a.y == b.y && a.z == b.z;
     }
 
-    bool valid(){
-        return x>=0 && y>=0 && z>=0;
-    }
+
 };
 
 std::hash<int>int_hash;

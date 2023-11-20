@@ -83,32 +83,134 @@ struct CoverageField {
                                bound_face_vertex_exact[bound_face_id[i][1]],
                                bound_face_vertex_exact[bound_face_id[i][2]]);
 
-//            for(auto j : bound_face_cutting_point[i]){
-//                if(j != bound_face_vertex_exact[bound_face_id[i][0]] &&
-//                   j != bound_face_vertex_exact[bound_face_id[i][1]] &&
-//                   j != bound_face_vertex_exact[bound_face_id[i][2]]
-//                        )
-//                    sorted_bound_vertex.push_back(j);
-//            }
-//            sort(sorted_bound_vertex.begin(),sorted_bound_vertex.end(),[&](const K2::Point_3& a, const K2::Point_3& b){
-//                if(a.x() != b.x()){
-//                    return a.x() < b.x();
-//                }
-//                else if(a.y() != b.y()){
-//                    return a.y() < b.y();
-//                }
-//                return a.z() < b.z();
-//            });
+            for(auto j : bound_face_cutting_point[i]){
+                if(j != bound_face_vertex_exact[bound_face_id[i][0]] &&
+                   j != bound_face_vertex_exact[bound_face_id[i][1]] &&
+                   j != bound_face_vertex_exact[bound_face_id[i][2]]
+                        )
+                    sorted_bound_vertex.push_back(j);
+            }
+            sort(sorted_bound_vertex.begin(),sorted_bound_vertex.end(),[&](const K2::Point_3& a, const K2::Point_3& b){
+                if(a.x() != b.x()){
+                    return a.x() < b.x();
+                }
+                else if(a.y() != b.y()){
+                    return a.y() < b.y();
+                }
+                return a.z() < b.z();
+            });
             sorted_bound_vertex.resize(std::unique(sorted_bound_vertex.begin(),sorted_bound_vertex.end())-sorted_bound_vertex.begin());
             //cout << field_id <<" "<<i<<" "<<cs.size() << endl;
-            vector<vector<K2::Point_3> > res = CGAL_CDT_NEW(sorted_bound_vertex,cs,tri);
+            vector<vector<K2::Point_3> > res = CGAL_CDT_NEW2(sorted_bound_vertex,cs,tri);
             for(int j=0;j<res.size();j++){
                 cdt_result.push_back(res[j]);
                 cdt_result_cross_field_list_id.push_back(i);
                 cdt_result_useful.push_back(bound_face_useful[i]);
             }
+//            for(auto j : bound_face_cutting_segment[i]){
+//                if(CGAL::squared_distance(j.vertex(0),tri)!=CGAL::Epeck::FT(0)){
+//                    cout <<"tri dist bug v0"<< endl;
+//                }
+//                if(CGAL::squared_distance(j.vertex(1),tri)!=CGAL::Epeck::FT(0)){
+//                    cout <<"tri dist bug v1"<< endl;
+//                }
+//            }
+
+//            if(i==0 || i==6){
+//                for(int j=0;j<res.size();j++){
+//                    if(CGAL::squared_distance(res[j][0],tri)!=CGAL::Epeck::FT(0)){
+//                        cout <<i<<" "<< j<<" "<< 0 <<"errortouying "<< CGAL::squared_distance(res[j][0],tri)<< endl;
+//                        cout <<i<<" "<< j<<" "<< 0 <<"errortouyingmian "<< CGAL::squared_distance(res[j][0],tri.supporting_plane())<< endl;
+//                    }
+//                    if(CGAL::squared_distance(res[j][1],tri)!=CGAL::Epeck::FT(0)){
+//                        cout <<i<<" "<< j<<" "<< 1 <<"errortouying "<< CGAL::squared_distance(res[j][1],tri)<<endl;
+//                        cout <<i<<" "<< j<<" "<< 1 <<"errortouyingmian "<< CGAL::squared_distance(res[j][1],tri.supporting_plane())<<endl;
+//                    }
+//                    if(CGAL::squared_distance(res[j][2],tri)!=CGAL::Epeck::FT(0)){
+//                        cout <<i<<" "<< j<<" "<< 2 <<"errortouying "<< CGAL::squared_distance(res[j][2],tri)<<endl;
+//                        cout <<i<<" "<< j<<" "<< 1 <<"errortouyingmian "<< CGAL::squared_distance(res[j][1],tri.supporting_plane())<<endl;
+//                    }
+//                }
+//            }
 
         }
+//        ofstream fsall("../occ2/out_debugall.obj");
+//        int ccc = 1;
+//        for(int i=0;i<bound_face_id.size();i++){
+//            fsall << "v "<<bound_face_vertex_exact[bound_face_id[i][0]]<<endl;
+//            fsall << "v "<<bound_face_vertex_exact[bound_face_id[i][1]]<<endl;
+//            fsall << "v "<<bound_face_vertex_exact[bound_face_id[i][2]]<<endl;
+//            fsall <<"f "<<ccc <<" "<< ccc+1 <<" "<< ccc+2 << endl;
+//            ccc+=3;
+//        }
+//        fsall.close();
+//
+//        ofstream fsip("../occ2/out_debug0.obj");
+//        ofstream fsop("../occ2/out_debug6.obj");
+//
+//        fsip << "v "<<bound_face_vertex_exact[bound_face_id[0][0]]<<endl;
+//        fsip << "v "<<bound_face_vertex_exact[bound_face_id[0][1]]<<endl;
+//        fsip << "v "<<bound_face_vertex_exact[bound_face_id[0][2]]<<endl;
+//        fsip <<"f 1 2 3"<<endl;
+//        fsop << "v "<<bound_face_vertex_exact[bound_face_id[6][0]]<<endl;
+//        fsop << "v "<<bound_face_vertex_exact[bound_face_id[6][1]]<<endl;
+//        fsop << "v "<<bound_face_vertex_exact[bound_face_id[6][2]]<<endl;
+//        fsop << "f 1 2 3"<<endl;
+//        K2::Triangle_3 tri0(bound_face_vertex_exact[bound_face_id[0][0]],
+//                            bound_face_vertex_exact[bound_face_id[0][1]],
+//                            bound_face_vertex_exact[bound_face_id[0][2]]
+//                            );
+//        K2::Triangle_3 tri6(bound_face_vertex_exact[bound_face_id[6][0]],
+//                            bound_face_vertex_exact[bound_face_id[6][1]],
+//                            bound_face_vertex_exact[bound_face_id[6][2]]
+//                            );
+//        CGAL::cpp11::result_of<K2::Intersect_3(K2::Triangle_3, K2::Triangle_3)>::type
+//                res_06 = intersection(tri0, tri6);
+//        if (res_06) {
+//            if (const K2::Segment_3 *s = boost::get<K2::Segment_3>(&*res_06)) {
+//                if (!segment_coincide_triangle(*s, tri0) || !segment_coincide_triangle(*s, tri6)) {
+//                    cout <<"06occur cdt but cutting segment"<<endl;
+//
+//                    //一会把0、6，2、6，4、7都输出来看一下，把里面的线段都输出来看一下到底是什么原因造成cdt的结果出现相交
+//
+//                  //  cout << "diff srouce id:"<<cdt_result_cross_field_list_id[i]<<" "<< cdt_result_cross_field_list_id[j]<<endl;
+//                }
+//                else{
+//                    cout <<"06occur segment_coincide_triangle"<<endl;
+//                }
+//            }
+//        }
+//
+//        for(int i=0;i<cdt_result.size();i++){
+//            if(!cdt_result_useful[i])continue;
+//            for(int j=i+1;j<cdt_result.size();j++){
+//                if(!cdt_result_useful[j])continue;
+//                K2::Triangle_3 tri_i(cdt_result[i][0],
+//                                     cdt_result[i][1],
+//                                     cdt_result[i][2]
+//                                     );
+//                K2::Triangle_3 tri_j(cdt_result[j][0],
+//                                     cdt_result[j][1],
+//                                     cdt_result[j][2]
+//                );
+//                CGAL::cpp11::result_of<K2::Intersect_3(K2::Triangle_3, K2::Triangle_3)>::type
+//                        res_tt = intersection(tri_i, tri_j);
+//                if (res_tt) {
+//                    if (const K2::Segment_3 *s = boost::get<K2::Segment_3>(&*res_tt)) {
+//                        if (!segment_coincide_triangle(*s, tri_i) || !segment_coincide_triangle(*s, tri_j)) {
+//                            cout <<"occur cdt but cutting segment"<<endl;
+//                            //一会把0、6，2、6，4、7都输出来看一下，把里面的线段都输出来看一下到底是什么原因造成cdt的结果出现相交
+//
+//                            cout << "diff srouce id:"<<cdt_result_cross_field_list_id[i]<<" "<< cdt_result_cross_field_list_id[j]<<endl;
+//                        }
+//
+//                    }
+//                }
+//            }
+//        }
+//
+//
+//        cout <<field_id<<"end cdt:::end cccccdt"<< endl;
 
     }
 
@@ -154,6 +256,7 @@ struct CoverageField {
                                   renumber_bound_face_vertex[renumber_bound_face_id[i][1]],
                                   renumber_bound_face_vertex[renumber_bound_face_id[i][2]]);
         }
+       // cout <<"tri_list"<<tri_list.size() <<":"<<renumber_bound_face_vertex.size()<<endl;
         Tree aabb_tree(tri_list.begin(),tri_list.end());
         auto iter = tri_list.begin();
         for(int i=0;i<renumber_bound_face_id.size();i++,iter++){ //这里似乎可以加速

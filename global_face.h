@@ -17,6 +17,8 @@ struct GlobalFace{
     std::unordered_map<int,vector<pair<K2::Point_3,int> > > ray_detect_map;//field 交点 int
 };
 
+
+
 vector<K2::Point_3> get_sampling_point(K2::Triangle_3 tri){
     vector<K2::Point_3> ret;
 //    for(int i=0;i<3;i++){

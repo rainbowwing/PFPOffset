@@ -113,6 +113,15 @@ struct FinalFace{
         this->center = std::move(center);
         this->flag = flag;
     }
+    friend bool operator < (const FinalFace &a, const FinalFace& b){
+        vector<int>va{a.f0,a.f1,a.f2};
+        vector<int>vb{b.f0,b.f1,b.f2};
+        sort(va.begin(),va.end());
+        sort(vb.begin(),vb.end());
+        if(va[0]!=vb[0])return va[0]<vb[0];
+        else if(va[1]!=vb[1])return va[1]<vb[1];
+        else return va[2]<vb[2];
+    }
 };
 
 
