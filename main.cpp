@@ -60,6 +60,7 @@
 #include "flag_parser.h"
 #include "merge_initial.h"
 #include "do_winding_number.h"
+#include "disassemble_circle.h"
 #include <omp.h>
 
 int check_resolution = 3;
@@ -91,8 +92,9 @@ int main(int argc, char* argv[]) {
     FILE *file44 = fopen( (input_filename + "_check_resolution_delete.obj").c_str(), "w");
     FILE *file54 = fopen( (input_filename + "_check_resolution_reserver.obj").c_str(), "w");
     FILE *file34 = fopen( (input_filename + "_cutting_segment.obj").c_str(), "w");
-    FILE *file676 = fopen( (input_filename + "_fff676.obj").c_str(), "w");
+    FILE *file676 = fopen( (input_filename + "_fffhole.obj").c_str(), "w");
     mesh->initBBox();
+   // mesh->build_fast();
    // mesh->build_fast();
     auto start_clock = std::chrono::high_resolution_clock::now();
     cout <<"mesh->build_fast() succ" << endl;
@@ -1629,8 +1631,6 @@ int main(int argc, char* argv[]) {
     atomic<int> flag = 0;
     for(int i=0;i<thread_num;i++) {
         global_face_final_generate_thread_pool[i] = make_shared<std::thread>([&](int now_id) {
-
-
             for (int i = 0; i < global_face_list.size(); i++) {
                 if(i %(thread_num*1000) ==0)
                     cout << "global_face_list:" << i <<"/"<<global_face_list.size()<< endl;
@@ -1663,7 +1663,6 @@ int main(int argc, char* argv[]) {
                         continue;
                     }
                     if(intersection_v.size()%2 == 1) {
-
                         global_face_list[i].useful = -200;
                         break;
                     }
@@ -1757,6 +1756,7 @@ int main(int argc, char* argv[]) {
                         global_face_list[i].idx2,
                         centroid((K2::Triangle_3(global_vertex_list[global_face_list[i].idx0], global_vertex_list[global_face_list[i].idx1], global_vertex_list[global_face_list[i].idx2]))),
                         true);
+            //if(!final_face_set.count(f))
             f_list.push_back(f);
         }
     }
@@ -1778,7 +1778,7 @@ int main(int argc, char* argv[]) {
                 CGAL::to_double(global_vertex_list[final_vertex_useful[i]].y()),
                 CGAL::to_double(global_vertex_list[final_vertex_useful[i]].z()));
     }
-
+    // 做一个冲突删面的逻辑
 
     vector<int>neighbor_build[is_vertex_useful.size()+10];
     map<pair<int,int>,vector<int> >check_manifold;
@@ -1786,6 +1786,66 @@ int main(int argc, char* argv[]) {
         if(a>b)swap(a,b);
         return make_pair(a,b);
     };
+    map<pair<int,int> ,FinalFace> hole_mp;
+
+
+    // 这里新增检查逻辑，优先级： 相邻的面中存在更多的正确反向边。
+
+    map<pair<int,int> ,vector<int> >check_conflict;
+    map<int,vector<int> > conflict_with;
+    vector<int> conflict_vec;
+    for (int i = 0; i < f_list.size(); i++) {
+        if (f_list[i].flag) {
+            for(pair<int,int> edge : vector<pair<int,int> >{
+                    std::make_pair(f_list[i].f0,f_list[i].f1),
+                    std::make_pair(f_list[i].f1,f_list[i].f2),
+                    std::make_pair(f_list[i].f2,f_list[i].f0)
+            }
+            ){
+                check_conflict[edge].push_back(i);
+            }
+        }
+    }
+    for(auto i : check_conflict){
+        if(i.second.size() >= 2) {
+            for(int j=0;j<i.second.size();j++){
+                for(int k=0;k<i.second.size();k++){
+                    if(j!=k){
+                        conflict_with[i.second[j]].push_back(i.second[k]);
+                        conflict_with[i.second[k]].push_back(i.second[j]);
+                    }
+                }
+            }
+        }
+    }
+    for(auto i : conflict_with){
+        if(i.second.size() > 1){
+            conflict_vec.push_back(i.first);
+        }
+    }
+    sort(conflict_vec.begin(),conflict_vec.end(),[&](int a,int b){
+        return  conflict_with[a].size() > conflict_with[b].size();
+    });
+
+    for(int i=0;i<conflict_vec.size();i++){
+        bool flag = false;
+        for(auto j: conflict_with[conflict_vec[i]]){
+            if(f_list[j].flag){
+                flag = true;
+            }
+        }
+        if(flag){
+            f_list[conflict_vec[i]].flag = false;
+        }
+    }
+
+
+
+
+
+
+
+
 
     for (int i = 0; i < f_list.size(); i++) {
 
@@ -1801,33 +1861,268 @@ int main(int argc, char* argv[]) {
             else {
                 fprintf(file6, "f %d %d %d\n", is_vertex_useful[f_list[i].f0] + 1, is_vertex_useful[f_list[i].f1] + 1,
                         is_vertex_useful[f_list[i].f2] + 1);
-                check_manifold[get_pair(f_list[i].f0,f_list[i].f1)].push_back(f_list[i].f2);
-                check_manifold[get_pair(f_list[i].f0,f_list[i].f2)].push_back(f_list[i].f1);
-                check_manifold[get_pair(f_list[i].f1,f_list[i].f2)].push_back(f_list[i].f0);
-                check_manifold[get_pair(f_list[i].f1,f_list[i].f0)].push_back(f_list[i].f2);
-                check_manifold[get_pair(f_list[i].f2,f_list[i].f0)].push_back(f_list[i].f1);
-                check_manifold[get_pair(f_list[i].f2,f_list[i].f1)].push_back(f_list[i].f0);
+//                check_manifold[get_pair(f_list[i].f0,f_list[i].f1)].push_back(f_list[i].f2);
+//                check_manifold[get_pair(f_list[i].f0,f_list[i].f2)].push_back(f_list[i].f1);
+//                check_manifold[get_pair(f_list[i].f1,f_list[i].f2)].push_back(f_list[i].f0);
+//                check_manifold[get_pair(f_list[i].f1,f_list[i].f0)].push_back(f_list[i].f2);
+//                check_manifold[get_pair(f_list[i].f2,f_list[i].f0)].push_back(f_list[i].f1);
+//                check_manifold[get_pair(f_list[i].f2,f_list[i].f1)].push_back(f_list[i].f0);
+                if(hole_mp.count(std::make_pair(f_list[i].f0,f_list[i].f1))){
+                    auto old = hole_mp[std::make_pair(f_list[i].f0,f_list[i].f1)];
+                    cout <<"hole_mp. error" << f_list[i].f0 <<" "<<f_list[i].f1 <<  endl;
+                    cout <<"old:" <<old.f0 <<" "<< old.f1 <<" "<< old.f2 << endl;
+                    cout <<"new:" << f_list[i].f0 <<" "<< f_list[i].f1 <<" "<< f_list[i].f2 << endl;
+                    cout <<"old.f0 :"<< old.f0 <<" "<<CGAL::to_double(global_vertex_list[old.f0].x()) <<" "
+                    <<CGAL::to_double(global_vertex_list[old.f0].y()) <<" "
+                    <<CGAL::to_double(global_vertex_list[old.f0].z()) << endl;
+                    cout <<"old.f1 :"<< old.f1 <<" "<<CGAL::to_double(global_vertex_list[old.f1].x()) <<" "
+                    <<CGAL::to_double(global_vertex_list[old.f1].y()) <<" "
+                    <<CGAL::to_double(global_vertex_list[old.f1].z()) << endl;
+                    cout <<"old.f2 :"<< old.f2 <<" "<<CGAL::to_double(global_vertex_list[old.f2].x()) <<" "
+                    <<CGAL::to_double(global_vertex_list[old.f2].y()) <<" "
+                    <<CGAL::to_double(global_vertex_list[old.f2].z()) << endl;
+                    cout << (K2::Triangle_3(global_vertex_list[old.f0],
+                                            global_vertex_list[old.f1],
+                                            global_vertex_list[old.f2])).is_degenerate()<<endl;
 
+                    cout <<"new.f0 :"<< f_list[i].f0 <<" "<<CGAL::to_double(global_vertex_list[f_list[i].f0].x()) <<" "
+                         <<CGAL::to_double(global_vertex_list[f_list[i].f0].y()) <<" "
+                         <<CGAL::to_double(global_vertex_list[f_list[i].f0].z()) << endl;
+                    cout <<"new.f1 :"<< f_list[i].f1 <<" "<<CGAL::to_double(global_vertex_list[f_list[i].f1].x()) <<" "
+                         <<CGAL::to_double(global_vertex_list[f_list[i].f1].y()) <<" "
+                         <<CGAL::to_double(global_vertex_list[f_list[i].f1].z()) << endl;
+                    cout <<"new.f2 :"<< f_list[i].f2 <<" "<<CGAL::to_double(global_vertex_list[f_list[i].f2].x()) <<" "
+                         <<CGAL::to_double(global_vertex_list[f_list[i].f2].y()) <<" "
+                         <<CGAL::to_double(global_vertex_list[f_list[i].f2].z()) << endl;
+
+
+                    cout << (K2::Triangle_3(global_vertex_list[f_list[i].f0],
+                                            global_vertex_list[f_list[i].f1],
+                                            global_vertex_list[f_list[i].f2])).is_degenerate()<<endl;
+                }
+                if(hole_mp.count(std::make_pair(f_list[i].f1,f_list[i].f2))){
+                    auto old = hole_mp[std::make_pair(f_list[i].f1,f_list[i].f2)];
+                    cout <<"hole_mp. error" << f_list[i].f1 <<" "<<f_list[i].f2 <<  endl;
+                    cout <<"old:" <<old.f0 <<" "<< old.f1 <<" "<< old.f2 << endl;
+                    cout <<"new:" << f_list[i].f0 <<" "<< f_list[i].f1 <<" "<< f_list[i].f2 << endl;
+                    cout <<"old.f0 :"<< old.f0 <<" "<<CGAL::to_double(global_vertex_list[old.f0].x()) <<" "
+                         <<CGAL::to_double(global_vertex_list[old.f0].y()) <<" "
+                         <<CGAL::to_double(global_vertex_list[old.f0].z()) << endl;
+                    cout <<"old.f1 :"<< old.f1 <<" "<<CGAL::to_double(global_vertex_list[old.f1].x()) <<" "
+                         <<CGAL::to_double(global_vertex_list[old.f1].y()) <<" "
+                         <<CGAL::to_double(global_vertex_list[old.f1].z()) << endl;
+                    cout <<"old.f2 :"<< old.f2 <<" "<<CGAL::to_double(global_vertex_list[old.f2].x()) <<" "
+                         <<CGAL::to_double(global_vertex_list[old.f2].y()) <<" "
+                         <<CGAL::to_double(global_vertex_list[old.f2].z()) << endl;
+
+                    cout << (K2::Triangle_3(global_vertex_list[old.f0],
+                                            global_vertex_list[old.f1],
+                                            global_vertex_list[old.f2])).is_degenerate()<<endl;
+
+                    cout <<"new.f0 :"<< f_list[i].f0 <<" "<<CGAL::to_double(global_vertex_list[f_list[i].f0].x()) <<" "
+                         <<CGAL::to_double(global_vertex_list[f_list[i].f0].y()) <<" "
+                         <<CGAL::to_double(global_vertex_list[f_list[i].f0].z()) << endl;
+                    cout <<"new.f1 :"<< f_list[i].f1 <<" "<<CGAL::to_double(global_vertex_list[f_list[i].f1].x()) <<" "
+                         <<CGAL::to_double(global_vertex_list[f_list[i].f1].y()) <<" "
+                         <<CGAL::to_double(global_vertex_list[f_list[i].f1].z()) << endl;
+                    cout <<"new.f2 :"<< f_list[i].f2 <<" "<<CGAL::to_double(global_vertex_list[f_list[i].f2].x()) <<" "
+                         <<CGAL::to_double(global_vertex_list[f_list[i].f2].y()) <<" "
+                         <<CGAL::to_double(global_vertex_list[f_list[i].f2].z()) << endl;
+
+                    cout << (K2::Triangle_3(global_vertex_list[f_list[i].f0],
+                                            global_vertex_list[f_list[i].f1],
+                                            global_vertex_list[f_list[i].f2])).is_degenerate()<<endl;
+
+                }
+                if(hole_mp.count(std::make_pair(f_list[i].f2,f_list[i].f0))){
+                    auto old = hole_mp[std::make_pair(f_list[i].f2,f_list[i].f0)];
+                    cout <<"hole_mp. error" << f_list[i].f2 <<" "<<f_list[i].f0 <<  endl;
+                    cout <<"old:" <<old.f0 <<" "<< old.f1 <<" "<< old.f2 << endl;
+                    cout <<"new:" << f_list[i].f0 <<" "<< f_list[i].f1 <<" "<< f_list[i].f2 << endl;
+                    cout <<"old.f0 :"<< old.f0 <<" "<<CGAL::to_double(global_vertex_list[old.f0].x()) <<" "
+                         <<CGAL::to_double(global_vertex_list[old.f0].y()) <<" "
+                         <<CGAL::to_double(global_vertex_list[old.f0].z()) << endl;
+                    cout <<"old.f1 :"<< old.f1 <<" "<<CGAL::to_double(global_vertex_list[old.f1].x()) <<" "
+                         <<CGAL::to_double(global_vertex_list[old.f1].y()) <<" "
+                         <<CGAL::to_double(global_vertex_list[old.f1].z()) << endl;
+                    cout <<"old.f2 :"<< old.f2 <<" "<<CGAL::to_double(global_vertex_list[old.f2].x()) <<" "
+                         <<CGAL::to_double(global_vertex_list[old.f2].y()) <<" "
+                         <<CGAL::to_double(global_vertex_list[old.f2].z()) << endl;
+                    cout << (K2::Triangle_3(global_vertex_list[old.f0],
+                                       global_vertex_list[old.f1],
+                                       global_vertex_list[old.f2])).is_degenerate()<<endl;
+
+                    cout <<"new.f0 :"<< f_list[i].f0 <<" "<<CGAL::to_double(global_vertex_list[f_list[i].f0].x()) <<" "
+                         <<CGAL::to_double(global_vertex_list[f_list[i].f0].y()) <<" "
+                         <<CGAL::to_double(global_vertex_list[f_list[i].f0].z()) << endl;
+                    cout <<"new.f1 :"<< f_list[i].f1 <<" "<<CGAL::to_double(global_vertex_list[f_list[i].f1].x()) <<" "
+                         <<CGAL::to_double(global_vertex_list[f_list[i].f1].y()) <<" "
+                         <<CGAL::to_double(global_vertex_list[f_list[i].f1].z()) << endl;
+                    cout <<"new.f2 :"<< f_list[i].f2 <<" "<<CGAL::to_double(global_vertex_list[f_list[i].f2].x()) <<" "
+                         <<CGAL::to_double(global_vertex_list[f_list[i].f2].y()) <<" "
+                         <<CGAL::to_double(global_vertex_list[f_list[i].f2].z()) << endl;
+                    cout << (K2::Triangle_3(global_vertex_list[f_list[i].f0],
+                                            global_vertex_list[f_list[i].f1],
+                                            global_vertex_list[f_list[i].f2])).is_degenerate()<<endl;
+                }
+                hole_mp[std::make_pair(f_list[i].f0,f_list[i].f1)] = f_list[i];
+                hole_mp[std::make_pair(f_list[i].f1,f_list[i].f2)] = f_list[i];
+                hole_mp[std::make_pair(f_list[i].f2,f_list[i].f0)] = f_list[i];
             }
         }
     }
-    for(auto i : check_manifold){
-        if(i.second.size() != 4){
-            cout << i.first.first <<" "<< i.first.second <<" : ";
-            for(int j: i.second){
-                cout << j <<" ";
-            }
-            cout << endl;
-            cout << is_vertex_useful[i.first.first] <<" "<< is_vertex_useful[i.first.second] <<" : ";
-            for(int j: i.second){
-                cout << is_vertex_useful[j] <<" ";
-            }
-            cout <<"*******"<< endl;
-            cout << endl;
+    map<int,vector<int> >hole_line;
+    queue<int>hole_q;
+    int debug_hole_cnt = 1;
+    for(auto iter : hole_mp){
+        int v0 = iter.first.first;
+        int v1 = iter.first.second;
+        if(!hole_mp.count(std::make_pair(v1,v0))){
+//            cout << "v0" << v0 <<" "<< "v1"<<v1<<endl;
+//            cout << "v0 :"<<v0<<" 具体 " <<global_vertex_list[v0]<< endl;
+//            cout << "v1 :"<<v1<<" 具体 " <<global_vertex_list[v1]<< endl;
+            hole_line[v1].push_back(v0);
+//            cout <<"hole_line insert"<< v1 << endl;
+//            cout <<"succ v1:"<<v1 <<"  v0:"<<v0 <<" f:"<<iter.second.f0 <<" "<<iter.second.f1 <<" "<< iter.second.f2 << endl;
 
-            //exit(0);
         }
     }
+    cout <<hole_line.size() << endl;
+    for(auto i : hole_line){
+        cout << i.first <<" "<< i.second.size()<<" ";
+        for(auto j : i.second)
+            cout << j <<" ";
+        cout << endl;
+    }
+
+    vector<vector<int> > each_hole;
+    int ss = is_vertex_useful.size();
+    int cnt676 = 1;
+    disassemble_circle(hole_line,each_hole);
+    for(int i=0;i<each_hole.size();i++){
+        for(int j=0;j<each_hole[i].size();j++){
+            fprintf(file676,"v %lf %lf %lf\n",CGAL::to_double(global_vertex_list[each_hole[i][j]].x()),
+                    CGAL::to_double(global_vertex_list[each_hole[i][j]].y()),
+                    CGAL::to_double(global_vertex_list[each_hole[i][j]].z())
+            );
+            fprintf(file676,"v %lf %lf %lf\n",CGAL::to_double(global_vertex_list[each_hole[i][(j+1)%each_hole[i].size()]].x()),
+                    CGAL::to_double(global_vertex_list[each_hole[i][(j+1)%each_hole[i].size()]].y()),
+                    CGAL::to_double(global_vertex_list[each_hole[i][(j+1)%each_hole[i].size()]].z())
+            );
+            fprintf(file676,"l %d %d\n",cnt676,cnt676+1);
+            cnt676+=2;
+        }
+    }
+    // 一会抓出来反法向的面，检测所有边是否出现冲突，进行调整。
+    for(int i=0;i<each_hole.size();i++){
+        if(each_hole[i].size() == 3){
+            fprintf(file6, "f %d %d %d\n", is_vertex_useful[each_hole[i][0]] + 1, is_vertex_useful[each_hole[i][1]] + 1,
+                    is_vertex_useful[each_hole[i][2]] + 1);
+            continue;
+        }
+        K2::Vector_3 vec(0,0,0);
+        for(int j=0;j<each_hole[i].size();j++){
+            vec += global_vertex_list[each_hole[i][j]] - K2::Point_3 (0,0,0);
+        }
+        vec /= each_hole[i].size();
+
+        fprintf(file6, "v %lf %lf %lf\n", CGAL::to_double(vec.x()),
+                CGAL::to_double(vec.y()),
+                CGAL::to_double(vec.z()));
+
+        for(int j=0;j<each_hole[i].size();j++){
+            fprintf(file6, "f %d %d %d\n",ss + 1 ,is_vertex_useful[each_hole[i][j]] + 1,
+                    is_vertex_useful[each_hole[i][(j+1)%each_hole[i].size()]] + 1);
+        }
+        ss++;
+    }
+
+
+//    for(int i=0;i<each_hole.size();i++){
+//        cout <<"circle :"<< i <<" ";
+//        for(int j=0;j<each_hole[i].size();j++){
+//            cout << each_hole[i][j] <<" ";
+//        }
+//        cout << endl;
+//    }
+
+
+//    int c_id_cnt = is_vertex_useful.size();
+//    while(0){
+//        int now = hole_q.front();
+//        hole_q.pop();
+//        if(hole_line[now]!=-1){
+//            int ss = hole_line[now];
+//            vector<int>boundary;
+//            //boundary.push_back(now);
+//            boundary.push_back(ss);
+//            while(ss != now){
+//                ss = hole_line[ss];
+//                cout <<"ss" << ss << endl;
+//                boundary.push_back(ss);
+//            }
+//            cout <<"boundary:";
+//            for(int i=0;i<boundary.size();i++){
+//                cout <<boundary[i] <<" ";
+//            }
+//            cout <<endl;
+//            if(boundary.size() == 3){
+//                cout <<"add face in 3:"<< boundary.size()<< endl;
+//                fprintf(file6,"f %d %d %d\n",is_vertex_useful[boundary[0]] + 1, is_vertex_useful[boundary[1]] + 1,
+//                        is_vertex_useful[boundary[2]] + 1);
+//            }
+//            else {
+//                cout <<"add face "<< boundary.size()<< endl;
+//                K2::Vector_3 center_vec(0,0,0);
+//                for (int i = 0; i < boundary.size(); i++) {
+//                    center_vec += global_vertex_list[boundary[i]] - K2::Point_3(0, 0, 0);
+//                }
+//                center_vec /= boundary.size();
+//                K2::Point_3 p = K2::Point_3(0, 0, 0) + center_vec;
+//                int cid = c_id_cnt++;
+//                fprintf(file6,"v %lf %lf %lf\n",CGAL::to_double(p.x()),
+//                        CGAL::to_double(p.y()),
+//                        CGAL::to_double(p.z()));
+//
+//                for(int i=0;i<boundary.size();i++){
+//                    int fi = is_vertex_useful[boundary[i]];
+//                    int se = is_vertex_useful[boundary[(i+1)%boundary.size()]];
+//                    fprintf(file6,"f %d %d %d\n",fi,se,cid);
+//                }
+//
+//            }
+//            for(int i=0;i<boundary.size();i++){
+//                hole_line[boundary[i]] = -1;
+//            }
+////            center_vec =
+//
+//
+//        }
+//    }
+
+
+
+
+
+
+
+//    for(auto i : check_manifold){
+//        if(i.second.size() != 4){
+//            cout << i.first.first <<" "<< i.first.second <<" : ";
+//            for(int j: i.second){
+//                cout << j <<" ";
+//            }
+//            cout << endl;
+//            cout << is_vertex_useful[i.first.first] <<" "<< is_vertex_useful[i.first.second] <<" : ";
+//            for(int j: i.second){
+//                cout << is_vertex_useful[j] <<" ";
+//            }
+//            cout <<"*******"<< endl;
+//            cout << endl;
+//
+//            //exit(0);
+//        }
+//    }
 
 
     fclose(file6);

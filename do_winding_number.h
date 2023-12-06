@@ -106,6 +106,7 @@ struct FinalFace{
     int f0,f1,f2;
     K2::Point_3 center;
     bool flag;
+    FinalFace(){}
     FinalFace(int f0,int f1,int f2,K2::Point_3 center,bool flag){
         this->f0 = f0;
         this->f1 = f1;
