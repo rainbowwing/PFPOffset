@@ -80,8 +80,12 @@ int main(int argc, char* argv[]) {
     cout <<"CGAL_RELEASE_DATE:" << CGAL_RELEASE_DATE << endl;
     mesh = make_shared<MeshKernel::SurfaceMesh>(ReadObjFile(input_filename)); grid_len = 0.1;
     //update_model();
+    start_x = 0;
+    start_y = 0;
+    start_z = 0;
+    set_start();
     input_filename = input_filename.substr(0,input_filename.size()-4);
-    input_filename+= string("_") + (running_mode==1?"offset_outward":"offset_inward");
+    input_filename+= string("_") + (running_mode==1 ? "offset_outward" : "offset_inward");
     FILE *file11 = fopen( (input_filename + "_grid.obj").c_str(), "w");
     FILE *file6 = fopen( (input_filename + "_tmp.obj").c_str(), "w");
     FILE *file7 = fopen( (input_filename + "_no_manifold.obj").c_str(), "w");
@@ -1774,14 +1778,14 @@ int main(int argc, char* argv[]) {
         }
     }
     for(int i=0;i<final_vertex_useful.size();i++){
-        fprintf(file6,"v %lf %lf %lf\n",CGAL::to_double(global_vertex_list[final_vertex_useful[i]].x()),
-                CGAL::to_double(global_vertex_list[final_vertex_useful[i]].y()),
-                CGAL::to_double(global_vertex_list[final_vertex_useful[i]].z()));
+        fprintf(file6,"v %lf %lf %lf\n",CGAL::to_double(global_vertex_list[final_vertex_useful[i]].x()+start_x),
+                CGAL::to_double(global_vertex_list[final_vertex_useful[i]].y()+start_y),
+                CGAL::to_double(global_vertex_list[final_vertex_useful[i]].z())+start_z);
     }
     // 做一个冲突删面的逻辑
 
     vector<int>neighbor_build[is_vertex_useful.size()+10];
-    map<pair<int,int>,vector<int> >check_manifold;
+    map<pair<int,int>,vector<int> > check_manifold;
     function<pair<int,int>(int,int)> get_pair = [&](int a,int b){
         if(a>b)swap(a,b);
         return make_pair(a,b);
@@ -1801,7 +1805,7 @@ int main(int argc, char* argv[]) {
                     std::make_pair(f_list[i].f1,f_list[i].f2),
                     std::make_pair(f_list[i].f2,f_list[i].f0)
             }
-            ){
+            ) {
                 check_conflict[edge].push_back(i);
             }
         }
@@ -2001,36 +2005,36 @@ int main(int argc, char* argv[]) {
     disassemble_circle(hole_line,each_hole);
     for(int i=0;i<each_hole.size();i++){
         for(int j=0;j<each_hole[i].size();j++){
-            fprintf(file676,"v %lf %lf %lf\n",CGAL::to_double(global_vertex_list[each_hole[i][j]].x()),
-                    CGAL::to_double(global_vertex_list[each_hole[i][j]].y()),
-                    CGAL::to_double(global_vertex_list[each_hole[i][j]].z())
+            fprintf(file676,"v %lf %lf %lf\n",CGAL::to_double(global_vertex_list[each_hole[i][j]].x()) + start_x,
+                    CGAL::to_double(global_vertex_list[each_hole[i][j]].y()) + start_y,
+                    CGAL::to_double(global_vertex_list[each_hole[i][j]].z()) + start_z
             );
-            fprintf(file676,"v %lf %lf %lf\n",CGAL::to_double(global_vertex_list[each_hole[i][(j+1)%each_hole[i].size()]].x()),
-                    CGAL::to_double(global_vertex_list[each_hole[i][(j+1)%each_hole[i].size()]].y()),
-                    CGAL::to_double(global_vertex_list[each_hole[i][(j+1)%each_hole[i].size()]].z())
+            fprintf(file676,"v %lf %lf %lf\n",CGAL::to_double(global_vertex_list[each_hole[i][(j+1)%each_hole[i].size()]].x()) + start_x,
+                    CGAL::to_double(global_vertex_list[each_hole[i][(j+1)%each_hole[i].size()]].y()) + start_y,
+                    CGAL::to_double(global_vertex_list[each_hole[i][(j+1)%each_hole[i].size()]].z()) + start_z
             );
             fprintf(file676,"l %d %d\n",cnt676,cnt676+1);
             cnt676+=2;
         }
     }
     // 一会抓出来反法向的面，检测所有边是否出现冲突，进行调整。
-    for(int i=0;i<each_hole.size();i++){
+    for(int i=0;i<each_hole.size();i++) {
         if(each_hole[i].size() == 3){
             fprintf(file6, "f %d %d %d\n", is_vertex_useful[each_hole[i][0]] + 1, is_vertex_useful[each_hole[i][1]] + 1,
                     is_vertex_useful[each_hole[i][2]] + 1);
             continue;
         }
         K2::Vector_3 vec(0,0,0);
-        for(int j=0;j<each_hole[i].size();j++){
+        for(int j=0;j<each_hole[i].size();j++) {
             vec += global_vertex_list[each_hole[i][j]] - K2::Point_3 (0,0,0);
         }
         vec /= each_hole[i].size();
 
-        fprintf(file6, "v %lf %lf %lf\n", CGAL::to_double(vec.x()),
-                CGAL::to_double(vec.y()),
-                CGAL::to_double(vec.z()));
+        fprintf(file6, "v %lf %lf %lf\n", CGAL::to_double(vec.x()) + start_x,
+                CGAL::to_double(vec.y()) + start_y,
+                CGAL::to_double(vec.z()) + start_z);
 
-        for(int j=0;j<each_hole[i].size();j++){
+        for(int j=0;j<each_hole[i].size();j++) {
             fprintf(file6, "f %d %d %d\n",ss + 1 ,is_vertex_useful[each_hole[i][j]] + 1,
                     is_vertex_useful[each_hole[i][(j+1)%each_hole[i].size()]] + 1);
         }

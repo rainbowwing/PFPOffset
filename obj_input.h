@@ -71,19 +71,24 @@ MeshKernel::SurfaceMesh ReadObjFile(const std::string &_InputFile) {
 shared_ptr <MeshKernel::SurfaceMesh> mesh;
 string input_filename;
 
+double start_x;
+double start_y;
+double start_z;
+void set_start(){
+    mesh->initBBox();
+    start_x = mesh->BBoxMin.x() + (mesh->BBoxMax.x() - mesh->BBoxMin.x()) / 2;
+    start_y = mesh->BBoxMin.y() + (mesh->BBoxMax.y() - mesh->BBoxMin.y()) / 2;
+    start_z = mesh->BBoxMin.z() + (mesh->BBoxMax.z() - mesh->BBoxMin.z()) / 2;
+}
 
 void update_model(){
     FILE *file_update = fopen( (input_filename + "_update.obj").c_str(), "w");
-    mesh->initBBox();
-    double stx = mesh->BBoxMin.x() + (mesh->BBoxMax.x() - mesh->BBoxMin.x())/2;
-    double sty = mesh->BBoxMin.y() + (mesh->BBoxMax.y() - mesh->BBoxMin.y())/2;
-    double stz = mesh->BBoxMin.z() + (mesh->BBoxMax.z() - mesh->BBoxMin.z())/2;
-
+    set_start();
     for(int i=0;i<mesh->VertexSize();i++){
         fprintf(file_update,"v %lf %lf %lf\n",
-                mesh->fast_iGameVertex[i].x()-stx,
-                mesh->fast_iGameVertex[i].y()-sty,
-                mesh->fast_iGameVertex[i].z()-stz);
+                mesh->fast_iGameVertex[i].x() - start_x,
+                mesh->fast_iGameVertex[i].y() - start_y,
+                mesh->fast_iGameVertex[i].z() - start_z);
     }
     for(int i=0;i<mesh->FaceSize();i++){
         fprintf(file_update,"f %d %d %d\n",
