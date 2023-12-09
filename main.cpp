@@ -89,6 +89,7 @@ int main(int argc, char* argv[]) {
     FILE *file11 = fopen( (input_filename + "_grid.obj").c_str(), "w");
     FILE *file6 = fopen( (input_filename + "_tmp.obj").c_str(), "w");
     FILE *file7 = fopen( (input_filename + "_no_manifold.obj").c_str(), "w");
+    FILE *file8 = fopen( (input_filename + "_result.obj").c_str(), "w");
     FILE *file13 = fopen( (input_filename + "_moveedge.obj").c_str(), "w");
 
     FILE *file14 = fopen( (input_filename + "_coveragefield.obj").c_str(), "w");
@@ -1075,9 +1076,9 @@ int main(int argc, char* argv[]) {
             printf("%d/%d\n", face_id, fsize);
         if(!coverage_field_list[face_id].useful)continue;
         MeshKernel::iGameVertex min_point(coverage_field_list[face_id].x_min,
-                                    coverage_field_list[face_id].y_min,
-                                    coverage_field_list[face_id].z_min
-                                    );
+                                          coverage_field_list[face_id].y_min,
+                                          coverage_field_list[face_id].z_min
+        );
         MeshKernel::iGameVertex max_point(coverage_field_list[face_id].x_max,
                                           coverage_field_list[face_id].y_max,
                                           coverage_field_list[face_id].z_max
@@ -1767,6 +1768,7 @@ int main(int argc, char* argv[]) {
     winding_num(f_list);
     map<int,int>is_vertex_useful;
     vector<int>final_vertex_useful;
+    vector<K2::Point_3>final_vertex_useful_point;
     for (int i = 0; i < f_list.size(); i++) {
         if (f_list[i].flag) {
             for(auto id : {f_list[i].f0,f_list[i].f1,f_list[i].f2}){
@@ -1780,8 +1782,13 @@ int main(int argc, char* argv[]) {
     for(int i=0;i<final_vertex_useful.size();i++){
         fprintf(file6,"v %lf %lf %lf\n",CGAL::to_double(global_vertex_list[final_vertex_useful[i]].x()+start_x),
                 CGAL::to_double(global_vertex_list[final_vertex_useful[i]].y()+start_y),
-                CGAL::to_double(global_vertex_list[final_vertex_useful[i]].z())+start_z);
+                CGAL::to_double(global_vertex_list[final_vertex_useful[i]].z()+start_z));
+        final_vertex_useful_point.emplace_back(global_vertex_list[final_vertex_useful[i]].x()+CGAL::Epeck::FT(start_x),
+                                               global_vertex_list[final_vertex_useful[i]].y()+CGAL::Epeck::FT(start_y),
+                                               global_vertex_list[final_vertex_useful[i]].z()+CGAL::Epeck::FT(start_z)
+                                               );
     }
+    map<pair<int,int>,int >final_topo_check_mp;
     // 做一个冲突删面的逻辑
 
     vector<int>neighbor_build[is_vertex_useful.size()+10];
@@ -1824,30 +1831,34 @@ int main(int argc, char* argv[]) {
     }
     for(auto i : conflict_with){
         if(i.second.size() > 1){
-            conflict_vec.push_back(i.first);
-        }
-    }
-    sort(conflict_vec.begin(),conflict_vec.end(),[&](int a,int b){
-        return  conflict_with[a].size() > conflict_with[b].size();
-    });
-
-    for(int i=0;i<conflict_vec.size();i++){
-        bool flag = false;
-        for(auto j: conflict_with[conflict_vec[i]]){
-            if(f_list[j].flag){
-                flag = true;
+            //conflict_vec.push_back(i.first);
+            for(int j=0;j<i.second.size();j++){
+                f_list[i.second[j]].flag = false;
             }
         }
-        if(flag){
-            f_list[conflict_vec[i]].flag = false;
-        }
     }
+//    sort(conflict_vec.begin(),conflict_vec.end(),[&](int a,int b){
+//        return  conflict_with[a].size() > conflict_with[b].size();
+//    });
+//
+//    for(int i=0;i<conflict_vec.size();i++){
+//        bool flag = false;
+//        for(auto j: conflict_with[conflict_vec[i]]){
+//            if(f_list[j].flag){
+//                cout <<"deal conflict"<<endl;
+//                flag = true;
+//            }
+//        }
+//        if(flag){
+//            f_list[conflict_vec[i]].flag = false;
+//        }
+//    }
+//
 
 
 
 
-
-
+    vector<vector<int> >final_face_list;
 
 
 
@@ -1953,8 +1964,8 @@ int main(int argc, char* argv[]) {
                          <<CGAL::to_double(global_vertex_list[old.f2].y()) <<" "
                          <<CGAL::to_double(global_vertex_list[old.f2].z()) << endl;
                     cout << (K2::Triangle_3(global_vertex_list[old.f0],
-                                       global_vertex_list[old.f1],
-                                       global_vertex_list[old.f2])).is_degenerate()<<endl;
+                                            global_vertex_list[old.f1],
+                                            global_vertex_list[old.f2])).is_degenerate()<<endl;
 
                     cout <<"new.f0 :"<< f_list[i].f0 <<" "<<CGAL::to_double(global_vertex_list[f_list[i].f0].x()) <<" "
                          <<CGAL::to_double(global_vertex_list[f_list[i].f0].y()) <<" "
@@ -1972,10 +1983,18 @@ int main(int argc, char* argv[]) {
                 hole_mp[std::make_pair(f_list[i].f0,f_list[i].f1)] = f_list[i];
                 hole_mp[std::make_pair(f_list[i].f1,f_list[i].f2)] = f_list[i];
                 hole_mp[std::make_pair(f_list[i].f2,f_list[i].f0)] = f_list[i];
+                final_topo_check_mp[std::make_pair(is_vertex_useful[f_list[i].f0],is_vertex_useful[f_list[i].f1])] = final_face_list.size();
+                final_topo_check_mp[std::make_pair(is_vertex_useful[f_list[i].f1],is_vertex_useful[f_list[i].f2])] = final_face_list.size();
+                final_topo_check_mp[std::make_pair(is_vertex_useful[f_list[i].f2],is_vertex_useful[f_list[i].f0])] = final_face_list.size();
+                final_face_list.push_back(vector<int>{is_vertex_useful[f_list[i].f0],
+                                                      is_vertex_useful[f_list[i].f1],
+                                                      is_vertex_useful[f_list[i].f2],
+                                                      1});
             }
         }
     }
     map<int,vector<int> >hole_line;
+    vector<vector<int> > each_hole;
     queue<int>hole_q;
     int debug_hole_cnt = 1;
     for(auto iter : hole_mp){
@@ -1999,12 +2018,11 @@ int main(int argc, char* argv[]) {
         cout << endl;
     }
 
-    vector<vector<int> > each_hole;
     int ss = is_vertex_useful.size();
     int cnt676 = 1;
     disassemble_circle(hole_line,each_hole);
-    for(int i=0;i<each_hole.size();i++){
-        for(int j=0;j<each_hole[i].size();j++){
+    for(int i=0;i<each_hole.size();i++) {
+        for(int j=0;j<each_hole[i].size();j++) {
             fprintf(file676,"v %lf %lf %lf\n",CGAL::to_double(global_vertex_list[each_hole[i][j]].x()) + start_x,
                     CGAL::to_double(global_vertex_list[each_hole[i][j]].y()) + start_y,
                     CGAL::to_double(global_vertex_list[each_hole[i][j]].z()) + start_z
@@ -2018,10 +2036,19 @@ int main(int argc, char* argv[]) {
         }
     }
     // 一会抓出来反法向的面，检测所有边是否出现冲突，进行调整。
+    fprintf(file6,"#*********\n");
     for(int i=0;i<each_hole.size();i++) {
+
         if(each_hole[i].size() == 3){
             fprintf(file6, "f %d %d %d\n", is_vertex_useful[each_hole[i][0]] + 1, is_vertex_useful[each_hole[i][1]] + 1,
                     is_vertex_useful[each_hole[i][2]] + 1);
+//            final_topo_check_mp[std::make_pair(is_vertex_useful[each_hole[i][0]],is_vertex_useful[each_hole[i][1]])] = final_face_list.size();
+//            final_topo_check_mp[std::make_pair(is_vertex_useful[each_hole[i][1]],is_vertex_useful[each_hole[i][2]])] = final_face_list.size();
+//            final_topo_check_mp[std::make_pair(is_vertex_useful[each_hole[i][2]],is_vertex_useful[each_hole[i][0]])] = final_face_list.size();
+            final_face_list.emplace_back(vector<int>{is_vertex_useful[each_hole[i][0]],
+                                                     is_vertex_useful[each_hole[i][1]],
+                                                     is_vertex_useful[each_hole[i][2]],
+                                                     1});
             continue;
         }
         K2::Vector_3 vec(0,0,0);
@@ -2033,13 +2060,114 @@ int main(int argc, char* argv[]) {
         fprintf(file6, "v %lf %lf %lf\n", CGAL::to_double(vec.x()) + start_x,
                 CGAL::to_double(vec.y()) + start_y,
                 CGAL::to_double(vec.z()) + start_z);
-
+        final_vertex_useful_point.emplace_back(vec.x()+CGAL::Epeck::FT(start_x),
+                                               vec.y()+CGAL::Epeck::FT(start_y),
+                                               vec.z()+CGAL::Epeck::FT(start_z)
+                                               );
         for(int j=0;j<each_hole[i].size();j++) {
             fprintf(file6, "f %d %d %d\n",ss + 1 ,is_vertex_useful[each_hole[i][j]] + 1,
                     is_vertex_useful[each_hole[i][(j+1)%each_hole[i].size()]] + 1);
+//            final_topo_check_mp[std::make_pair(ss, is_vertex_useful[each_hole[i][j]] ) ] = final_face_list.size();
+//            final_topo_check_mp[std::make_pair(is_vertex_useful[each_hole[i][j]] , is_vertex_useful[each_hole[i][(j+1)%each_hole[i].size()]]) ] = final_face_list.size();
+//            final_topo_check_mp[std::make_pair(is_vertex_useful[each_hole[i][(j+1)%each_hole[i].size()]], ss) ] = final_face_list.size();
+            final_face_list.emplace_back(vector<int>{ss,
+                                                     is_vertex_useful[each_hole[i][j]],
+                                                     is_vertex_useful[each_hole[i][(j+1)%each_hole[i].size()]],
+                                                     1});
         }
         ss++;
     }
+
+    for(int times = 0; times < 3 ; times++) {
+        for(int i=0;i<final_face_list.size();i++){
+            if(final_face_list[i][3]){
+                final_topo_check_mp[std::make_pair(final_face_list[i][0], final_face_list[i][1] ) ] = i;
+                final_topo_check_mp[std::make_pair(final_face_list[i][1], final_face_list[i][2] ) ] = i;
+                final_topo_check_mp[std::make_pair(final_face_list[i][2], final_face_list[i][0] ) ] = i;
+            }
+        }
+
+        bool final_flag = false;
+        for(auto iter : final_topo_check_mp) {
+            int v0 = iter.first.first;
+            int v1 = iter.first.second;
+            if(!final_topo_check_mp.count(std::make_pair(v1,v0))){
+                cout <<"lack of "<< v1 <<" "<< v0 << endl;
+                cout <<"deleta face" << iter.second<< endl;
+                final_face_list[iter.second][3] = 0;
+                final_flag = true;
+            }
+        }
+        if(!final_flag) {
+            cout <<"final ok" << endl;
+            break;
+        }
+        final_topo_check_mp.clear();
+        for(int i=0;i<final_face_list.size();i++){
+            if(final_face_list[i][3]) {
+                final_topo_check_mp[std::make_pair(final_face_list[i][0], final_face_list[i][1])] = i;
+                final_topo_check_mp[std::make_pair(final_face_list[i][1], final_face_list[i][2])] = i;
+                final_topo_check_mp[std::make_pair(final_face_list[i][2], final_face_list[i][0])] = i;
+            }
+        }
+        hole_line.clear();
+        each_hole.clear();
+        for(auto iter : final_topo_check_mp) {
+            int v0 = iter.first.first;
+            int v1 = iter.first.second;
+            if(!final_topo_check_mp.count(std::make_pair(v1,v0))){
+                hole_line[v1].push_back(v0);
+            }
+        }
+        disassemble_circle(hole_line,each_hole);
+
+        for(int i=0;i<each_hole.size();i++) {
+            if(each_hole[i].size() == 3){
+                final_face_list.emplace_back(vector<int>{each_hole[i][0],
+                                                         each_hole[i][1],
+                                                         each_hole[i][2],
+                                                         1});
+                continue;
+            }
+            cout <<"add p "<< endl;
+            K2::Vector_3 vec(0,0,0);
+            for(int j=0;j<each_hole[i].size();j++) {
+                vec += final_vertex_useful_point[each_hole[i][j]] - K2::Point_3 (0,0,0);
+            }
+            vec /= each_hole[i].size();
+
+            final_vertex_useful_point.emplace_back(vec.x(),
+                                                   vec.y(),
+                                                   vec.z()
+            );
+            for(int j=0;j<each_hole[i].size();j++) {
+                final_face_list.emplace_back(vector<int>{(int)final_vertex_useful_point.size()-1,
+                                                         each_hole[i][j],
+                                                         each_hole[i][(j+1)%each_hole[i].size()],
+                                                         1});
+            }
+        }
+
+    }
+    for(int i=0;i<final_vertex_useful_point.size();i++){
+        fprintf(file8, "v %lf %lf %lf\n",
+                CGAL::to_double(final_vertex_useful_point[i].x()),
+                CGAL::to_double(final_vertex_useful_point[i].y()),
+                CGAL::to_double(final_vertex_useful_point[i].z()));
+    }
+    for(int i=0;i<final_face_list.size();i++){
+        if(final_face_list[i][3])
+        fprintf(file8, "f %d %d %d\n",
+                final_face_list[i][0]+1,
+                final_face_list[i][1]+1,
+                final_face_list[i][2]+1
+                );
+    }
+
+
+
+
+
 
 
 //    for(int i=0;i<each_hole.size();i++){
