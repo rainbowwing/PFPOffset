@@ -125,11 +125,12 @@ int main(int argc, char* argv[]) {
         }
         avg_edge_limit = sum/mesh->FaceSize();
         if(default_move <= 0) {
-            default_move = sqrt(x_len*x_len + y_len*y_len + z_len*z_len)*1e-3;
+            default_move = min(min(x_len, y_len), z_len)*1e-3;
             cout <<"default_move_dist:" <<default_move << endl;
             //exit(0);
         }
         double min_len = min(min(x_len,y_len),z_len);
+        //double min_len = sqrt(x_len*x_len+y_len*y_len+z_len*z_len)*1e-3;
         double rate = x_len/min_len*y_len/min_len*z_len/min_len;
 
         cout <<"??"<<(4*thread_num) <<" "<<rate << endl; // minlen rate 格了 4* thread_num 格子
@@ -2080,7 +2081,7 @@ int main(int argc, char* argv[]) {
 
     for(int times = 0; times < 3 ; times++) {
         for(int i=0;i<final_face_list.size();i++){
-            if(final_face_list[i][3]){
+            if(final_face_list[i][3]) {
                 final_topo_check_mp[std::make_pair(final_face_list[i][0], final_face_list[i][1] ) ] = i;
                 final_topo_check_mp[std::make_pair(final_face_list[i][1], final_face_list[i][2] ) ] = i;
                 final_topo_check_mp[std::make_pair(final_face_list[i][2], final_face_list[i][0] ) ] = i;
@@ -2157,11 +2158,11 @@ int main(int argc, char* argv[]) {
     }
     for(int i=0;i<final_face_list.size();i++){
         if(final_face_list[i][3])
-        fprintf(file8, "f %d %d %d\n",
-                final_face_list[i][0]+1,
-                final_face_list[i][1]+1,
-                final_face_list[i][2]+1
-                );
+            fprintf(file8, "f %d %d %d\n",
+                    final_face_list[i][0]+1,
+                    final_face_list[i][1]+1,
+                    final_face_list[i][2]+1
+                    );
     }
 
 

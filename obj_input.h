@@ -79,6 +79,11 @@ void set_start(){
     start_x = mesh->BBoxMin.x() + (mesh->BBoxMax.x() - mesh->BBoxMin.x()) / 2;
     start_y = mesh->BBoxMin.y() + (mesh->BBoxMax.y() - mesh->BBoxMin.y()) / 2;
     start_z = mesh->BBoxMin.z() + (mesh->BBoxMax.z() - mesh->BBoxMin.z()) / 2;
+    for(int i=0;i<mesh->VertexSize();i++){
+        mesh->fast_iGameVertex[i].x() -= start_x;
+        mesh->fast_iGameVertex[i].y() -= start_y;
+        mesh->fast_iGameVertex[i].z() -= start_z;
+    }
 }
 
 void update_model(){
