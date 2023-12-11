@@ -71,4 +71,75 @@ void disassemble_circle(std::map<int, vector<int> >hole_line, vector<vector<int>
         }
     }
 }
+
+void fix_hole(vector<int>hole_line,vector<K2::Point_3>position,Tree * tree,vector<vector<int> >& ret){
+    std::function<void(vector<int>)> dfs = [&](vector<int> v){
+        if(v.size() == 3){
+            vector<int> ans;
+            for(int i=0;i<v.size();i++){
+                ans.push_back(hole_line[v[i]]);
+            }
+            ret.push_back(ans);
+            return ;
+        }
+        int st = -1;
+        int en = -1;
+        for(int i=0;i<v.size();i++){
+            int other = (i + 2) % v.size();
+            while((other + 1) % v.size() != i){
+                K2::Segment_3 seg(position[v[i]],position[v[other]]);
+                std::list< Tree::Intersection_and_primitive_id<K2::Triangle_3>::Type> intersections;
+                tree->all_intersections(seg,std::back_inserter(intersections));
+                bool flag = true;
+                for(auto item : intersections) { //todo 这里改成批量插入
+                    if (const K2::Segment_3 *s = boost::get<K2::Segment_3>(&(item.first))) {
+
+                    } else if (const K2::Point_3 *p = boost::get<K2::Point_3>(&(item.first))) {
+                        if(*p != seg.vertex(0) && *p != seg.vertex(1)){
+                            flag = false;
+                            break;
+                        }
+                    }
+                }
+                if(flag){
+                    st = i;
+                    en = other;
+                    break;
+                }
+                other = (other + 1) % v.size();
+            }
+            if(st !=-1)break;
+        }
+        if(st != -1) {
+            vector<int> left;
+            vector<int> right;
+            for(int i=st;i!=en;i=(i+1)%v.size()){
+                left.push_back(v[i]);
+            }
+            left.push_back(v[en]);
+
+            for(int i=en;i!=st;i=(i+1)%v.size()){
+                right.push_back(v[i]);
+            }
+            right.push_back(v[st]);
+            dfs(left);
+            dfs(right);
+        }
+        if(st == -1){
+            vector<int> ans;
+            for(int i=0;i<v.size();i++){
+                ans.push_back(hole_line[v[i]]);
+            }
+            ret.push_back(ans);
+            return ;
+        }
+    };
+    vector<int> d;
+    for(int i=0;i<hole_line.size();i++){
+        d.push_back(i);
+    }
+    dfs(d);
+}
+
+
 #endif //PFPOFFSET_DISASSEMBLE_CIRCLE_H
