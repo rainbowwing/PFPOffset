@@ -12,7 +12,7 @@ struct CoverageField {
     vector<vector<grid> >  bound_face_cross_field_list;
     vector<vector<K2::Segment_3> > bound_face_cutting_segment;
     vector<vector<K2::Point_3> > bound_face_cutting_point;
-    vector<int> bound_face_useful;// 0  表示确定无用 1表示确定有用 2表示大概率无用
+    vector<int> bound_face_useful;// 0  表示确定无用 1表示确定有用 2表示大概率无用 -99 表示原来的表面
 
     K2::Point_3 center;
     std::vector<std::vector<K2::Point_3> > cdt_result;

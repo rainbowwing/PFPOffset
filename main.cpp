@@ -586,7 +586,7 @@ int main(int argc, char* argv[]) {
                         if ((coverage_field_list[i].bound_face_id[j][0] >= 3 ||
                              coverage_field_list[i].bound_face_id[j][1] >= 3 ||
                              coverage_field_list[i].bound_face_id[j][2] >= 3)) {
-                            for(int k=0;k<coverage_field_list[i].bound_face_sampling_point[j].size();k++){
+                            for(int k=0;k<coverage_field_list[i].bound_face_sampling_point[j].size();k++) {
                                 K2::Point_3 sample = coverage_field_list[i].bound_face_sampling_point[j][k];
                                 if(CGAL::approximate_sqrt(origin_face_tree.squared_distance(sample)) <= CGAL::Epeck::FT(min_near_limit)){
                                     coverage_field_list[i].bound_face_sampling_point_state[j][k] = -1;
@@ -783,7 +783,6 @@ int main(int argc, char* argv[]) {
                                     coverage_field_list[i].bound_face_sampling_point_state[j][k] = -1;
                             }
                         }
-
 
 //                        for(int k=0;k<coverage_field_list[i].bound_face_sampling_point[j].size();k++){
 //                            if(coverage_field_list[i].bound_face_sampling_point_state[j][k]!=-1){
@@ -1136,7 +1135,7 @@ int main(int argc, char* argv[]) {
                 Tree frame_aabb_tree(frame_faces_list.begin(),frame_faces_list.end());
                 CGAL::Polyhedron_3<K2> frame_poly;
                 PMP::polygon_soup_to_polygon_mesh(ps, each_grid_face_list, frame_poly, CGAL::parameters::all_default());
-
+                list<K2::Triangle_3> origin_face_list;
                 for(int j = 0; j <  each_grid->second.field_list.size() ; j++){
                     int field_id = each_grid->second.field_list[j];
                     for(int k=0;k<coverage_field_list[field_id].bound_face_id.size();k++){
@@ -1157,12 +1156,24 @@ int main(int argc, char* argv[]) {
                                 each_grid->second.face_hash_id_map[this_tri.id()] = {field_id,k};
                                 each_grid->second.build_aabb_tree_triangle_list.push_back(this_tri);
                             }
-                        }
+                        }// 而是应该在这里直接插入，在这里直接插入可以形成较好的
 
                     }
+                    K2::Triangle_3 origin_tri(origin_mesh_vertices[mesh->fast_iGameFace[field_id].vh(0)],
+                    origin_mesh_vertices[mesh->fast_iGameFace[field_id].vh(1)],
+                    origin_mesh_vertices[mesh->fast_iGameFace[field_id].vh(2)]);
+                    origin_face_list.push_back(origin_tri);
                 }
-                Tree this_grid_aabb_tree( each_grid->second.build_aabb_tree_triangle_list.begin(),
-                                          each_grid->second.build_aabb_tree_triangle_list.end());
+                origin_face_list.insert(origin_face_list.end(), each_grid->second.build_aabb_tree_triangle_list.begin(),
+                                        each_grid->second.build_aabb_tree_triangle_list.end());
+                Tree this_grid_aabb_tree( origin_face_list.begin(),
+                                          origin_face_list.end()); // 这里插入新的面
+
+
+//                Tree this_grid_aabb_tree( each_grid->second.build_aabb_tree_triangle_list.begin(),
+//                                          each_grid->second.build_aabb_tree_triangle_list.end()); // 这里插入新的面
+
+
                // cout <<each_grid_cnt<<":::::::" <<each_grid->second.build_aabb_tree_triangle_list.size()<<endl;
                 //X: 这里写查询 因为aabb树指针的bug，所以反着做，用每个格子去查询每个面
 
@@ -1222,13 +1233,13 @@ int main(int argc, char* argv[]) {
         for(int j=0;j<coverage_field_list[face_id].bound_face_id.size();j++){
             if(coverage_field_list[face_id].bound_face_useful[j] == 1)
             for(int k=0;k<coverage_field_list[face_id].bound_face_cutting_segment[j].size();k++){
-                fprintf(file34,"v %lf %lf %lf\n",CGAL::to_double(coverage_field_list[face_id].bound_face_cutting_segment[j][k].vertex(0).x()),
-                        CGAL::to_double(coverage_field_list[face_id].bound_face_cutting_segment[j][k].vertex(0).y()),
-                        CGAL::to_double(coverage_field_list[face_id].bound_face_cutting_segment[j][k].vertex(0).z())
-                        );
-                fprintf(file34,"v %lf %lf %lf\n",CGAL::to_double(coverage_field_list[face_id].bound_face_cutting_segment[j][k].vertex(1).x()),
-                        CGAL::to_double(coverage_field_list[face_id].bound_face_cutting_segment[j][k].vertex(1).y()),
-                        CGAL::to_double(coverage_field_list[face_id].bound_face_cutting_segment[j][k].vertex(1).z())
+                fprintf(file34,"v %lf %lf %lf\n",CGAL::to_double(coverage_field_list[face_id].bound_face_cutting_segment[j][k].vertex(0).x())+start_x,
+                        CGAL::to_double(coverage_field_list[face_id].bound_face_cutting_segment[j][k].vertex(0).y()+start_y),
+                        CGAL::to_double(coverage_field_list[face_id].bound_face_cutting_segment[j][k].vertex(0).z()+start_z)
+                );
+                fprintf(file34,"v %lf %lf %lf\n",CGAL::to_double(coverage_field_list[face_id].bound_face_cutting_segment[j][k].vertex(1).x()+start_x),
+                        CGAL::to_double(coverage_field_list[face_id].bound_face_cutting_segment[j][k].vertex(1).y()+start_y),
+                        CGAL::to_double(coverage_field_list[face_id].bound_face_cutting_segment[j][k].vertex(1).z()+start_z)
                 );
                 fprintf(file34,"l %d %d\n",ll+1,ll+2);
                 ll+=2;
@@ -1274,7 +1285,7 @@ int main(int argc, char* argv[]) {
                 coverage_field_list[field_id].field_id = field_id;
                 coverage_field_list[field_id].do_cdt();
                 coverage_field_list[field_id].renumber();
-                global_vertex_id_sum+= coverage_field_list[field_id].renumber_bound_face_vertex.size();
+                global_vertex_id_sum += coverage_field_list[field_id].renumber_bound_face_vertex.size();
             }
         },i);
     }
@@ -2044,7 +2055,7 @@ int main(int argc, char* argv[]) {
     fprintf(file6,"#*********\n");
     for(int i=0;i<each_hole.size();i++) {
 
-        if(each_hole[i].size() == 3){
+        if(each_hole[i].size() == 3) {
             fprintf(file6, "f %d %d %d\n", is_vertex_useful[each_hole[i][0]] + 1, is_vertex_useful[each_hole[i][1]] + 1,
                     is_vertex_useful[each_hole[i][2]] + 1);
 //            final_topo_check_mp[std::make_pair(is_vertex_useful[each_hole[i][0]],is_vertex_useful[each_hole[i][1]])] = final_face_list.size();
@@ -2174,7 +2185,23 @@ int main(int argc, char* argv[]) {
                     cout <<"ret j"<< endl;
                 }
                 else{
-                    cout <<"ret_error"<<endl;
+                    K2::Vector_3 vec(0,0,0);
+                    for(int k=0;k<ret[j].size();k++) {
+                        vec += final_vertex_useful_point[ret[j][k]] - K2::Point_3 (0,0,0);
+                    }
+                    vec /= each_hole[i].size();
+                    final_vertex_useful_point.emplace_back(vec.x(),
+                                                           vec.y(),
+                                                           vec.z()
+                    );
+                    for(int k=0;k<ret[j].size();k++) {
+                        final_face_list.emplace_back(vector<int>{(int)final_vertex_useful_point.size()-1,
+                                                                 ret[j][k],
+                                                                 ret[j][(k+1)%ret[j].size()],
+                                                                 1});
+                    }
+
+                    cout <<"ret_error dual"<<endl;
                 }
             }
         }

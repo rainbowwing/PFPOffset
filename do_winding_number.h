@@ -164,7 +164,7 @@ void winding_num(vector<FinalFace>& v){
     }
 
     // Assuming the query points are in this structure:
-    std::vector<std::vector<double>> query_points;
+    std::vector<std::vector<double> > query_points;
 
     for(int i=0;i<v.size();i++){
         query_points.push_back({CGAL::to_double(v[i].center.x()),
