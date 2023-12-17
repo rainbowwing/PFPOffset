@@ -1620,10 +1620,12 @@ int main(int argc, char* argv[]) {
                     K2::Ray_3 ray(global_face_list[global_face_id].center, -ray_vec);
                     std::list<Tree::Intersection_and_primitive_id<K2::Ray_3>::Type> intersections;
                     aabb_tree.all_intersections(ray, std::back_inserter(intersections));
+
                     for (auto item: intersections) {
                         pair<int, int> belong = triangle_mapping[item.second->id()];
                         int which_field = belong.first;
                         int which_id = belong.second;
+                        //continue;
                         if (which_field == global_face_list[global_face_id].field_id)continue;
                         if (const K2::Point_3 *p = boost::get<K2::Point_3>(&(item.first))) {
                             if (*p != global_face_list[global_face_id].center)
@@ -1641,7 +1643,7 @@ int main(int argc, char* argv[]) {
     }
     for(int i=0;i<thread_num;i++)
         face_generate_ray_detect_thread_pool[i]->join();
-    //exit(0);
+    //exit(0); // 现在这里加exit 然后注释掉上半部分看看会不会出问题，不会就测测下面的是不是求交出问题了
 
     cout <<"start generate"<<endl;
     std::vector <std::shared_ptr<std::thread> > global_face_final_generate_thread_pool(thread_num);
