@@ -87,9 +87,39 @@ void fix_hole(vector<int>hole_line,vector<K2::Point_3>position,Tree * tree,vecto
         for(int i=0;i<v.size();i++){
             int other = (i + 2) % v.size();
             while((other + 1) % v.size() != i){
-                K2::Segment_3 seg(position[v[i]],position[v[other]]);
+                K2::Segment_3 seg(position[v[i]],position[v[other]]);//这里退化了
+                if(seg.is_degenerate()){
+                    st = i;
+                    en = other;
+                    break;
+                }
                 std::list< Tree::Intersection_and_primitive_id<K2::Triangle_3>::Type> intersections;
-                tree->all_intersections(seg,std::back_inserter(intersections));
+                //tree->all_intersections(seg,std::back_inserter(intersections));
+                try {
+                    tree->all_intersections(seg, std::back_inserter(intersections));
+                } catch (const CGAL::Assertion_exception& e) {
+                    // 打印异常信息
+                    std::cerr << "Caught a CGAL assertion exception: " << e.what() << std::endl;
+                    st = i;
+                    en = other;
+                    break;
+                    // handle exception here
+                } catch (const std::exception& e) {
+                    // 这将捕获任何派生自std::exception的异常
+                    std::cerr << "Caught a standard exception: " << e.what() << std::endl;
+                    st = i;
+                    en = other;
+                    break;
+                } catch (...) {
+                    // 这将捕获任何其他类型的异常
+                    std::cerr << "Caught an unknown exception" << std::endl;
+                    st = i;
+                    en = other;
+                    break;
+                }
+
+
+
                 bool flag = true;
                 for(auto item : intersections) { //todo 这里改成批量插入
                     if (const K2::Segment_3 *s = boost::get<K2::Segment_3>(&(item.first))) {

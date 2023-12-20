@@ -125,7 +125,7 @@ int main(int argc, char* argv[]) {
         }
         avg_edge_limit = sum/mesh->FaceSize();
         if(default_move <= 0) {
-            default_move = min(min(x_len, y_len), z_len)*1e-3;
+            default_move = min(min(x_len, y_len), z_len)*1e-3/2;
             cout <<"default_move_dist:" <<default_move << endl;
             //exit(0);
         }
@@ -247,8 +247,7 @@ int main(int argc, char* argv[]) {
             se.insert(mesh->fast_iGameFace[j].vh(0));
             se.insert(mesh->fast_iGameFace[j].vh(1));
             se.insert(mesh->fast_iGameFace[j].vh(2));
-            for(auto k: mesh->FastNeighborFhOfVertex_[i])
-            {
+            for(auto k: mesh->FastNeighborFhOfVertex_[i]) {
                 if(j==k)continue;
                 int cnt = se.count(mesh->fast_iGameFace[k].vh(0)) +
                         se.count(mesh->fast_iGameFace[k].vh(1)) +
@@ -347,7 +346,9 @@ int main(int argc, char* argv[]) {
         K2::Point_3 v0 = origin_mesh_vertices[mesh->fast_iGameFace[i].vh(0)];
         K2::Point_3 v1 = origin_mesh_vertices[mesh->fast_iGameFace[i].vh(1)];
         K2::Point_3 v2 = origin_mesh_vertices[mesh->fast_iGameFace[i].vh(2)];
-        origin_face_list.emplace_back(v0,v1,v2);
+        K2::Triangle_3 tri(v0,v1,v2);
+        if(!tri.is_degenerate())
+            origin_face_list.push_back(tri);
     }
 
     Tree origin_face_tree(origin_face_list.begin(),origin_face_list.end());
@@ -1546,6 +1547,7 @@ int main(int argc, char* argv[]) {
     for (auto each_grid = frame_grid_mp.begin(); each_grid != frame_grid_mp.end(); each_grid++) {
         que.push(each_grid);
     }
+    //freopen("./out.txt","w",stdout);
     std::mutex que_mutex;
     std::vector <std::shared_ptr<std::thread> > face_generate_ray_detect_thread_pool(thread_num);
     for(int i=0;i<thread_num;i++) {
@@ -1579,7 +1581,7 @@ int main(int argc, char* argv[]) {
                            small.y() <= v.y() && v.y() <= big.y() &&
                            small.z() <= v.z() && v.z() <= big.z();
                 };
-
+                cout << "thread" << now_id <<" st select"<<endl;
                 for (int i = 0; i < each_grid->second.field_list.size(); i++) {
                     int field_id = each_grid->second.field_list[i];
                     bool useful = false;
@@ -1606,37 +1608,76 @@ int main(int argc, char* argv[]) {
                         }
                     }
                 }
+                cout << "thread" << now_id <<" st build aabb"<<endl;
                 Tree aabb_tree(l.begin(), l.end());
-
+                cout << "thread" << now_id <<" st this thread"<<endl;
                 for (int i = 0; i < each_grid->second.global_face_list.size(); i++) {
+                    cout << "thread" << now_id <<" st i"<<endl;
                     int global_face_id = each_grid->second.global_face_list[i];
-                    if (global_face_list[global_face_id].useful !=1 )continue;
+                    cout << "global_face_id" <<global_face_id << endl;
+                    if (global_face_list[global_face_id].useful !=1 ) {
+                        cout << "thread" << now_id <<" continue i"<<endl;
+                        continue;
+                    }
+                    cout << "global_vertex_list check "<< global_vertex_list.size() <<" "
+                    <<global_face_list[global_face_id].idx0 <<" "<<global_face_list[global_face_id].idx1 <<" "
+                    <<global_face_list[global_face_id].idx2<<endl;
                     K2::Point_3 v0 = global_vertex_list[global_face_list[global_face_id].idx0];
+                    cout << "v0:"<<v0 << endl;
                     K2::Point_3 v1 = global_vertex_list[global_face_list[global_face_id].idx1];
+                    cout << "v1:"<<v1 << endl;
                     K2::Point_3 v2 = global_vertex_list[global_face_list[global_face_id].idx2];
+                    cout << "v2:"<<v2 << endl;
+                    // 这里有没有退化，
+                    /*
+thread7 done 2.2
+thread7 done 2.4
+thread7 done 3
+thread7 end i
+thread7 st i
+                     */
+                    cout << K2::Triangle_3(v0, v1, v2).is_degenerate() << endl;
 
                     K2::Vector_3 ray_vec = K2::Triangle_3(v0, v1, v2).supporting_plane().orthogonal_vector();
-
+                    cout << "ray_vec:"<<ray_vec << endl;
+                    cout << "centerbef :"<<global_face_list[global_face_id].center << endl;
                     K2::Ray_3 ray(global_face_list[global_face_id].center, -ray_vec);
+                    cout <<"center : " <<CGAL::to_double(global_face_list[global_face_id].center.x()) <<" "
+                    << CGAL::to_double(global_face_list[global_face_id].center.y())<<" "
+                    << CGAL::to_double(global_face_list[global_face_id].center.z()) << endl;
+                    cout <<"ray_vec : " <<CGAL::to_double(ray_vec.x()) <<" "
+                         << CGAL::to_double(ray_vec.y())<<" "
+                         << CGAL::to_double(ray_vec.z()) << endl;
+
+
                     std::list<Tree::Intersection_and_primitive_id<K2::Ray_3>::Type> intersections;
                     aabb_tree.all_intersections(ray, std::back_inserter(intersections));
-
+                    cout <<"aabbend"<<endl;
                     for (auto item: intersections) {
+                        cout << "thread" << now_id <<" done 0"<<endl;
                         pair<int, int> belong = triangle_mapping[item.second->id()];
                         int which_field = belong.first;
                         int which_id = belong.second;
-                        //continue;
+                        cout << "thread" << now_id <<" done 1"<<endl;
                         if (which_field == global_face_list[global_face_id].field_id)continue;
+                        cout << "thread" << now_id <<" done 2"<<endl;
                         if (const K2::Point_3 *p = boost::get<K2::Point_3>(&(item.first))) {
-                            if (*p != global_face_list[global_face_id].center)
+                            if (*p != global_face_list[global_face_id].center) {
+                                cout << "thread" << now_id <<" done 2.2"<<endl;
                                 global_face_list[global_face_id].ray_detect_map[which_field].emplace_back(*p, which_id);
+                                cout << "thread" << now_id <<" done 2.4"<<endl;
+                            }
 //                            else
 //                                global_face_list[global_face_id].special_face_id.insert(which_field);
                         } else {
+                            cout << "thread" << now_id <<" done 2.6"<<endl;
                             global_face_list[global_face_id].special_field_id.insert(which_field);
                         }
+                        cout << "thread" << now_id <<" done 3"<<endl;
                     }
+                    cout << "thread" << now_id <<" end i"<<endl;
                 }
+                cout << "thread" << now_id <<" end this thread"<<endl;
             }
 
         },i);
@@ -2396,9 +2437,22 @@ int main(int argc, char* argv[]) {
     fclose(file_ans);
     return 0;
 }
-// 1 2 3 4 5 6
-// 5 1 2 3 7 8
-//
+/*
+# 查看swap内存大小
+free -h
+# 关闭所有交换空间
+swapoff -a
+# dd命令创建一个swap文件,/dev/zero不要改动，swapfile可以改名
+dd if=/dev/zero of=/tmp/swapfile bs=1024 count=2048000
+# 修改swapfile文件权限，就是600，不然会warning
+chmod 600 /tmp/swapfile
+# 格式化为swap分区
+mkswap /tmp/swapfile
+# 挂载并激活swap分区
+swapon /tmp/swapfile
+# 设置扩展的swap分区为自动挂载，这一步不做，swapoff和swapon的-a对这个文件swap分区不起效
+echo /tmp/swapfile swap swap defaults 0 0 >> /etc/fstab
 
+ */
 
 
