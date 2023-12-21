@@ -53,7 +53,7 @@ struct CoverageField {
                 cnt += (j.vertex(1) == bound_face_vertex_exact[bound_face_id[i][0]] );
                 cnt += (j.vertex(1) == bound_face_vertex_exact[bound_face_id[i][1]] );
                 cnt += (j.vertex(1) == bound_face_vertex_exact[bound_face_id[i][2]] );
-                if(cnt <2 ){
+                if(cnt <2 ) {
                     cs.push_back(j);
                 }
             }

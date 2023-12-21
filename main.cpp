@@ -644,7 +644,7 @@ int main(int argc, char* argv[]) {
                     }
                     Tree aabb_local(neighbor_face.begin(),neighbor_face.end());
 
-                    function<bool(K2::Point_3,K2::Triangle_3)>check_inner_vertex = [&](K2::Point_3 check_point,K2::Triangle_3 tri){
+                    function<bool(K2::Point_3,K2::Triangle_3)>check_inner_vertex = [&](K2::Point_3 check_point,K2::Triangle_3 tri) {
                         K2::Point_3 v0 = tri.vertex(0);
                         K2::Point_3 v1 = tri.vertex(1);
                         K2::Point_3 v2 = tri.vertex(2);
@@ -669,7 +669,7 @@ int main(int argc, char* argv[]) {
                             if(side == CGAL::ON_BOUNDARY) {
                                 if( tri.supporting_plane().oriented_side(coverage_field_list[i].center) !=
                                     tri.supporting_plane().oriented_side(coverage_field_list[neighbor_id].center) &&
-                                    tri.supporting_plane().oriented_side(coverage_field_list[i].center)+
+                                    tri.supporting_plane().oriented_side(coverage_field_list[i].center) +
                                     tri.supporting_plane().oriented_side(coverage_field_list[neighbor_id].center) ==0){
                                     return true;
                                 }
@@ -771,34 +771,34 @@ int main(int argc, char* argv[]) {
                         K2::Triangle_3 tri_this(coverage_field_list[i].bound_face_vertex_exact[coverage_field_list[i].bound_face_id[j][0]],
                             coverage_field_list[i].bound_face_vertex_exact[coverage_field_list[i].bound_face_id[j][1]],
                             coverage_field_list[i].bound_face_vertex_exact[coverage_field_list[i].bound_face_id[j][2]]);
-                        if(check_inner_vertex_all(coverage_field_list[i].bound_face_sampling_point[j],tri_this)){
-                            for(int k=0;k<coverage_field_list[i].bound_face_sampling_point[j].size();k++){
-                                coverage_field_list[i].bound_face_sampling_point_state[j][k] = -1;
-                            }
-                        }
-                        else{
-                            for(int k=0;k<coverage_field_list[i].bound_face_sampling_point[j].size();k++){
-                                if(coverage_field_list[i].bound_face_sampling_point_state[j][k]!=-1 && ret[coverage_field_list[i].bound_face_sampling_point_state[j][k]])
-                                    coverage_field_list[i].bound_face_sampling_point_state[j][k] = 0;
-                                else
-                                    coverage_field_list[i].bound_face_sampling_point_state[j][k] = -1;
-                            }
-                        }
-
-//                        for(int k=0;k<coverage_field_list[i].bound_face_sampling_point[j].size();k++){
-//                            if(coverage_field_list[i].bound_face_sampling_point_state[j][k]!=-1){
-//                                if(ret[coverage_field_list[i].bound_face_sampling_point_state[j][k]] ){
-//                                    if(check_inner_vertex(coverage_field_list[i].bound_face_sampling_point[j][k],tri_this)){
-//                                        coverage_field_list[i].bound_face_sampling_point_state[j][k] = -1;
-//                                    }
-//                                    else
-//                                        coverage_field_list[i].bound_face_sampling_point_state[j][k] = 0;
-//                                }
-//                                else{
-//                                    coverage_field_list[i].bound_face_sampling_point_state[j][k] = -1;
-//                                }
+//                        if(check_inner_vertex_all(coverage_field_list[i].bound_face_sampling_point[j],tri_this)){ // 这里是决定到底全部删除，还是全部留下的逻辑所在之处
+//                            for(int k=0;k<coverage_field_list[i].bound_face_sampling_point[j].size();k++){
+//                                coverage_field_list[i].bound_face_sampling_point_state[j][k] = -1;
 //                            }
 //                        }
+//                        else{
+//                            for(int k=0;k<coverage_field_list[i].bound_face_sampling_point[j].size();k++){
+//                                if(coverage_field_list[i].bound_face_sampling_point_state[j][k]!=-1 && ret[coverage_field_list[i].bound_face_sampling_point_state[j][k]])
+//                                    coverage_field_list[i].bound_face_sampling_point_state[j][k] = 0;
+//                                else
+//                                    coverage_field_list[i].bound_face_sampling_point_state[j][k] = -1;
+//                            }
+//                        }
+
+                        for(int k=0;k<coverage_field_list[i].bound_face_sampling_point[j].size();k++){
+                            if(coverage_field_list[i].bound_face_sampling_point_state[j][k]!=-1){
+                                if(ret[coverage_field_list[i].bound_face_sampling_point_state[j][k]] ){
+                                    if(check_inner_vertex(coverage_field_list[i].bound_face_sampling_point[j][k],tri_this)){
+                                        coverage_field_list[i].bound_face_sampling_point_state[j][k] = -1;
+                                    }
+                                    else
+                                        coverage_field_list[i].bound_face_sampling_point_state[j][k] = 0;
+                                }
+                                else{
+                                    coverage_field_list[i].bound_face_sampling_point_state[j][k] = -1;
+                                }
+                            }
+                        }
 
                     }
                 }
@@ -1581,7 +1581,7 @@ int main(int argc, char* argv[]) {
                            small.y() <= v.y() && v.y() <= big.y() &&
                            small.z() <= v.z() && v.z() <= big.z();
                 };
-                cout << "thread" << now_id <<" st select"<<endl;
+                //cout << "thread" << now_id <<" st select"<<endl;
                 for (int i = 0; i < each_grid->second.field_list.size(); i++) {
                     int field_id = each_grid->second.field_list[i];
                     bool useful = false;
@@ -1608,26 +1608,26 @@ int main(int argc, char* argv[]) {
                         }
                     }
                 }
-                cout << "thread" << now_id <<" st build aabb"<<endl;
+                //cout << "thread" << now_id <<" st build aabb"<<endl;
                 Tree aabb_tree(l.begin(), l.end());
-                cout << "thread" << now_id <<" st this thread"<<endl;
+                //cout << "thread" << now_id <<" st this thread"<<endl;
                 for (int i = 0; i < each_grid->second.global_face_list.size(); i++) {
-                    cout << "thread" << now_id <<" st i"<<endl;
+                    //cout << "thread" << now_id <<" st i"<<endl;
                     int global_face_id = each_grid->second.global_face_list[i];
-                    cout << "global_face_id" <<global_face_id << endl;
+                    //cout << "global_face_id" <<global_face_id << endl;
                     if (global_face_list[global_face_id].useful !=1 ) {
-                        cout << "thread" << now_id <<" continue i"<<endl;
+                        //cout << "thread" << now_id <<" continue i"<<endl;
                         continue;
                     }
-                    cout << "global_vertex_list check "<< global_vertex_list.size() <<" "
-                    <<global_face_list[global_face_id].idx0 <<" "<<global_face_list[global_face_id].idx1 <<" "
-                    <<global_face_list[global_face_id].idx2<<endl;
+//                    cout << "global_vertex_list check "<< global_vertex_list.size() <<" "
+//                    <<global_face_list[global_face_id].idx0 <<" "<<global_face_list[global_face_id].idx1 <<" "
+//                    <<global_face_list[global_face_id].idx2<<endl;
                     K2::Point_3 v0 = global_vertex_list[global_face_list[global_face_id].idx0];
-                    cout << "v0:"<<v0 << endl;
+                    //cout << "v0:"<<v0 << endl;
                     K2::Point_3 v1 = global_vertex_list[global_face_list[global_face_id].idx1];
-                    cout << "v1:"<<v1 << endl;
+                    //cout << "v1:"<<v1 << endl;
                     K2::Point_3 v2 = global_vertex_list[global_face_list[global_face_id].idx2];
-                    cout << "v2:"<<v2 << endl;
+                    //cout << "v2:"<<v2 << endl;
                     // 这里有没有退化，
                     /*
 thread7 done 2.2
@@ -1636,48 +1636,48 @@ thread7 done 3
 thread7 end i
 thread7 st i
                      */
-                    cout << K2::Triangle_3(v0, v1, v2).is_degenerate() << endl;
+//                    cout << K2::Triangle_3(v0, v1, v2).is_degenerate() << endl;
 
                     K2::Vector_3 ray_vec = K2::Triangle_3(v0, v1, v2).supporting_plane().orthogonal_vector();
-                    cout << "ray_vec:"<<ray_vec << endl;
-                    cout << "centerbef :"<<global_face_list[global_face_id].center << endl;
+//                    cout << "ray_vec:"<<ray_vec << endl;
+//                    cout << "centerbef :"<<global_face_list[global_face_id].center << endl;
                     K2::Ray_3 ray(global_face_list[global_face_id].center, -ray_vec);
-                    cout <<"center : " <<CGAL::to_double(global_face_list[global_face_id].center.x()) <<" "
-                    << CGAL::to_double(global_face_list[global_face_id].center.y())<<" "
-                    << CGAL::to_double(global_face_list[global_face_id].center.z()) << endl;
-                    cout <<"ray_vec : " <<CGAL::to_double(ray_vec.x()) <<" "
-                         << CGAL::to_double(ray_vec.y())<<" "
-                         << CGAL::to_double(ray_vec.z()) << endl;
+//                    cout <<"center : " <<CGAL::to_double(global_face_list[global_face_id].center.x()) <<" "
+//                    << CGAL::to_double(global_face_list[global_face_id].center.y())<<" "
+//                    << CGAL::to_double(global_face_list[global_face_id].center.z()) << endl;
+//                    cout <<"ray_vec : " <<CGAL::to_double(ray_vec.x()) <<" "
+//                         << CGAL::to_double(ray_vec.y())<<" "
+//                         << CGAL::to_double(ray_vec.z()) << endl;
 
 
                     std::list<Tree::Intersection_and_primitive_id<K2::Ray_3>::Type> intersections;
                     aabb_tree.all_intersections(ray, std::back_inserter(intersections));
-                    cout <<"aabbend"<<endl;
+                    //cout <<"aabbend"<<endl;
                     for (auto item: intersections) {
-                        cout << "thread" << now_id <<" done 0"<<endl;
+                        //cout << "thread" << now_id <<" done 0"<<endl;
                         pair<int, int> belong = triangle_mapping[item.second->id()];
                         int which_field = belong.first;
                         int which_id = belong.second;
-                        cout << "thread" << now_id <<" done 1"<<endl;
+                        //cout << "thread" << now_id <<" done 1"<<endl;
                         if (which_field == global_face_list[global_face_id].field_id)continue;
-                        cout << "thread" << now_id <<" done 2"<<endl;
+                        //cout << "thread" << now_id <<" done 2"<<endl;
                         if (const K2::Point_3 *p = boost::get<K2::Point_3>(&(item.first))) {
                             if (*p != global_face_list[global_face_id].center) {
-                                cout << "thread" << now_id <<" done 2.2"<<endl;
+                                //cout << "thread" << now_id <<" done 2.2"<<endl;
                                 global_face_list[global_face_id].ray_detect_map[which_field].emplace_back(*p, which_id);
-                                cout << "thread" << now_id <<" done 2.4"<<endl;
+                                //cout << "thread" << now_id <<" done 2.4"<<endl;
                             }
 //                            else
 //                                global_face_list[global_face_id].special_face_id.insert(which_field);
                         } else {
-                            cout << "thread" << now_id <<" done 2.6"<<endl;
+                            //cout << "thread" << now_id <<" done 2.6"<<endl;
                             global_face_list[global_face_id].special_field_id.insert(which_field);
                         }
-                        cout << "thread" << now_id <<" done 3"<<endl;
+                        //cout << "thread" << now_id <<" done 3"<<endl;
                     }
-                    cout << "thread" << now_id <<" end i"<<endl;
+                    //cout << "thread" << now_id <<" end i"<<endl;
                 }
-                cout << "thread" << now_id <<" end this thread"<<endl;
+                //cout << "thread" << now_id <<" end this thread"<<endl;
             }
 
         },i);
@@ -2162,7 +2162,7 @@ thread7 st i
 //        ss++;
     }
 
-    for(int times = 0; times < 3 ; times++) {
+    for(int times = 0; times < 10 ; times++) {
         for(int i=0;i<final_face_list.size();i++){
             if(final_face_list[i][3]) {
                 final_topo_check_mp[std::make_pair(final_face_list[i][0], final_face_list[i][1] ) ] = i;
