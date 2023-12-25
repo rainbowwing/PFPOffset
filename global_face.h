@@ -50,6 +50,7 @@ vector<K2::Point_3> get_sampling_point(K2::Triangle_3 tri){
 vector<MeshKernel::iGameVertex> field_move_vertex;
 
 vector<vector<K2::Point_3> > field_move_vertices;
+vector<vector<K2::Point_3> > field_move_vertices_ex;
 vector<K2::Point_3>origin_mesh_vertices;
 
 vector<vector<MeshKernel::iGameVertex> > field_move_face;

@@ -50,6 +50,7 @@ bool segment_coincide_triangle(K2::Segment_3 a,K2::Triangle_3 tri){
     return false;
 }
 
+
 bool point_coincide_triangle(K2::Point_3 a,K2::Triangle_3 tri){
     for(int i=0;i<3;i++){
         K2::Segment_3 c(tri.vertex(i),tri.vertex((i+1)%3));

@@ -91,6 +91,7 @@ int main(int argc, char* argv[]) {
     FILE *file7 = fopen( (input_filename + "_no_manifold.obj").c_str(), "w");
     FILE *file8 = fopen( (input_filename + "_result.obj").c_str(), "w");
     FILE *file13 = fopen( (input_filename + "_moveedge.obj").c_str(), "w");
+    FILE *file15 = fopen( (input_filename + "_extend_vertex.obj").c_str(), "w");
 
     FILE *file14 = fopen( (input_filename + "_coveragefield.obj").c_str(), "w");
     FILE *file24 = fopen( (input_filename + "_coveragefield24.obj").c_str(), "w");
@@ -125,7 +126,8 @@ int main(int argc, char* argv[]) {
         }
         avg_edge_limit = sum/mesh->FaceSize();
         if(default_move <= 0) {
-            default_move = min(min(x_len, y_len), z_len)*1e-3/2;
+            //default_move = min(min(x_len, y_len), z_len)*1e-3;
+            default_move = sqrt(x_len*x_len+y_len*y_len+z_len*z_len)*1e-3;
             cout <<"default_move_dist:" <<default_move << endl;
             //exit(0);
         }
@@ -301,7 +303,7 @@ int main(int argc, char* argv[]) {
         dp_thread_pool[i]->join();
     int cnte = 1;
     for (int i = 0; i < mesh->VertexSize(); i++) {
-        for(int j = 0;j<field_move_vertices[i].size();j++){
+        for(int j = 0;j < field_move_vertices[i].size();j++){
             fprintf(file13,"v %lf %lf %lf\n",CGAL::to_double(field_move_vertices[i][j].x()),
                     CGAL::to_double(field_move_vertices[i][j].y()),
                     CGAL::to_double(field_move_vertices[i][j].z())
@@ -309,10 +311,12 @@ int main(int argc, char* argv[]) {
             fprintf(file13,"v %lf %lf %lf\n",mesh->fast_iGameVertex[i].x(),
                     mesh->fast_iGameVertex[i].y(),
                     mesh->fast_iGameVertex[i].z()
-            );
+                    );
             fprintf(file13,"l %d %d\n",cnte,cnte+1);
             cnte+=2;
         }
+
+
         //fprintf(file13,"v");
     }
     for(int i=0;i<mesh->VertexSize();i++){
@@ -320,12 +324,60 @@ int main(int argc, char* argv[]) {
                                                mesh->fast_iGameVertex[i].y(),
                                                mesh->fast_iGameVertex[i].z()
                                                );
+
     }
    // exit(0);
-
+    field_move_vertices_ex.resize(field_move_vertices.size());
     merge_initial();
-
-
+//    for (int i = 0; i < mesh->VertexSize(); i++) {
+//        bool flag = false;
+//        if (field_move_vertices[i].size() >= 2) {
+//            vector<MeshKernel::iGameFaceHandle> neighbor_list;
+//            for(auto j : mesh->FastNeighborFhOfVertex_[i]){
+//                neighbor_list.push_back(j);
+//            }
+//            if(neighbor_list.empty()) {
+//                continue;
+//            }
+//            for(auto j : neighbor_list){
+//                bool positive_side = false;
+//                bool negative_side = false;
+//                K2::Triangle_3 this_facet(origin_mesh_vertices[mesh->fast_iGameFace[j].vh(0)],
+//                                          origin_mesh_vertices[mesh->fast_iGameFace[j].vh(1)],
+//                                          origin_mesh_vertices[mesh->fast_iGameFace[j].vh(2)]);
+//
+//                for(auto k : field_move_vertices[i]) {
+//                    positive_side |= this_facet.supporting_plane().has_on_positive_side(k);
+//                    negative_side |= this_facet.supporting_plane().has_on_negative_side(k);
+//                }
+//                if(positive_side && negative_side) {
+//                    K2::Point_3 center = centroid(this_facet);
+//                    //flag = true;
+//                    K2::Vector_3 vec = (origin_mesh_vertices[i] - center)
+//                            / CGAL::approximate_sqrt((origin_mesh_vertices[i] - center).squared_length());
+//
+//                    K2::Point_3 extend_point = origin_mesh_vertices[i] + vec * mesh->fast_iGameFace[j].move_dist / 2;
+//                    field_move_vertices_ex[i].push_back(extend_point);
+//                }
+//            }
+//        }
+//        for(auto k : field_move_vertices_ex[i]){
+//            field_move_vertices[i].push_back(k);
+//        }
+//
+//
+//        if(flag) {
+//            cout << i << "need extend "<< endl;
+//            fprintf(file15, "v %lf %lf %lf\n",CGAL::to_double(origin_mesh_vertices[i].x())+start_x,
+//                    CGAL::to_double(origin_mesh_vertices[i].y())+start_y,
+//                    CGAL::to_double(origin_mesh_vertices[i].z())+start_z
+//                    );
+//        }
+//        else {
+//            cout << i << " not "<< endl;
+//        }
+//    }
+   //exit(0);
     for(int i=0;i<mesh->FaceSize();i++){
         coverage_field_list.push_back(CoverageField(MeshKernel::iGameFaceHandle(i)));
 
@@ -488,22 +540,22 @@ int main(int argc, char* argv[]) {
                         for(auto neighbor_id: coverage_intersection[i]) {
                             if (!coverage_field_list[neighbor_id].useful)continue;
                             CGAL::Bounded_side bs = coverage_field_list[neighbor_id].bounded_side(center);
-                            if(bs == CGAL::ON_BOUNDED_SIDE){
+                            if(bs == CGAL::ON_BOUNDED_SIDE) {
                                 inner_flag = true;
                                 break;
                             }
-                            else if(bs == CGAL::ON_BOUNDARY){
+                            else if(bs == CGAL::ON_BOUNDARY) {
                                 if(tri_this.supporting_plane().oriented_side(coverage_field_list[i].center) !=
                                    tri_this.supporting_plane().oriented_side(coverage_field_list[neighbor_id].center) &&
-                                   tri_this.supporting_plane().oriented_side(coverage_field_list[i].center)+
-                                   tri_this.supporting_plane().oriented_side(coverage_field_list[neighbor_id].center) ==0 ){
+                                   tri_this.supporting_plane().oriented_side(coverage_field_list[i].center) +
+                                   tri_this.supporting_plane().oriented_side(coverage_field_list[neighbor_id].center) == 0 ) {
                                     inner_flag = true;
                                     break;
                                 }
                             }
                         }
 
-                        if(!inner_flag){
+                        if(!inner_flag) {
                             coverage_field_list[i].self_face_delete_flag = false;
                             break;
                         }
@@ -659,74 +711,74 @@ int main(int argc, char* argv[]) {
 
 
                             //cout << check_point<< endl;
-                        for(auto neighbor_id: coverage_intersection[i]) {
-                            if (!coverage_field_list[neighbor_id].useful)continue;
-                            if(neighbor_id == i)continue;
-                            auto side = coverage_field_list[neighbor_id].bounded_side(check_point);
-                            if(side == CGAL::ON_BOUNDED_SIDE) {
-                                return true;
-                            }
-                            if(side == CGAL::ON_BOUNDARY) {
-                                if( tri.supporting_plane().oriented_side(coverage_field_list[i].center) !=
-                                    tri.supporting_plane().oriented_side(coverage_field_list[neighbor_id].center) &&
-                                    tri.supporting_plane().oriented_side(coverage_field_list[i].center) +
-                                    tri.supporting_plane().oriented_side(coverage_field_list[neighbor_id].center) ==0){
-                                    return true;
-                                }
-                            }
-                        }
-                        return false;
-
-
-                            //下面写这段是新方法//todo 改造成爆掉一个点就炸了 ？ 或者有一个计数器
-//                        map<int,set<K2::Point_3> >field_cnt;
-//                        set<int>field_error;
-//
-//                           // cout << "v "<< check_point<<endl;
-//                        K2::Vector_3 normal = -1 * tri.supporting_plane().orthogonal_vector();
-//                        K2::Ray_3 ray(check_point,normal);
-//                        std::list< Tree::Intersection_and_primitive_id<K2::Triangle_3>::Type> intersections;
-//
-//                        aabb_local.all_intersections(ray,std::back_inserter(intersections));
-//
-//                        for(auto item : intersections) { //todo 这里改成批量插入
-//                            int id = face_to_field.find(item.second->id())->second;
-//                            if (const K2::Point_3 *p = boost::get<K2::Point_3>(&(item.first))) {
-//                                if(*p == check_point)continue;
-//                                if(field_cnt[id].count(*p)){
-//                                    field_error.insert(id);
-//                                }
-//                                else
-//                                    field_cnt[id].insert(*p);
-//                            }
-//                            else{
-//                                field_error.insert(id);
-//                            }
-//                        }
-//
-//                        for(const auto& it : field_cnt){
-//                            if(!field_error.count(it.first) && it.second.size() % 2 == 1) {
-//                                return true;
-//                            }
-//                        }
-//
-//                        for(auto neighbor_id: field_error) {
+//                        for(auto neighbor_id: coverage_intersection[i]) {
 //                            if (!coverage_field_list[neighbor_id].useful)continue;
 //                            if(neighbor_id == i)continue;
 //                            auto side = coverage_field_list[neighbor_id].bounded_side(check_point);
-//                            if(side == CGAL::ON_BOUNDED_SIDE){
+//                            if(side == CGAL::ON_BOUNDED_SIDE) {
 //                                return true;
 //                            }
-//                            if(side == CGAL::ON_BOUNDARY){
+//                            if(side == CGAL::ON_BOUNDARY) {
 //                                if( tri.supporting_plane().oriented_side(coverage_field_list[i].center) !=
 //                                    tri.supporting_plane().oriented_side(coverage_field_list[neighbor_id].center) &&
-//                                    tri.supporting_plane().oriented_side(coverage_field_list[i].center)+
+//                                    tri.supporting_plane().oriented_side(coverage_field_list[i].center) +
 //                                    tri.supporting_plane().oriented_side(coverage_field_list[neighbor_id].center) ==0){
 //                                    return true;
 //                                }
 //                            }
 //                        }
 //                        return false;
+
+
+                            //下面写这段是新方法//todo 改造成爆掉一个点就炸了 ？ 或者有一个计数器
+                        map<int,set<K2::Point_3> >field_cnt;
+                        set<int>field_error;
+
+                           // cout << "v "<< check_point<<endl;
+                        K2::Vector_3 normal = -1 * tri.supporting_plane().orthogonal_vector();
+                        K2::Ray_3 ray(check_point,normal);
+                        std::list< Tree::Intersection_and_primitive_id<K2::Triangle_3>::Type> intersections;
+
+                        aabb_local.all_intersections(ray,std::back_inserter(intersections));
+
+                        for(auto item : intersections) { //todo 这里改成批量插入
+                            int id = face_to_field.find(item.second->id())->second;
+                            if (const K2::Point_3 *p = boost::get<K2::Point_3>(&(item.first))) {
+                                if(*p == check_point)continue;
+                                if(field_cnt[id].count(*p)){
+                                    field_error.insert(id);
+                                }
+                                else
+                                    field_cnt[id].insert(*p);
+                            }
+                            else{
+                                field_error.insert(id);
+                            }
+                        }
+
+                        for(const auto& it : field_cnt){
+                            if(!field_error.count(it.first) && it.second.size() % 2 == 1) {
+                                return true;
+                            }
+                        }
+
+                        for(auto neighbor_id: field_error) {
+                            if (!coverage_field_list[neighbor_id].useful)continue;
+                            if(neighbor_id == i)continue;
+                            auto side = coverage_field_list[neighbor_id].bounded_side(check_point);
+                            if(side == CGAL::ON_BOUNDED_SIDE){
+                                return true;
+                            }
+                            if(side == CGAL::ON_BOUNDARY){
+                                if( tri.supporting_plane().oriented_side(coverage_field_list[i].center) !=
+                                    tri.supporting_plane().oriented_side(coverage_field_list[neighbor_id].center) &&
+                                    tri.supporting_plane().oriented_side(coverage_field_list[i].center)+
+                                    tri.supporting_plane().oriented_side(coverage_field_list[neighbor_id].center) ==0){
+                                    return true;
+                                }
+                            }
+                        }
+                        return false;
                     };
 
                     function<bool(vector<K2::Point_3>vv,K2::Triangle_3)>check_inner_vertex_all = [&](vector<K2::Point_3>vv ,K2::Triangle_3 tri){
@@ -785,8 +837,8 @@ int main(int argc, char* argv[]) {
 //                            }
 //                        }
 
-                        for(int k=0;k<coverage_field_list[i].bound_face_sampling_point[j].size();k++){
-                            if(coverage_field_list[i].bound_face_sampling_point_state[j][k]!=-1){
+                        for(int k=0;k<coverage_field_list[i].bound_face_sampling_point[j].size();k++) {
+                            if(coverage_field_list[i].bound_face_sampling_point_state[j][k] != -1){
                                 if(ret[coverage_field_list[i].bound_face_sampling_point_state[j][k]] ){
                                     if(check_inner_vertex(coverage_field_list[i].bound_face_sampling_point[j][k],tri_this)){
                                         coverage_field_list[i].bound_face_sampling_point_state[j][k] = -1;
@@ -816,21 +868,21 @@ int main(int argc, char* argv[]) {
                 }
             }
         }
-        ofstream fsip("../occ2/find_inp.obj");
-        ofstream fsop("../occ2/find_outp.obj");
+        ofstream fsip("../occ5mac/find_inp.obj");
+        ofstream fsop("../occ5mac/find_outp.obj");
         for(int i=0;i<mesh->FaceSize();i++) {
             for (int j = 0; j < coverage_field_list[i].bound_face_id.size(); j++) {
                 for(int k=0;k<coverage_field_list[i].bound_face_sampling_point[j].size();k++){
                     cout << coverage_field_list[i].bound_face_sampling_point_state[j][k] << endl;
                     if(coverage_field_list[i].bound_face_sampling_point_state[j][k]==-1 || coverage_field_list[i].bound_face_useful[j]!=1 ) {
-                        fsip <<"v "<< coverage_field_list[i].bound_face_sampling_point[j][k].x() << " "
-                             << coverage_field_list[i].bound_face_sampling_point[j][k].y() << " "
-                             << coverage_field_list[i].bound_face_sampling_point[j][k].z() << endl;
+                        fsip <<"v "<< coverage_field_list[i].bound_face_sampling_point[j][k].x()+start_x << " "
+                             << coverage_field_list[i].bound_face_sampling_point[j][k].y()+start_y << " "
+                             << coverage_field_list[i].bound_face_sampling_point[j][k].z()+start_z << endl;
                     }
                     else{
-                        fsop  <<"v "<< coverage_field_list[i].bound_face_sampling_point[j][k].x() << " "
-                             << coverage_field_list[i].bound_face_sampling_point[j][k].y() << " "
-                             << coverage_field_list[i].bound_face_sampling_point[j][k].z() << endl;
+                        fsop  <<"v "<< coverage_field_list[i].bound_face_sampling_point[j][k].x()+start_x << " "
+                             << coverage_field_list[i].bound_face_sampling_point[j][k].y()+start_y << " "
+                             << coverage_field_list[i].bound_face_sampling_point[j][k].z()+start_z << endl;
                     }
                 }
             }
@@ -1199,8 +1251,7 @@ int main(int argc, char* argv[]) {
 
                                 map<size_t,pair<int,int> >::iterator iter = each_grid->second.face_hash_id_map.find(item.second->id());
                                 if(iter->second.first != field_id ) {
-                                    coverage_field_list[field_id].bound_face_cutting_segment[bound_face_id].push_back(
-                                            *s);
+                                    coverage_field_list[field_id].bound_face_cutting_segment[bound_face_id].push_back(*s);
                                 }
                             }
                             else if(const K2::Point_3 * p = boost::get<K2::Point_3>(&(item.first))){
@@ -1211,8 +1262,8 @@ int main(int argc, char* argv[]) {
                             }
                             else if(const std::vector<K2::Point_3> * v = boost::get<std::vector<K2::Point_3> >(&(item.first)) ){
                                 map<size_t,pair<int,int> >::iterator iter = each_grid->second.face_hash_id_map.find(item.second->id());
-                                if(iter->second.first != field_id ){
-                                    for(int j=0;j<v->size();j++){
+                                if(iter->second.first != field_id ) {
+                                    for(int j=0;j<v->size();j++ ) {
                                         coverage_field_list[field_id].bound_face_cutting_point[bound_face_id].push_back(v->at(j));
                                     }
                                 }
@@ -1747,9 +1798,13 @@ thread7 st i
                        // }
                     }
 
-                    if(CGAL::approximate_sqrt(origin_face_tree.squared_distance(centroid(K2::Triangle_3(v0,v1,v2)))) <= CGAL::Epeck::FT(min_near_limit)){
+                    if(origin_face_tree.squared_distance(v0) <= CGAL::Epeck::FT(0) &&
+                            origin_face_tree.squared_distance(v1) <= CGAL::Epeck::FT(0) &&
+                            origin_face_tree.squared_distance(v2) <= CGAL::Epeck::FT(0)
+                    ){
                         //cout <<"-300:occur: " <<origin_face_tree.squared_distance(centroid(K2::Triangle_3(v0,v1,v2))) <<" "<< min_near_limit << " "<<default_move<<endl;
                         global_face_list[i].useful = -300;
+                        cout << "global_face_list[i].useful = -300" << endl;
                     }
                 }
             }
@@ -1914,11 +1969,10 @@ thread7 st i
 
 
     vector<vector<int> >final_face_list;
-
+    list<K2::Triangle_3 > t_list;
 
 
     for (int i = 0; i < f_list.size(); i++) {
-
         if(f_list[i].flag) {
             if(running_mode == 1) {
 //                sum_avg_edge += sqrt(CGAL::to_double((CGAL::squared_distance(global_vertex_list[global_face_list[i].idx0] , global_vertex_list[global_face_list[i].idx1]))));
@@ -1931,6 +1985,11 @@ thread7 st i
             else {
                 fprintf(file6, "f %d %d %d\n", is_vertex_useful[f_list[i].f0] + 1, is_vertex_useful[f_list[i].f1] + 1,
                         is_vertex_useful[f_list[i].f2] + 1);
+                t_list.push_back(K2::Triangle_3(global_vertex_list[f_list[i].f0],
+                                                global_vertex_list[f_list[i].f1],
+                                                global_vertex_list[f_list[i].f2]));
+
+
 //                check_manifold[get_pair(f_list[i].f0,f_list[i].f1)].push_back(f_list[i].f2);
 //                check_manifold[get_pair(f_list[i].f0,f_list[i].f2)].push_back(f_list[i].f1);
 //                check_manifold[get_pair(f_list[i].f1,f_list[i].f2)].push_back(f_list[i].f0);
@@ -2048,6 +2107,57 @@ thread7 st i
             }
         }
     }
+
+    //vector<K2::Point_3>final_vertex_useful_point_d = final_vertex_useful_point;
+//    sort(final_vertex_useful_point_d.begin(),final_vertex_useful_point_d.end(),[&](const K2::Point_3 &a,const K2::Point_3 &b){
+//        if(a.x() != b.x())
+//            return a.x() < b.x();
+//        else if(a.y() != b.y())
+//            return a.y() < b.y();
+//        else
+//            return a.z() < b.z();
+//    });
+//    for(int i=0;i<final_vertex_useful_point_d.size()-1;i++){
+//        if(final_vertex_useful_point_d[i] == final_vertex_useful_point_d[i+1]){
+//            cout << "coincide it" << endl;
+//        }
+//    }
+//
+//    Tree dtree(t_list.begin(),t_list.end());
+//    for(auto i : t_list){
+//        cnt++;
+//
+//        std::list<Tree::Intersection_and_primitive_id<K2::Triangle_3>::Type> intersections;
+//        dtree.all_intersections(i, std::back_inserter(intersections));
+//        for (auto item: intersections) {
+//            if (const K2::Point_3 * p = boost::get<K2::Point_3>(&(item.first))) {
+//                continue;
+//            }
+//            else if(const K2::Segment_3 * s = boost::get<K2::Segment_3>(&(item.first))){
+//                if(segment_coincide_triangle(*s,i)) {
+//
+//                }
+//                else{
+//                    cout <<"no1"<<endl;
+//                }
+//            }
+//            else if(const K2::Triangle_3 * tri = boost::get<K2::Triangle_3>(&(item.first))){
+//                if(i.id() != item.second->id()) {
+//                    cout <<"no3:"<<cnt<<endl;
+//                }
+//                else{
+//                   // cout <<"yes3:"<<cnt<<endl;
+//                }
+//                continue;
+//            }
+//            else if(const std::vector<K2::Point_3> * v = boost::get<std::vector<K2::Point_3> > (&(item.first))){
+//                cout <<"no2"<<endl;
+//            }
+//        }
+//    }
+//    cout <<"dtree success"<< endl;
+
+   // exit(0);
     map<int,vector<int> >hole_line;
     vector<vector<int> > each_hole;
     queue<int>hole_q;
@@ -2161,6 +2271,11 @@ thread7 st i
 //        }
 //        ss++;
     }
+
+
+
+
+
 
     for(int times = 0; times < 10 ; times++) {
         for(int i=0;i<final_face_list.size();i++){
@@ -2281,6 +2396,7 @@ thread7 st i
 //        }
 
     }
+
     for(int i=0;i<final_vertex_useful_point.size();i++){
         fprintf(file8, "v %lf %lf %lf\n",
                 CGAL::to_double(final_vertex_useful_point[i].x()+CGAL::Epeck::FT(start_x)),
@@ -2295,6 +2411,8 @@ thread7 st i
                     final_face_list[i][2]+1
                     );
     }
+
+
 
 
 
