@@ -1167,10 +1167,10 @@ int main(int argc, char* argv[]) {
         }
     }
     //exit(0);
-//    if(frame_grid_mp.size() > 1500){
-//        cout <<"len bug"<<": "<<frame_grid_mp.size()<< endl;
-//        exit(0);
-//    }
+    if(frame_grid_mp.size() > 1500){
+        cout <<"len bug"<<": "<<frame_grid_mp.size()<< endl;
+        exit(0);
+    }
 
 
 
