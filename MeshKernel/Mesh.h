@@ -23,7 +23,7 @@ namespace MeshKernel {
 		SurfaceMesh() {};
 		SurfaceMesh(const std::vector<iGameVertex>& _vertices, const std::vector<std::vector<iGameVertexHandle>>& _faces
         , const std::vector<double >face_move) {
-			InitMesh(_vertices, _faces,face_move);
+			InitMesh(_vertices, _faces, face_move);
 		}
 		//SurfaceMesh(const SurfaceMesh& _surfacemesh);
 		/*=============初始化网格=============*/

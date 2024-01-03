@@ -159,6 +159,7 @@ int main(int argc, char* argv[]) {
         auto tmp = (v0 + v1 + v2)/3;
         if(mesh->fast_iGameFace[MeshKernel::iGameFaceHandle(i)].move_dist <= 0){// deal Illegal input
             mesh->fast_iGameFace[MeshKernel::iGameFaceHandle(i)].move_dist = default_move;
+            cout << i <<" is: "<< mesh->fast_iGameFace[MeshKernel::iGameFaceHandle(i)].move_dist << endl;
         }
         min_near_limit = min(min_near_limit,mesh->fast_iGameFace[MeshKernel::iGameFaceHandle(i)].move_dist);
 
@@ -1123,7 +1124,18 @@ int main(int argc, char* argv[]) {
         return ret;
     };
     int fsize = mesh->FaceSize();
-
+//    for (int face_id = 0; face_id < fsize; face_id++) {
+//        MeshKernel::iGameVertex min_point(coverage_field_list[face_id].x_min,
+//                                          coverage_field_list[face_id].y_min,
+//                                          coverage_field_list[face_id].z_min
+//        );
+//        MeshKernel::iGameVertex max_point(coverage_field_list[face_id].x_max,
+//                                          coverage_field_list[face_id].y_max,
+//                                          coverage_field_list[face_id].z_max
+//        );
+//        cout << face_id <<": "<<mesh->fast_iGameFace[face_id].move_dist << endl;
+//    }
+    //exit(0);
     cout <<"bfs start \n" << endl;
     for (int face_id = 0; face_id < fsize; face_id++) {
         if (face_id % 1000 == 0)
@@ -1155,10 +1167,10 @@ int main(int argc, char* argv[]) {
         }
     }
     //exit(0);
-    if(frame_grid_mp.size() > 1500){
-        cout <<"len bug"<<": "<<frame_grid_mp.size()<< endl;
-        exit(0);
-    }
+//    if(frame_grid_mp.size() > 1500){
+//        cout <<"len bug"<<": "<<frame_grid_mp.size()<< endl;
+//        exit(0);
+//    }
 
 
 

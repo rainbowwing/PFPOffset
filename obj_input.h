@@ -48,8 +48,10 @@ MeshKernel::SurfaceMesh ReadObjFile(const std::string &_InputFile) {
                     std::cerr << vh << " " << vertices.size() << std::endl;
                 }
             }
-            if (vex.size() >= 4)
+            if (vex.size() >= 4) {
+                exit(0);
                 move_dist.push_back(std::stod(vex[3]));
+            }
             else
                 move_dist.push_back(default_move);
             faces.push_back(face);

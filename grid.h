@@ -119,6 +119,7 @@ grid vertex_to_grid(MeshKernel::iGameVertex v) {
     int x = int((v.x() - stx) / grid_len + myeps); // 先不管
     int y = int((v.y() - sty) / grid_len + myeps); // 先不管
     int z = int((v.z() - stz) / grid_len + myeps); // 先不管
+
     return grid{x, y, z};
 }
 
