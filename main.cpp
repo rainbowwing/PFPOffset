@@ -141,6 +141,7 @@ int main(int argc, char* argv[]) {
         cout << "grid_len "<< grid_len<<endl;
 
     }
+    //exit(0);
 //    FILE * file50 = fopen((input_filename.substr(0,input_filename.size()-4) + "_offset.obj2").c_str(),"w");
 //
 //    fprintf(file50,"#download from quad mesh, add offset distance of every by PFPOffset.\n");
@@ -185,59 +186,59 @@ int main(int argc, char* argv[]) {
 
     cout <<"st do_quadratic_error_metric" << endl;
 
-    std::vector <std::shared_ptr<std::thread> > build_neighbor(thread_num);
-    for(int i=0;i<thread_num;i++) {
-        //for (int i = 50; i < 51; i++) {
-        build_neighbor[i] = make_shared<std::thread>([&](int now_id) {
-            std::list<K2::Triangle_3> tri_list;
-            std::unordered_map<unsigned long long ,int> mp;
-            for (int i = 0; i < mesh->FaceSize(); i++) {
-                auto v0 = mesh->fast_iGameVertex[mesh->fast_iGameFace[MeshKernel::iGameFaceHandle(i)].vh(0)];
-                auto v1 = mesh->fast_iGameVertex[mesh->fast_iGameFace[MeshKernel::iGameFaceHandle(i)].vh(1)];
-                auto v2 = mesh->fast_iGameVertex[mesh->fast_iGameFace[MeshKernel::iGameFaceHandle(i)].vh(2)];
-                K2::Triangle_3 tri(iGameVertex_to_Point_K2(v0),
-                                   iGameVertex_to_Point_K2(v1),
-                                   iGameVertex_to_Point_K2(v2)
-                );
-                mp[tri.id()] = i;
-                tri_list.push_back(tri);
-            }
-            Tree aabb(tri_list.begin(),tri_list.end());
-            for (int i = 0; i < mesh->VertexSize(); i++) {
-                if (i % thread_num != now_id)continue;
-                if (i % 20 == 0)
-                    cout << "build near: " << i << "/"<<mesh->VertexSize()<< endl;
-                CGAL::Epeck::FT r(min_bbox_len/1000);
-                std::list<Primitive> intersected_primitives;
-                std::list< Tree::Intersection_and_primitive_id<K2::Triangle_3>::Type> intersections;
-                K2::Point_3 this_vertex = iGameVertex_to_Point_K2(mesh->fast_iGameVertex[i]);
-//                cout << coverage_field_list[i].bbox_min <<" "<< coverage_field_list[i].bbox_max<<endl;
-//                CGAL::Epeck::FT xx = coverage_field_list[i].bbox_min.x();
-//                cout << xx - CGAL::Epeck::FT(0.05) << endl;
-                K2::Iso_cuboid_3 bbox2(
-                        this_vertex.x() - r,
-                        this_vertex.y() - r,
-                        this_vertex.z() - r,
-                        this_vertex.x() + r,
-                        this_vertex.y() + r,
-                        this_vertex.z() + r
-                );
-                aabb.all_intersections(bbox2,std::back_inserter(intersections));
-                cout << "intersectionssize:"<< intersections.size() << endl;
-                for(auto item : intersections) {
-//                    cout <<"v " <<item.second->vertex(0) << endl;
-//                    cout <<"v " <<item.second->vertex(1) << endl;
-//                    cout <<"v " <<item.second->vertex(2) << endl;
-                    auto iter = mp.find(item.second->id());
-                    if(iter == mp.end()) exit(0);// 异常错误
-                    mesh->FastNeighborFhOfVertex_[i].insert(MeshKernel::iGameFaceHandle(iter->second));
-                }
-            }
-        }, i);
-    }
-
-    for(int i=0;i<thread_num;i++)
-        build_neighbor[i]->join();
+//    std::vector <std::shared_ptr<std::thread> > build_neighbor(thread_num);
+//    for(int i=0;i<thread_num;i++) {
+//        //for (int i = 50; i < 51; i++) {
+//        build_neighbor[i] = make_shared<std::thread>([&](int now_id) {
+//            std::list<K2::Triangle_3> tri_list;
+//            std::unordered_map<unsigned long long ,int> mp;
+//            for (int i = 0; i < mesh->FaceSize(); i++) {
+//                auto v0 = mesh->fast_iGameVertex[mesh->fast_iGameFace[MeshKernel::iGameFaceHandle(i)].vh(0)];
+//                auto v1 = mesh->fast_iGameVertex[mesh->fast_iGameFace[MeshKernel::iGameFaceHandle(i)].vh(1)];
+//                auto v2 = mesh->fast_iGameVertex[mesh->fast_iGameFace[MeshKernel::iGameFaceHandle(i)].vh(2)];
+//                K2::Triangle_3 tri(iGameVertex_to_Point_K2(v0),
+//                                   iGameVertex_to_Point_K2(v1),
+//                                   iGameVertex_to_Point_K2(v2)
+//                );
+//                mp[tri.id()] = i;
+//                tri_list.push_back(tri);
+//            }
+//            Tree aabb(tri_list.begin(),tri_list.end());
+//            for (int i = 0; i < mesh->VertexSize(); i++) {
+//                if (i % thread_num != now_id)continue;
+//                if (i % 20 == 0)
+//                    cout << "build near: " << i << "/"<<mesh->VertexSize()<< endl;
+//                CGAL::Epeck::FT r(min_bbox_len/1000);
+//                std::list<Primitive> intersected_primitives;
+//                std::list< Tree::Intersection_and_primitive_id<K2::Triangle_3>::Type> intersections;
+//                K2::Point_3 this_vertex = iGameVertex_to_Point_K2(mesh->fast_iGameVertex[i]);
+////                cout << coverage_field_list[i].bbox_min <<" "<< coverage_field_list[i].bbox_max<<endl;
+////                CGAL::Epeck::FT xx = coverage_field_list[i].bbox_min.x();
+////                cout << xx - CGAL::Epeck::FT(0.05) << endl;
+//                K2::Iso_cuboid_3 bbox2(
+//                        this_vertex.x() - r,
+//                        this_vertex.y() - r,
+//                        this_vertex.z() - r,
+//                        this_vertex.x() + r,
+//                        this_vertex.y() + r,
+//                        this_vertex.z() + r
+//                );
+//                aabb.all_intersections(bbox2,std::back_inserter(intersections));
+//                cout << "intersectionssize:"<< intersections.size() << endl;
+//                for(auto item : intersections) {
+////                    cout <<"v " <<item.second->vertex(0) << endl;
+////                    cout <<"v " <<item.second->vertex(1) << endl;
+////                    cout <<"v " <<item.second->vertex(2) << endl;
+//                    auto iter = mp.find(item.second->id());
+//                    if(iter == mp.end()) exit(0);// 异常错误
+//                    mesh->FastNeighborFhOfVertex_[i].insert(MeshKernel::iGameFaceHandle(iter->second));
+//                }
+//            }
+//        }, i);
+//    }
+//
+//    for(int i=0;i<thread_num;i++)
+//        build_neighbor[i]->join();
     for (int i = 0; i < mesh->VertexSize(); i++) {
         cout << i <<" "<< mesh->FastNeighborFhOfVertex_[i].size() << endl;
     }
@@ -823,34 +824,34 @@ int main(int argc, char* argv[]) {
                         K2::Triangle_3 tri_this(coverage_field_list[i].bound_face_vertex_exact[coverage_field_list[i].bound_face_id[j][0]],
                             coverage_field_list[i].bound_face_vertex_exact[coverage_field_list[i].bound_face_id[j][1]],
                             coverage_field_list[i].bound_face_vertex_exact[coverage_field_list[i].bound_face_id[j][2]]);
-//                        if(check_inner_vertex_all(coverage_field_list[i].bound_face_sampling_point[j],tri_this)){ // 这里是决定到底全部删除，还是全部留下的逻辑所在之处
-//                            for(int k=0;k<coverage_field_list[i].bound_face_sampling_point[j].size();k++){
-//                                coverage_field_list[i].bound_face_sampling_point_state[j][k] = -1;
-//                            }
-//                        }
-//                        else{
-//                            for(int k=0;k<coverage_field_list[i].bound_face_sampling_point[j].size();k++){
-//                                if(coverage_field_list[i].bound_face_sampling_point_state[j][k]!=-1 && ret[coverage_field_list[i].bound_face_sampling_point_state[j][k]])
-//                                    coverage_field_list[i].bound_face_sampling_point_state[j][k] = 0;
-//                                else
-//                                    coverage_field_list[i].bound_face_sampling_point_state[j][k] = -1;
-//                            }
-//                        }
-
-                        for(int k=0;k<coverage_field_list[i].bound_face_sampling_point[j].size();k++) {
-                            if(coverage_field_list[i].bound_face_sampling_point_state[j][k] != -1){
-                                if(ret[coverage_field_list[i].bound_face_sampling_point_state[j][k]] ){
-                                    if(check_inner_vertex(coverage_field_list[i].bound_face_sampling_point[j][k],tri_this)){
-                                        coverage_field_list[i].bound_face_sampling_point_state[j][k] = -1;
-                                    }
-                                    else
-                                        coverage_field_list[i].bound_face_sampling_point_state[j][k] = 0;
-                                }
-                                else{
-                                    coverage_field_list[i].bound_face_sampling_point_state[j][k] = -1;
-                                }
+                        if(check_inner_vertex_all(coverage_field_list[i].bound_face_sampling_point[j],tri_this)){ // 这里是决定到底全部删除，还是全部留下的逻辑所在之处
+                            for(int k=0;k<coverage_field_list[i].bound_face_sampling_point[j].size();k++){
+                                coverage_field_list[i].bound_face_sampling_point_state[j][k] = -1;
                             }
                         }
+                        else{
+                            for(int k=0;k<coverage_field_list[i].bound_face_sampling_point[j].size();k++){
+                                if(coverage_field_list[i].bound_face_sampling_point_state[j][k]!=-1 && ret[coverage_field_list[i].bound_face_sampling_point_state[j][k]])
+                                    coverage_field_list[i].bound_face_sampling_point_state[j][k] = 0;
+                                else
+                                    coverage_field_list[i].bound_face_sampling_point_state[j][k] = -1;
+                            }
+                        }
+
+//                        for(int k=0;k<coverage_field_list[i].bound_face_sampling_point[j].size();k++) {
+//                            if(coverage_field_list[i].bound_face_sampling_point_state[j][k] != -1){
+//                                if(ret[coverage_field_list[i].bound_face_sampling_point_state[j][k]] ){
+//                                    if(check_inner_vertex(coverage_field_list[i].bound_face_sampling_point[j][k],tri_this)){
+//                                        coverage_field_list[i].bound_face_sampling_point_state[j][k] = -1;
+//                                    }
+//                                    else
+//                                        coverage_field_list[i].bound_face_sampling_point_state[j][k] = 0;
+//                                }
+//                                else{
+//                                    coverage_field_list[i].bound_face_sampling_point_state[j][k] = -1;
+//                                }
+//                            }
+//                        }
 
                     }
                 }
@@ -1138,6 +1139,8 @@ int main(int argc, char* argv[]) {
         );
         grid g_min = vertex_to_grid(min_point);
         grid g_max = vertex_to_grid(max_point);
+
+
         for(int i=g_min.x;i<=g_max.x;i++){
             for(int j=g_min.y;j<=g_max.y;j++){
                 for(int k=g_min.z;k<=g_max.z;k++){
@@ -1150,6 +1153,11 @@ int main(int argc, char* argv[]) {
                 }
             }
         }
+    }
+    //exit(0);
+    if(frame_grid_mp.size() > 1500){
+        cout <<"len bug"<<": "<<frame_grid_mp.size()<< endl;
+        exit(0);
     }
 
 
@@ -2522,6 +2530,13 @@ thread7 st i
     if(tetwild_e>0){
         tetwild_ex += " -e "+to_string(tetwild_e) +" ";
     }
+
+
+    FILE *file_ans = fopen(  (input_filename + "_time.txt").c_str(), "w");
+    stringstream time_use;
+    time_use << diff.count();
+    fputs(time_use.str().c_str(),file_ans);
+
     //exit(0);
     if(result_mode == 1) {
         tetwild_ex+= "   --manifold-surface     ";
@@ -2539,20 +2554,7 @@ thread7 st i
 
     //system(("mv "+new_name+"__sf.obj " + input_filename+"_result.obj" ).c_str());
     //Remeshing().run((input_filename + "_result.obj").c_str());
-    cout << cmd << endl;
-    system(cmd.c_str());
-    auto end2_clock = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> diff2 = end2_clock - end_clock;
-    std::cout << input_filename<< "\t" << diff.count() <<"\t"<<diff2.count()<<"\t";
-    auto mesh00 = make_shared<MeshKernel::SurfaceMesh>(ReadObjFile(input_filename + "_final_result.obj"));
-    cout <<"final result is saved in "<< input_filename + "_final_result.obj"<<endl;
-    cout << mesh00->VertexSize() <<"\t"<< mesh00->FaceSize() << "\t"<< mesh->VertexSize()<<"\t"<<mesh->FaceSize()<<endl;
-    stringstream time_use;
-    FILE *file_ans = fopen(  (input_filename + "_time.txt").c_str(), "w");
-    time_use  << input_filename<< "\t" << diff.count() <<"\t"<<diff2.count()<<"\t";
-    time_use << mesh00->VertexSize() <<"\t"<< mesh00->FaceSize() << "\t"<< mesh->VertexSize()<<"\t"<<mesh->FaceSize()<<endl;
-    fputs(time_use.str().c_str(),file_ans);
-    fclose(file_ans);
+
     return 0;
 }
 /*

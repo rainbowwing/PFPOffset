@@ -38,8 +38,8 @@ namespace MeshKernel {
         for(int i=0;i<_elements.size();i++){
             this->fast_iGameFace.emplace_back(_elements[i], face_move[i]);
             this->FastNeighborFhOfFace_.emplace_back();
-//            for(int j=0;j<_elements[i].size();j++)
-//                this->FastNeighborFhOfVertex_[_elements[i][j].idx()].insert(MeshKernel::iGameFaceHandle(i));
+            for(int j=0;j<_elements[i].size();j++)
+                this->FastNeighborFhOfVertex_[_elements[i][j].idx()].insert(MeshKernel::iGameFaceHandle(i));
 
         }
 //        for(int i =0;i< this->FastNeighborFhOfVertex_.size();i++){
