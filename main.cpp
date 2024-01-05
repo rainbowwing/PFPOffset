@@ -2001,6 +2001,119 @@ thread7 st i
 
                 fprintf(file6, "f %d %d %d\n", is_vertex_useful[f_list[i].f0] + 1, is_vertex_useful[f_list[i].f2] + 1,
                         is_vertex_useful[f_list[i].f1] + 1);
+
+                if(hole_mp.count(std::make_pair(f_list[i].f0,f_list[i].f1))){
+                    auto old = hole_mp[std::make_pair(f_list[i].f0,f_list[i].f1)];
+                    cout <<"hole_mp. error" << f_list[i].f0 <<" "<<f_list[i].f1 <<  endl;
+                    cout <<"old:" <<old.f0 <<" "<< old.f1 <<" "<< old.f2 << endl;
+                    cout <<"new:" << f_list[i].f0 <<" "<< f_list[i].f1 <<" "<< f_list[i].f2 << endl;
+                    cout <<"old.f0 :"<< old.f0 <<" "<<CGAL::to_double(global_vertex_list[old.f0].x()) <<" "
+                         <<CGAL::to_double(global_vertex_list[old.f0].y()) <<" "
+                         <<CGAL::to_double(global_vertex_list[old.f0].z()) << endl;
+                    cout <<"old.f1 :"<< old.f1 <<" "<<CGAL::to_double(global_vertex_list[old.f1].x()) <<" "
+                         <<CGAL::to_double(global_vertex_list[old.f1].y()) <<" "
+                         <<CGAL::to_double(global_vertex_list[old.f1].z()) << endl;
+                    cout <<"old.f2 :"<< old.f2 <<" "<<CGAL::to_double(global_vertex_list[old.f2].x()) <<" "
+                         <<CGAL::to_double(global_vertex_list[old.f2].y()) <<" "
+                         <<CGAL::to_double(global_vertex_list[old.f2].z()) << endl;
+                    cout << (K2::Triangle_3(global_vertex_list[old.f0],
+                                            global_vertex_list[old.f1],
+                                            global_vertex_list[old.f2])).is_degenerate()<<endl;
+
+                    cout <<"new.f0 :"<< f_list[i].f0 <<" "<<CGAL::to_double(global_vertex_list[f_list[i].f0].x()) <<" "
+                         <<CGAL::to_double(global_vertex_list[f_list[i].f0].y()) <<" "
+                         <<CGAL::to_double(global_vertex_list[f_list[i].f0].z()) << endl;
+                    cout <<"new.f1 :"<< f_list[i].f1 <<" "<<CGAL::to_double(global_vertex_list[f_list[i].f1].x()) <<" "
+                         <<CGAL::to_double(global_vertex_list[f_list[i].f1].y()) <<" "
+                         <<CGAL::to_double(global_vertex_list[f_list[i].f1].z()) << endl;
+                    cout <<"new.f2 :"<< f_list[i].f2 <<" "<<CGAL::to_double(global_vertex_list[f_list[i].f2].x()) <<" "
+                         <<CGAL::to_double(global_vertex_list[f_list[i].f2].y()) <<" "
+                         <<CGAL::to_double(global_vertex_list[f_list[i].f2].z()) << endl;
+
+
+                    cout << (K2::Triangle_3(global_vertex_list[f_list[i].f0],
+                                            global_vertex_list[f_list[i].f1],
+                                            global_vertex_list[f_list[i].f2])).is_degenerate()<<endl;
+                }
+                if(hole_mp.count(std::make_pair(f_list[i].f1,f_list[i].f2))){
+                    auto old = hole_mp[std::make_pair(f_list[i].f1,f_list[i].f2)];
+                    cout <<"hole_mp. error" << f_list[i].f1 <<" "<<f_list[i].f2 <<  endl;
+                    cout <<"old:" <<old.f0 <<" "<< old.f1 <<" "<< old.f2 << endl;
+                    cout <<"new:" << f_list[i].f0 <<" "<< f_list[i].f1 <<" "<< f_list[i].f2 << endl;
+                    cout <<"old.f0 :"<< old.f0 <<" "<<CGAL::to_double(global_vertex_list[old.f0].x()) <<" "
+                         <<CGAL::to_double(global_vertex_list[old.f0].y()) <<" "
+                         <<CGAL::to_double(global_vertex_list[old.f0].z()) << endl;
+                    cout <<"old.f1 :"<< old.f1 <<" "<<CGAL::to_double(global_vertex_list[old.f1].x()) <<" "
+                         <<CGAL::to_double(global_vertex_list[old.f1].y()) <<" "
+                         <<CGAL::to_double(global_vertex_list[old.f1].z()) << endl;
+                    cout <<"old.f2 :"<< old.f2 <<" "<<CGAL::to_double(global_vertex_list[old.f2].x()) <<" "
+                         <<CGAL::to_double(global_vertex_list[old.f2].y()) <<" "
+                         <<CGAL::to_double(global_vertex_list[old.f2].z()) << endl;
+
+                    cout << (K2::Triangle_3(global_vertex_list[old.f0],
+                                            global_vertex_list[old.f1],
+                                            global_vertex_list[old.f2])).is_degenerate()<<endl;
+
+                    cout <<"new.f0 :"<< f_list[i].f0 <<" "<<CGAL::to_double(global_vertex_list[f_list[i].f0].x()) <<" "
+                         <<CGAL::to_double(global_vertex_list[f_list[i].f0].y()) <<" "
+                         <<CGAL::to_double(global_vertex_list[f_list[i].f0].z()) << endl;
+                    cout <<"new.f1 :"<< f_list[i].f1 <<" "<<CGAL::to_double(global_vertex_list[f_list[i].f1].x()) <<" "
+                         <<CGAL::to_double(global_vertex_list[f_list[i].f1].y()) <<" "
+                         <<CGAL::to_double(global_vertex_list[f_list[i].f1].z()) << endl;
+                    cout <<"new.f2 :"<< f_list[i].f2 <<" "<<CGAL::to_double(global_vertex_list[f_list[i].f2].x()) <<" "
+                         <<CGAL::to_double(global_vertex_list[f_list[i].f2].y()) <<" "
+                         <<CGAL::to_double(global_vertex_list[f_list[i].f2].z()) << endl;
+
+                    cout << (K2::Triangle_3(global_vertex_list[f_list[i].f0],
+                                            global_vertex_list[f_list[i].f1],
+                                            global_vertex_list[f_list[i].f2])).is_degenerate()<<endl;
+
+                }
+                if(hole_mp.count(std::make_pair(f_list[i].f2,f_list[i].f0))){
+                    auto old = hole_mp[std::make_pair(f_list[i].f2,f_list[i].f0)];
+                    cout <<"hole_mp. error" << f_list[i].f2 <<" "<<f_list[i].f0 <<  endl;
+                    cout <<"old:" <<old.f0 <<" "<< old.f1 <<" "<< old.f2 << endl;
+                    cout <<"new:" << f_list[i].f0 <<" "<< f_list[i].f1 <<" "<< f_list[i].f2 << endl;
+                    cout <<"old.f0 :"<< old.f0 <<" "<<CGAL::to_double(global_vertex_list[old.f0].x()) <<" "
+                         <<CGAL::to_double(global_vertex_list[old.f0].y()) <<" "
+                         <<CGAL::to_double(global_vertex_list[old.f0].z()) << endl;
+                    cout <<"old.f1 :"<< old.f1 <<" "<<CGAL::to_double(global_vertex_list[old.f1].x()) <<" "
+                         <<CGAL::to_double(global_vertex_list[old.f1].y()) <<" "
+                         <<CGAL::to_double(global_vertex_list[old.f1].z()) << endl;
+                    cout <<"old.f2 :"<< old.f2 <<" "<<CGAL::to_double(global_vertex_list[old.f2].x()) <<" "
+                         <<CGAL::to_double(global_vertex_list[old.f2].y()) <<" "
+                         <<CGAL::to_double(global_vertex_list[old.f2].z()) << endl;
+                    cout << (K2::Triangle_3(global_vertex_list[old.f0],
+                                            global_vertex_list[old.f1],
+                                            global_vertex_list[old.f2])).is_degenerate()<<endl;
+
+                    cout <<"new.f0 :"<< f_list[i].f0 <<" "<<CGAL::to_double(global_vertex_list[f_list[i].f0].x()) <<" "
+                         <<CGAL::to_double(global_vertex_list[f_list[i].f0].y()) <<" "
+                         <<CGAL::to_double(global_vertex_list[f_list[i].f0].z()) << endl;
+                    cout <<"new.f1 :"<< f_list[i].f1 <<" "<<CGAL::to_double(global_vertex_list[f_list[i].f1].x()) <<" "
+                         <<CGAL::to_double(global_vertex_list[f_list[i].f1].y()) <<" "
+                         <<CGAL::to_double(global_vertex_list[f_list[i].f1].z()) << endl;
+                    cout <<"new.f2 :"<< f_list[i].f2 <<" "<<CGAL::to_double(global_vertex_list[f_list[i].f2].x()) <<" "
+                         <<CGAL::to_double(global_vertex_list[f_list[i].f2].y()) <<" "
+                         <<CGAL::to_double(global_vertex_list[f_list[i].f2].z()) << endl;
+                    cout << (K2::Triangle_3(global_vertex_list[f_list[i].f0],
+                                            global_vertex_list[f_list[i].f1],
+                                            global_vertex_list[f_list[i].f2])).is_degenerate()<<endl;
+                }
+                hole_mp[std::make_pair(f_list[i].f0,f_list[i].f1)] = f_list[i];
+                hole_mp[std::make_pair(f_list[i].f1,f_list[i].f2)] = f_list[i];
+                hole_mp[std::make_pair(f_list[i].f2,f_list[i].f0)] = f_list[i];
+                final_topo_check_mp[std::make_pair(is_vertex_useful[f_list[i].f0],is_vertex_useful[f_list[i].f1])] = final_face_list.size();
+                final_topo_check_mp[std::make_pair(is_vertex_useful[f_list[i].f1],is_vertex_useful[f_list[i].f2])] = final_face_list.size();
+                final_topo_check_mp[std::make_pair(is_vertex_useful[f_list[i].f2],is_vertex_useful[f_list[i].f0])] = final_face_list.size();
+                final_face_list.push_back(vector<int>{is_vertex_useful[f_list[i].f0],
+                                                      is_vertex_useful[f_list[i].f2],
+                                                      is_vertex_useful[f_list[i].f1],
+                                                      1});
+
+
+
+
             }
             else {
                 fprintf(file6, "f %d %d %d\n", is_vertex_useful[f_list[i].f0] + 1, is_vertex_useful[f_list[i].f1] + 1,

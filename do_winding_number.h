@@ -179,7 +179,7 @@ void winding_num(vector<FinalFace>& v){
     }
     Eigen::VectorXd W;
     igl::winding_number(V, F, P, W);
-    for(int i=0;i< v.size(); i++){
+    for(int i=0;i< v.size(); i++) {
         if( (running_mode == 1 && W(i) <= 0.5) || (running_mode == 2 && W(i) >= 0.5)){
             v[i].flag = true;
         }
