@@ -76,7 +76,7 @@ int main(int argc, char* argv[]) {
     std::cerr.rdbuf(nullstream.rdbuf());
     google::ParseCommandLineFlags(&argc, &argv, true);
     flag_parser();
-
+    double default_ratio = 3e-3;
     cout <<"CGAL_RELEASE_DATE:" << CGAL_RELEASE_DATE << endl;
     mesh = make_shared<MeshKernel::SurfaceMesh>(ReadObjFile(input_filename)); grid_len = 0.1;
     //update_model();
@@ -85,7 +85,7 @@ int main(int argc, char* argv[]) {
     start_z = 0;
     set_start();
     input_filename = input_filename.substr(0,input_filename.size()-4);
-    input_filename+= string("_") + (running_mode==1 ? "offset_outward" : "offset_inward");
+    input_filename+= string("_") + (running_mode==1 ? "offset_outward_"+ to_string(default_ratio) : "offset_inward_"+ to_string(default_ratio));
     FILE *file11 = fopen( (input_filename + "_grid.obj").c_str(), "w");
     FILE *file6 = fopen( (input_filename + "_tmp.obj").c_str(), "w");
     FILE *file7 = fopen( (input_filename + "_no_manifold.obj").c_str(), "w");
@@ -109,6 +109,7 @@ int main(int argc, char* argv[]) {
     double y_len = (mesh->BBoxMax - mesh->BBoxMin).y();
     double z_len = (mesh->BBoxMax - mesh->BBoxMin).z();
     double min_bbox_len = min(min(x_len,y_len),z_len);
+
     {
         double sum = 0;
         for(int i=0;i<mesh->FaceSize();i++){
@@ -127,7 +128,7 @@ int main(int argc, char* argv[]) {
         avg_edge_limit = sum/mesh->FaceSize();
         if(default_move <= 0) {
             //default_move = min(min(x_len, y_len), z_len)*1e-3;
-            default_move = sqrt(x_len*x_len+y_len*y_len+z_len*z_len)*1e-3;
+            default_move = sqrt(x_len*x_len+y_len*y_len+z_len*z_len)*default_ratio;
             cout <<"default_move_dist:" <<default_move << endl;
             //exit(0);
         }
