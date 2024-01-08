@@ -76,7 +76,7 @@ int main(int argc, char* argv[]) {
     std::cerr.rdbuf(nullstream.rdbuf());
     google::ParseCommandLineFlags(&argc, &argv, true);
     flag_parser();
-    double default_ratio = 3e-3;
+    double default_ratio = 5e-4;
     cout <<"CGAL_RELEASE_DATE:" << CGAL_RELEASE_DATE << endl;
     mesh = make_shared<MeshKernel::SurfaceMesh>(ReadObjFile(input_filename)); grid_len = 0.1;
     //update_model();
@@ -112,7 +112,7 @@ int main(int argc, char* argv[]) {
 
     {
         double sum = 0;
-        for(int i=0;i<mesh->FaceSize();i++){
+        for(int i=0;i<mesh->FaceSize();i++) {
             double minx = *set<double>{(mesh->fast_iGameVertex[mesh->fast_iGameFace[i].vh(0)] - mesh->fast_iGameVertex[mesh->fast_iGameFace[i].vh(1)]).norm(),
                                        (mesh->fast_iGameVertex[mesh->fast_iGameFace[i].vh(1)] - mesh->fast_iGameVertex[mesh->fast_iGameFace[i].vh(2)]).norm(),
                                        (mesh->fast_iGameVertex[mesh->fast_iGameFace[i].vh(2)] - mesh->fast_iGameVertex[mesh->fast_iGameFace[i].vh(0)]).norm()
