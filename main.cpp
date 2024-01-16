@@ -66,6 +66,7 @@
 
 int check_resolution = 3;
 using namespace std;
+//#define DEBUG
 
 int main(int argc, char* argv[]) {
 //    data_analyze();
@@ -86,13 +87,17 @@ int main(int argc, char* argv[]) {
     start_x = 0;
     start_y = 0;
     start_z = 0;
+#ifndef DEBUG
     set_start();
+#endif
     input_filename = input_filename.substr(0,input_filename.size()-4);
     input_filename+= string("_") + (running_mode==1 ? "offset_outward_"+ to_string(default_ratio) : "offset_inward_"+ to_string(default_ratio));
+    FILE *file8 = fopen( (input_filename + "_result.obj").c_str(), "w");
+#ifdef DEBUG
     FILE *file11 = fopen( (input_filename + "_grid.obj").c_str(), "w");
     FILE *file6 = fopen( (input_filename + "_tmp.obj").c_str(), "w");
     FILE *file7 = fopen( (input_filename + "_no_manifold.obj").c_str(), "w");
-    FILE *file8 = fopen( (input_filename + "_result.obj").c_str(), "w");
+
     FILE *file13 = fopen( (input_filename + "_moveedge.obj").c_str(), "w");
     FILE *file15 = fopen( (input_filename + "_extend_vertex.obj").c_str(), "w");
 
@@ -102,6 +107,7 @@ int main(int argc, char* argv[]) {
 //    FILE *file54 = fopen( (input_filename + "_check_resolution_reserver.obj").c_str(), "w");
     FILE *file34 = fopen( (input_filename + "_cutting_segment.obj").c_str(), "w");
     FILE *file676 = fopen( (input_filename + "_fffhole.obj").c_str(), "w");
+#endif
     mesh->initBBox();
    // mesh->build_fast();
    // mesh->build_fast();
@@ -307,6 +313,7 @@ int main(int argc, char* argv[]) {
     }
     for(int i=0;i<thread_num;i++)
         dp_thread_pool[i]->join();
+#ifdef DEBUG
     int cnte = 1;
     for (int i = 0; i < mesh->VertexSize(); i++) {
         for(int j = 0;j < field_move_vertices[i].size();j++){
@@ -325,6 +332,8 @@ int main(int argc, char* argv[]) {
 
         //fprintf(file13,"v");
     }
+#endif
+
     for(int i=0;i<mesh->VertexSize();i++){
         origin_mesh_vertices[i] = K2::Point_3 (mesh->fast_iGameVertex[i].x(),
                                                mesh->fast_iGameVertex[i].y(),
@@ -417,14 +426,18 @@ int main(int argc, char* argv[]) {
     for(int i=0;i<mesh->FaceSize();i++){
 //        if(coverage_field_list[i].bound_face_vertex_inexact.size() == 7 ) {
         for (int j = 0; j < coverage_field_list[i].bound_face_vertex_exact.size(); j++) {
+#ifdef DEBUG
             fprintf(file14,"v %lf %lf %lf\n",CGAL::to_double(coverage_field_list[i].bound_face_vertex_exact[j].x())+start_x,
                     CGAL::to_double(coverage_field_list[i].bound_face_vertex_exact[j].y())+start_y,
                     CGAL::to_double(coverage_field_list[i].bound_face_vertex_exact[j].z())+start_z);
+#endif
         }
         for(int j=0;j<coverage_field_list[i].bound_face_id.size();j++){
+#ifdef DEBUG
             fprintf(file14,"f %d %d %d\n",coverage_field_list[i].bound_face_id[j][0]+1+pre_cnt,
                     coverage_field_list[i].bound_face_id[j][1]+1+pre_cnt,
                     coverage_field_list[i].bound_face_id[j][2]+1+pre_cnt);
+#endif
             auto v0 = coverage_field_list[i].bound_face_vertex_exact[coverage_field_list[i].bound_face_id[j][0]];
             auto v1 = coverage_field_list[i].bound_face_vertex_exact[coverage_field_list[i].bound_face_id[j][1]];
             auto v2 = coverage_field_list[i].bound_face_vertex_exact[coverage_field_list[i].bound_face_id[j][2]];
@@ -445,7 +458,9 @@ int main(int argc, char* argv[]) {
 //            break;
 //        }
     }
+#ifdef DEBUG
     fclose(file14);
+#endif
     //exit(0);
     vector<set<int> > coverage_intersection(mesh->FaceSize());
     //X: 全局删法1
@@ -876,6 +891,7 @@ int main(int argc, char* argv[]) {
         }
 //        FILE *file44 = fopen( (input_filename + "_check_resolution_delete.obj").c_str(), "w");
 //        FILE *file54 = fopen( (input_filename + "_check_resolution_reserver.obj").c_str(), "w");
+#ifdef DEBUG
         ofstream fsip((input_filename + "_check_resolution_delete.obj").c_str());
         ofstream fsop((input_filename + "_check_resolution_reserver.obj").c_str());
         for(int i=0;i<mesh->FaceSize();i++) {
@@ -895,7 +911,7 @@ int main(int argc, char* argv[]) {
                 }
             }
         }
-
+#endif
 
 //        int cnt44 = 1;
 //        int cnt54 = 1;
@@ -1306,6 +1322,7 @@ int main(int argc, char* argv[]) {
     for(int i=0;i<thread_num;i++)
         each_grid_thread_pool[i]->join();
     int ll = 0;
+#ifdef DEBUG
     for (int face_id = 0; face_id < fsize; face_id++) {
         if(!coverage_field_list[face_id].useful)continue;
         for(int j=0;j<coverage_field_list[face_id].bound_face_id.size();j++){
@@ -1326,7 +1343,7 @@ int main(int argc, char* argv[]) {
         }
     }
     fclose(file34);
-
+#endif
     //exit(0);
 
     for (auto each_grid= frame_grid_mp.begin(); each_grid != frame_grid_mp.end(); each_grid++) {
@@ -1342,10 +1359,12 @@ int main(int argc, char* argv[]) {
                 int to = DirectedGridEdge[ii][jj];
                 MeshKernel::iGameVertex fv = getGridiGameVertex(small, big, from);
                 MeshKernel::iGameVertex tv = getGridiGameVertex(small, big, to);
+#ifdef DEBUG
                 fprintf(file11, "v %lf %lf %lf\n", fv.x(), fv.y(), fv.z());
                 fprintf(file11, "v %lf %lf %lf\n", tv.x(), tv.y(), tv.z());
                 fprintf(file11, "l %d %d\n", f3_id, f3_id + 1);
                 f3_id += 2;
+#endif
             }
         }
     }
@@ -2845,8 +2864,9 @@ thread7 st i
 //        }
 //    }
 
-
+#ifdef DEBUG
     fclose(file6);
+#endif
     //sum_avg_edge /=(global_face_list.size()*3*20);
 
     auto end_clock = std::chrono::high_resolution_clock::now();
