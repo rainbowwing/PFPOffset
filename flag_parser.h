@@ -27,6 +27,8 @@ DEFINE_double(L, -1,
 
 DEFINE_double(E, -1,
               "set tetwild argument -e");
+DEFINE_double(r, -1,
+              "default ratio");
 
 //DEFINE_double(e, 1e-4,
 //              "This arg is a double means the eps. When the distance of two points is smaller than eps, we will regard these two point as coinciding. ");
@@ -34,6 +36,7 @@ int result_mode;
 
 double tetwild_l = -1;
 double tetwild_e = -1;
+double default_ratio = 1e-3;
 void flag_parser() {
     result_mode = FLAGS_m;
     cout << "result_mode is " << result_mode << endl;
@@ -50,6 +53,9 @@ void flag_parser() {
     tetwild_l = FLAGS_L;
     tetwild_e = FLAGS_E;
     default_move = FLAGS_d;
+    if(FLAGS_r > 0){
+        default_ratio = FLAGS_r;
+    }
 
 }
 

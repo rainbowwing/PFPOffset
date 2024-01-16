@@ -79,7 +79,7 @@ int main(int argc, char* argv[]) {
     std::cerr.rdbuf(nullstream.rdbuf());
     google::ParseCommandLineFlags(&argc, &argv, true);
     flag_parser();
-    double default_ratio = 1e-3;
+
     cout <<"CGAL_RELEASE_DATE:" << CGAL_RELEASE_DATE << endl;
     mesh = make_shared<MeshKernel::SurfaceMesh>(ReadObjFile(input_filename)); grid_len = 0.1;
     //update_model();
@@ -1877,7 +1877,7 @@ thread7 st i
 //    }
 
     double sum_avg_edge = 0;
-
+    CGAL::Epeck::FT face_avg(0);
     vector<FinalFace> f_list;
     set<vector<int> >final_face_set;
     for (int i = 0; i < global_face_list.size(); i++) {
@@ -1897,10 +1897,16 @@ thread7 st i
                         global_face_list[i].idx2,
                         centroid((K2::Triangle_3(global_vertex_list[global_face_list[i].idx0], global_vertex_list[global_face_list[i].idx1], global_vertex_list[global_face_list[i].idx2]))),
                         true);
+            face_avg += (K2::Triangle_3(global_vertex_list[global_face_list[i].idx0], global_vertex_list[global_face_list[i].idx1], global_vertex_list[global_face_list[i].idx2])).squared_area();
             //if(!final_face_set.count(f))
             f_list.push_back(f);
         }
     }
+    if(f_list.size())
+        face_avg /= (1.0*f_list.size());
+
+
+
     winding_num(f_list);
     map<int,int>is_vertex_useful;
     vector<int>final_vertex_useful;
@@ -1915,14 +1921,16 @@ thread7 st i
             }
         }
     }
-    for(int i=0;i<final_vertex_useful.size();i++){
+    for(int i=0;i<final_vertex_useful.size();i++) {
+#ifdef DEBUG
         fprintf(file6,"v %lf %lf %lf\n",CGAL::to_double(global_vertex_list[final_vertex_useful[i]].x()+start_x),
                 CGAL::to_double(global_vertex_list[final_vertex_useful[i]].y()+start_y),
                 CGAL::to_double(global_vertex_list[final_vertex_useful[i]].z()+start_z));
+#endif
         final_vertex_useful_point.emplace_back(global_vertex_list[final_vertex_useful[i]].x()/*+CGAL::Epeck::FT(start_x)*/,
                                                global_vertex_list[final_vertex_useful[i]].y()/*+CGAL::Epeck::FT(start_y)*/,
                                                global_vertex_list[final_vertex_useful[i]].z()/*+CGAL::Epeck::FT(start_z)*/
-                                               );
+        );
     }
     map<pair<int,int>,int >final_topo_check_mp;
     // 做一个冲突删面的逻辑
@@ -1948,7 +1956,7 @@ thread7 st i
                     std::make_pair(f_list[i].f1,f_list[i].f2),
                     std::make_pair(f_list[i].f2,f_list[i].f0)
             }
-            ) {
+                    ) {
                 check_conflict[edge].push_back(i);
             }
         }
@@ -2001,13 +2009,14 @@ thread7 st i
     for (int i = 0; i < f_list.size(); i++) {
         if(f_list[i].flag) {
             if(running_mode == 1) {
+
 //                sum_avg_edge += sqrt(CGAL::to_double((CGAL::squared_distance(global_vertex_list[global_face_list[i].idx0] , global_vertex_list[global_face_list[i].idx1]))));
 //                sum_avg_edge += sqrt(CGAL::to_double((CGAL::squared_distance(global_vertex_list[global_face_list[i].idx2] , global_vertex_list[global_face_list[i].idx1]))));
-//                sum_avg_edge += sqrt(CGAL::to_double((CGAL::squared_distance(global_vertex_list[global_face_list[i].idx0] , global_vertex_list[global_face_list[i].idx2]))));
-
+//                sum_avg_edge += sqrt(CGAL ::to_double((CGAL::squared_distance(global_vertex_list[global_face_list[i].idx0] , global_vertex_list[global_face_list[i].idx2]))));
+#ifdef DEBUG
                 fprintf(file6, "f %d %d %d\n", is_vertex_useful[f_list[i].f0] + 1, is_vertex_useful[f_list[i].f2] + 1,
                         is_vertex_useful[f_list[i].f1] + 1);
-
+#endif
                 if(hole_mp.count(std::make_pair(f_list[i].f0,f_list[i].f1))){
                     auto old = hole_mp[std::make_pair(f_list[i].f0,f_list[i].f1)];
                     cout <<"hole_mp. error" << f_list[i].f0 <<" "<<f_list[i].f1 <<  endl;
@@ -2122,11 +2131,13 @@ thread7 st i
 
             }
             else {
+#ifdef DEBUG
                 fprintf(file6, "f %d %d %d\n", is_vertex_useful[f_list[i].f0] + 1, is_vertex_useful[f_list[i].f1] + 1,
                         is_vertex_useful[f_list[i].f2] + 1);
-                t_list.push_back(K2::Triangle_3(global_vertex_list[f_list[i].f0],
-                                                global_vertex_list[f_list[i].f1],
-                                                global_vertex_list[f_list[i].f2]));
+#endif
+//                t_list.push_back(K2::Triangle_3(global_vertex_list[f_list[i].f0],
+//                                                global_vertex_list[f_list[i].f1],
+//                                                global_vertex_list[f_list[i].f2]));
 
 
 //                check_manifold[get_pair(f_list[i].f0,f_list[i].f1)].push_back(f_list[i].f2);
@@ -2141,14 +2152,14 @@ thread7 st i
                     cout <<"old:" <<old.f0 <<" "<< old.f1 <<" "<< old.f2 << endl;
                     cout <<"new:" << f_list[i].f0 <<" "<< f_list[i].f1 <<" "<< f_list[i].f2 << endl;
                     cout <<"old.f0 :"<< old.f0 <<" "<<CGAL::to_double(global_vertex_list[old.f0].x()) <<" "
-                    <<CGAL::to_double(global_vertex_list[old.f0].y()) <<" "
-                    <<CGAL::to_double(global_vertex_list[old.f0].z()) << endl;
+                         <<CGAL::to_double(global_vertex_list[old.f0].y()) <<" "
+                         <<CGAL::to_double(global_vertex_list[old.f0].z()) << endl;
                     cout <<"old.f1 :"<< old.f1 <<" "<<CGAL::to_double(global_vertex_list[old.f1].x()) <<" "
-                    <<CGAL::to_double(global_vertex_list[old.f1].y()) <<" "
-                    <<CGAL::to_double(global_vertex_list[old.f1].z()) << endl;
+                         <<CGAL::to_double(global_vertex_list[old.f1].y()) <<" "
+                         <<CGAL::to_double(global_vertex_list[old.f1].z()) << endl;
                     cout <<"old.f2 :"<< old.f2 <<" "<<CGAL::to_double(global_vertex_list[old.f2].x()) <<" "
-                    <<CGAL::to_double(global_vertex_list[old.f2].y()) <<" "
-                    <<CGAL::to_double(global_vertex_list[old.f2].z()) << endl;
+                         <<CGAL::to_double(global_vertex_list[old.f2].y()) <<" "
+                         <<CGAL::to_double(global_vertex_list[old.f2].z()) << endl;
                     cout << (K2::Triangle_3(global_vertex_list[old.f0],
                                             global_vertex_list[old.f1],
                                             global_vertex_list[old.f2])).is_degenerate()<<endl;
@@ -2246,11 +2257,7 @@ thread7 st i
             }
         }
     }
-    CGAL::Epeck::FT face_avg(0);
-    for(auto i : t_list){
-        face_avg += i.squared_area();
-    }
-    face_avg /= CGAL::Epeck::FT(t_list.size());
+
 
     //vector<K2::Point_3>final_vertex_useful_point_d = final_vertex_useful_point;
 //    sort(final_vertex_useful_point_d.begin(),final_vertex_useful_point_d.end(),[&](const K2::Point_3 &a,const K2::Point_3 &b){
@@ -2301,7 +2308,7 @@ thread7 st i
 //    }
 //    cout <<"dtree success"<< endl;
 
-   // exit(0);
+    // exit(0);
     map<int,vector<int> >hole_line;
     vector<vector<int> > each_hole;
     queue<int>hole_q;
@@ -2332,6 +2339,7 @@ thread7 st i
     disassemble_circle(hole_line,each_hole);
     for(int i=0;i<each_hole.size();i++) {
         for(int j=0;j<each_hole[i].size();j++) {
+#ifdef DEBUG
             fprintf(file676,"v %lf %lf %lf\n",CGAL::to_double(global_vertex_list[each_hole[i][j]].x()) + start_x,
                     CGAL::to_double(global_vertex_list[each_hole[i][j]].y()) + start_y,
                     CGAL::to_double(global_vertex_list[each_hole[i][j]].z()) + start_z
@@ -2342,19 +2350,23 @@ thread7 st i
             );
             fprintf(file676,"l %d %d\n",cnt676,cnt676+1);
             cnt676+=2;
+#endif
         }
     }
     // 一会抓出来反法向的面，检测所有边是否出现冲突，进行调整。
 
 //    function<void(vector<int>)>
 
-
+#ifdef DEBUG
     fprintf(file6,"#*********\n");
+#endif
     for(int i=0;i<each_hole.size();i++) {
 
         if(each_hole[i].size() == 3) {
+#ifdef DEBUG
             fprintf(file6, "f %d %d %d\n", is_vertex_useful[each_hole[i][0]] + 1, is_vertex_useful[each_hole[i][1]] + 1,
                     is_vertex_useful[each_hole[i][2]] + 1);
+#endif
 //            final_topo_check_mp[std::make_pair(is_vertex_useful[each_hole[i][0]],is_vertex_useful[each_hole[i][1]])] = final_face_list.size();
 //            final_topo_check_mp[std::make_pair(is_vertex_useful[each_hole[i][1]],is_vertex_useful[each_hole[i][2]])] = final_face_list.size();
 //            final_topo_check_mp[std::make_pair(is_vertex_useful[each_hole[i][2]],is_vertex_useful[each_hole[i][0]])] = final_face_list.size();
@@ -2392,8 +2404,8 @@ thread7 st i
             for(int j=0;j<ret.size();j++){
                 if(ret[j].size() == 3){
                     K2::Triangle_3 t(final_vertex_useful_point[is_vertex_useful[ret[j][0]]],
-                                    final_vertex_useful_point[is_vertex_useful[ret[j][1]]],
-                                    final_vertex_useful_point[is_vertex_useful[ret[j][2]]]
+                                     final_vertex_useful_point[is_vertex_useful[ret[j][1]]],
+                                     final_vertex_useful_point[is_vertex_useful[ret[j][2]]]
                     );
                     if(t.squared_area() <= face_avg/1000000)
                         final_face_list.emplace_back(vector<int>{is_vertex_useful[ret[j][0]],
@@ -2419,6 +2431,7 @@ thread7 st i
             }
         }
     }
+
 
 
 
@@ -2565,19 +2578,177 @@ thread7 st i
 //
 //    }
 
+
+
+
     for(int i=0;i<final_vertex_useful_point.size();i++){
         fprintf(file8, "v %lf %lf %lf\n",
                 CGAL::to_double(final_vertex_useful_point[i].x()+CGAL::Epeck::FT(start_x)),
                 CGAL::to_double(final_vertex_useful_point[i].y()+CGAL::Epeck::FT(start_y)),
                 CGAL::to_double(final_vertex_useful_point[i].z()+CGAL::Epeck::FT(start_z)));
-    }
+    }// 构建拓扑
+    vector<vector<int> >topological_vertex_neighbor(final_vertex_useful_point.size());
     for(int i=0;i<final_face_list.size();i++){
-        if(final_face_list[i][3])
+        if(final_face_list[i][3]) {
+            topological_vertex_neighbor[final_face_list[i][0]].push_back(i);
+            topological_vertex_neighbor[final_face_list[i][1]].push_back(i);
+            topological_vertex_neighbor[final_face_list[i][2]].push_back(i);
+        }
+    }
+    DSU final_dsu;
+    map<pair<int,int>, vector<int> > record_cut;
+
+    for(int i=0;i<final_face_list.size();i++){
+        if(final_face_list[i][3]) {
+            if(set<int>{final_face_list[i][0],
+                        final_face_list[i][1],
+                        final_face_list[i][2],
+            }.size() != 3) {
+                final_face_list[i][3] = 0;
+                continue;
+            }
+            if(K2::Triangle_3 (final_vertex_useful_point[final_face_list[i][0]],
+                               final_vertex_useful_point[final_face_list[i][1]],
+                               final_vertex_useful_point[final_face_list[i][2]]
+            ).is_degenerate()){
+                if (final_vertex_useful_point[final_face_list[i][0]] == final_vertex_useful_point[final_face_list[i][1]]
+                    && final_vertex_useful_point[final_face_list[i][2]] == final_vertex_useful_point[final_face_list[i][1]]){
+                    final_face_list[i][3] = 0;
+                    final_dsu.join(final_face_list[i][0],final_face_list[i][1]);
+                    final_dsu.join(final_face_list[i][1],final_face_list[i][2]);
+                    final_dsu.join(final_face_list[i][2],final_face_list[i][0]);
+                    cout <<"out 3" << endl;
+                }
+                else if (final_vertex_useful_point[final_face_list[i][0]] == final_vertex_useful_point[final_face_list[i][1]]){
+                    final_face_list[i][3] = 0;
+                    final_dsu.join(final_face_list[i][0],final_face_list[i][1]);
+                    cout <<"out 2" << endl;
+                }
+                else if (final_vertex_useful_point[final_face_list[i][1]] == final_vertex_useful_point[final_face_list[i][2]]){
+                    final_face_list[i][3] = 0;
+                    final_dsu.join(final_face_list[i][1],final_face_list[i][2]);
+                    cout <<"out 2" << endl;
+                }
+                else if (final_vertex_useful_point[final_face_list[i][2]] == final_vertex_useful_point[final_face_list[i][0]]){
+                    final_face_list[i][3] = 0;
+                    final_dsu.join(final_face_list[i][2],final_face_list[i][0]);
+                    cout <<"out 2" << endl;
+                }
+                else if (K2::Segment_3(final_vertex_useful_point[final_face_list[i][0]],final_vertex_useful_point[final_face_list[i][1]])
+                        .has_on(final_vertex_useful_point[final_face_list[i][2]])){
+                    final_face_list[i][3] = 0;
+                    record_cut[{final_face_list[i][0],final_face_list[i][1]}].push_back(final_face_list[i][2]);
+                    record_cut[{final_face_list[i][1],final_face_list[i][0]}].push_back(final_face_list[i][2]);
+                    cout <<"out 2" << endl;
+                }
+                else if (K2::Segment_3(final_vertex_useful_point[final_face_list[i][1]],final_vertex_useful_point[final_face_list[i][2]])
+                        .has_on(final_vertex_useful_point[final_face_list[i][0]])){
+                    final_face_list[i][3] = 0;
+                    record_cut[{final_face_list[i][1],final_face_list[i][2]}].push_back(final_face_list[i][0]);
+                    record_cut[{final_face_list[i][2],final_face_list[i][1]}].push_back(final_face_list[i][0]);
+                    cout <<"out 2" << endl;
+                }
+                else if (K2::Segment_3(final_vertex_useful_point[final_face_list[i][0]],final_vertex_useful_point[final_face_list[i][2]])
+                        .has_on(final_vertex_useful_point[final_face_list[i][1]])){
+                    final_face_list[i][3] = 0;
+                    record_cut[{final_face_list[i][0],final_face_list[i][2]}].push_back(final_face_list[i][1]);
+                    record_cut[{final_face_list[i][2],final_face_list[i][0]}].push_back(final_face_list[i][1]);
+                    cout <<"out 2" << endl;
+                }
+                else{
+                    cout <<"error of degenerate"<< endl;
+                    exit(0);
+                }
+            }
+        }
+    }
+    int final_face_list_size = final_face_list.size();
+    for(int i=0;i<final_face_list_size;i++){
+        if(final_face_list[i][3]) {
+            int old_id0 = final_face_list[i][0];
+            int old_id1 = final_face_list[i][1];
+            int old_id2 = final_face_list[i][2];
+            if( record_cut.count({old_id0,old_id1}) ||
+                record_cut.count({old_id1,old_id2}) ||
+                record_cut.count({old_id2,old_id0}) ){
+                auto center = centroid(K2::Triangle_3 (final_vertex_useful_point[final_face_list[i][0]],
+                                                       final_vertex_useful_point[final_face_list[i][1]],
+                                                       final_vertex_useful_point[final_face_list[i][2]]));
+                vector<int> new_tri;
+                new_tri.push_back(old_id0);
+                if(record_cut.count({old_id0,old_id1})){
+                    auto v = record_cut[{old_id0,old_id1}];
+                    sort(v.begin(),v.end(),[&](int a,int b) {
+                        return CGAL::squared_distance(final_vertex_useful_point[a],final_vertex_useful_point[old_id0])
+                               < CGAL::squared_distance(final_vertex_useful_point[b],final_vertex_useful_point[old_id0]);
+                    });
+                    for(int j=0;j<v.size();j++){
+                        new_tri.push_back(v[j]);
+                    }
+                }
+
+                new_tri.push_back(old_id1);
+                if(record_cut.count({old_id1,old_id2})){
+                    auto v = record_cut[{old_id1,old_id2}];
+                    sort(v.begin(),v.end(),[&](int a,int b) {
+                        return CGAL::squared_distance(final_vertex_useful_point[a],final_vertex_useful_point[old_id1])
+                               < CGAL::squared_distance(final_vertex_useful_point[b],final_vertex_useful_point[old_id1]);
+                    });
+                    for(int j=0;j<v.size();j++){
+                        new_tri.push_back(v[j]);
+                    }
+                }
+
+                new_tri.push_back(old_id2);
+                if(record_cut.count({old_id2,old_id0})){
+                    auto v = record_cut[{old_id2,old_id0}];
+                    sort(v.begin(),v.end(),[&](int a,int b) {
+                        return CGAL::squared_distance(final_vertex_useful_point[a],final_vertex_useful_point[old_id2])
+                               < CGAL::squared_distance(final_vertex_useful_point[b],final_vertex_useful_point[old_id2]);
+                    });
+                    for(int j=0;j<v.size();j++){
+                        new_tri.push_back(v[j]);
+                    }
+                }
+                new_tri.push_back(old_id0);
+                final_face_list[i][3] = 0;
+                int s = final_vertex_useful_point.size();
+                final_vertex_useful_point.push_back(center);
+                for(int j=0;j<(int)new_tri.size()-1;j++) {
+                    final_face_list.push_back({s,new_tri[j],new_tri[j+1],1});
+                }
+            }
+        }
+    }
+    for(int i=0;i<final_face_list_size;i++) {
+        if (final_face_list[i][3]) {
+            final_face_list[i][0] = final_dsu.find_root(final_face_list[i][0]);
+            final_face_list[i][1] = final_dsu.find_root(final_face_list[i][1]);
+            final_face_list[i][2] = final_dsu.find_root(final_face_list[i][2]);
+        }
+    }
+
+    for(int i=0;i<final_face_list.size();i++) {
+        if (final_face_list[i][3]) {
+            if (set < int > {final_face_list[i][0],
+                             final_face_list[i][1],
+                             final_face_list[i][2],
+            }.size() != 3) {
+                final_face_list[i][3] = 0;
+                continue;
+            }
+            if (K2::Triangle_3(final_vertex_useful_point[final_face_list[i][0]],
+                               final_vertex_useful_point[final_face_list[i][1]],
+                               final_vertex_useful_point[final_face_list[i][2]]
+            ).is_degenerate()) {
+                cout << "is_degenerate" << endl;
+            }
             fprintf(file8, "f %d %d %d\n",
                     final_face_list[i][0]+1,
                     final_face_list[i][1]+1,
                     final_face_list[i][2]+1
-                    );
+            );
+        }
     }
 
 
