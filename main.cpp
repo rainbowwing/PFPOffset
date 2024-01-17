@@ -110,7 +110,7 @@ int main(int argc, char* argv[]) {
 #endif
     mesh->initBBox();
    // mesh->build_fast();
-   // mesh->build_fast();
+   // mesh->build_fast();-f ../data_variable/914678.obj -i=2 -t=10 -E=0.0005 -r=0.003000
     auto start_clock = std::chrono::high_resolution_clock::now();
     cout <<"mesh->build_fast() succ" << endl;
     //double default_move_dist = 0.05;
@@ -335,7 +335,7 @@ int main(int argc, char* argv[]) {
         //fprintf(file13,"v");
     }
 #endif
-
+    auto dp_clock = std::chrono::high_resolution_clock::now();
     for(int i=0;i<mesh->VertexSize();i++){
         origin_mesh_vertices[i] = K2::Point_3 (mesh->fast_iGameVertex[i].x(),
                                                mesh->fast_iGameVertex[i].y(),
@@ -399,6 +399,7 @@ int main(int argc, char* argv[]) {
         coverage_field_list.push_back(CoverageField(MeshKernel::iGameFaceHandle(i)));
 
     }
+    auto polygon_clock = std::chrono::high_resolution_clock::now();
     std::list<K2::Triangle_3>origin_face_list;
     for(int i=0;i<mesh->FaceSize();i++){
 //                K2::Point_3 v0(mesh->fast_iGameVertex[mesh->fast_iGameFace[i].vh(0)].x(),
@@ -960,6 +961,7 @@ int main(int argc, char* argv[]) {
 //        }
         cout <<"find near show "<< endl;
     }
+    auto speed_clock = std::chrono::high_resolution_clock::now();
     ofstream fsd("../occ2/find_delete.obj");
     ofstream fsl("../occ2/find_last.obj");
     int cnt = 1;
@@ -1783,7 +1785,7 @@ thread7 st i
     for(int i=0;i<thread_num;i++)
         face_generate_ray_detect_thread_pool[i]->join();
     //exit(0); // 现在这里加exit 然后注释掉上半部分看看会不会出问题，不会就测测下面的是不是求交出问题了
-
+    auto ray_clock = std::chrono::high_resolution_clock::now();
     cout <<"start generate"<<endl;
     std::vector <std::shared_ptr<std::thread> > global_face_final_generate_thread_pool(thread_num);
     atomic<int> flag = 0;
@@ -2880,7 +2882,7 @@ thread7 st i
     //sum_avg_edge /=(global_face_list.size()*3*20);
 
     auto end_clock = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> diff = end_clock - start_clock;
+
 
     string new_name = (input_filename + "_tmp.obj");
     string cmd;
@@ -2892,10 +2894,14 @@ thread7 st i
         tetwild_ex += " -e "+to_string(tetwild_e) +" ";
     }
 
-
+    std::chrono::duration<double> diff0 = dp_clock - start_clock;
+    std::chrono::duration<double> diff1 = polygon_clock - dp_clock;
+    std::chrono::duration<double> diff2 = speed_clock - polygon_clock;
+    std::chrono::duration<double> diff3 = ray_clock - speed_clock;
+    std::chrono::duration<double> diff4 = end_clock - ray_clock;
     FILE *file_ans = fopen(  (input_filename + "_time.txt").c_str(), "w");
     stringstream time_use;
-    time_use << diff.count();
+    time_use << diff0.count() <<" "<< diff1.count() <<" "<<diff2.count() <<" "<<diff3.count() <<" "<<diff4.count() << endl;
     fputs(time_use.str().c_str(),file_ans);
 
     //exit(0);
