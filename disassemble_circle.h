@@ -84,7 +84,7 @@ void fix_hole(vector<int>hole_line,vector<K2::Point_3>position,Tree * tree,vecto
         }
         int st = -1;
         int en = -1;
-        for(int i=0;i<v.size();i++){
+        for(int i=0;i<v.size();i++) {
             int other = (i + 2) % v.size();
             while((other + 1) % v.size() != i){
                 K2::Segment_3 seg(position[v[i]],position[v[other]]);//这里退化了
@@ -155,7 +155,7 @@ void fix_hole(vector<int>hole_line,vector<K2::Point_3>position,Tree * tree,vecto
             dfs(left);
             dfs(right);
         }
-        if(st == -1){
+        if(st == -1) {
             vector<int> ans;
             for(int i=0;i<v.size();i++){
                 ans.push_back(hole_line[v[i]]);

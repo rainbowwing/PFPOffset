@@ -66,7 +66,7 @@
 
 int check_resolution = 3;
 using namespace std;
-//#define DEBUG
+#define DEBUG
 
 int main(int argc, char* argv[]) {
 //    data_analyze();
@@ -91,7 +91,7 @@ int main(int argc, char* argv[]) {
     set_start();
 #endif
     input_filename = input_filename.substr(0,input_filename.size()-4);
-    input_filename+= string("_") + (running_mode==1 ? "offset_outward_"+ to_string(default_ratio) : "offset_inward_"+ to_string(default_ratio));
+    input_filename += string("_") + (running_mode==1 ? "offset_outward_"+ to_string(default_ratio) : "offset_inward_"+ to_string(default_ratio));
     FILE *file8 = fopen( (input_filename + "_result.obj").c_str(), "w");
 #ifdef DEBUG
     FILE *file11 = fopen( (input_filename + "_grid.obj").c_str(), "w");
@@ -174,6 +174,8 @@ int main(int argc, char* argv[]) {
         min_near_limit = min(min_near_limit,mesh->fast_iGameFace[MeshKernel::iGameFaceHandle(i)].move_dist);
 
         cout <<"facei "<<  mesh->fast_iGameFace[MeshKernel::iGameFaceHandle(i)].move_dist<<" "<<mesh->FastNeighborFhOfFace_[i].size()<< endl;
+
+       // mesh->fast_iGameFace[MeshKernel::iGameFaceHandle(i)].move_dist=0.133754;
         //myeps = min(myeps,mesh->fast_iGameFace[MeshKernel::iGameFaceHandle(i)].move_dist);
 //        fprintf(file50,"f %d %d %d %.7lf\n",mesh->fast_iGameFace[MeshKernel::iGameFaceHandle(i)].vh(0)+1,
 //                mesh->fast_iGameFace[MeshKernel::iGameFaceHandle(i)].vh(1)+1,
@@ -256,7 +258,7 @@ int main(int argc, char* argv[]) {
 
    // exit(0);
     for(int i =0;i< mesh->FastNeighborFhOfVertex_.size();i++){
-        for(auto j : mesh->FastNeighborFhOfVertex_[i]){
+        for(auto j : mesh->FastNeighborFhOfVertex_[i]) {
             std::set<int>se;
             se.insert(mesh->fast_iGameFace[j].vh(0));
             se.insert(mesh->fast_iGameFace[j].vh(1));
@@ -793,7 +795,7 @@ int main(int argc, char* argv[]) {
                             if(side == CGAL::ON_BOUNDARY){
                                 if( tri.supporting_plane().oriented_side(coverage_field_list[i].center) !=
                                     tri.supporting_plane().oriented_side(coverage_field_list[neighbor_id].center) &&
-                                    tri.supporting_plane().oriented_side(coverage_field_list[i].center)+
+                                    tri.supporting_plane().oriented_side(coverage_field_list[i].center) +
                                     tri.supporting_plane().oriented_side(coverage_field_list[neighbor_id].center) ==0){
                                     return true;
                                 }
@@ -2036,6 +2038,9 @@ thread7 st i
                 fprintf(file6, "f %d %d %d\n", is_vertex_useful[f_list[i].f0] + 1, is_vertex_useful[f_list[i].f2] + 1,
                         is_vertex_useful[f_list[i].f1] + 1);
 #endif
+                t_list.push_back(K2::Triangle_3(global_vertex_list[f_list[i].f0],
+                                global_vertex_list[f_list[i].f1],
+                                global_vertex_list[f_list[i].f2]));
                 if(hole_mp.count(std::make_pair(f_list[i].f0,f_list[i].f1))){
                     auto old = hole_mp[std::make_pair(f_list[i].f0,f_list[i].f1)];
                     cout <<"hole_mp. error" << f_list[i].f0 <<" "<<f_list[i].f1 <<  endl;
@@ -2063,7 +2068,6 @@ thread7 st i
                     cout <<"new.f2 :"<< f_list[i].f2 <<" "<<CGAL::to_double(global_vertex_list[f_list[i].f2].x()) <<" "
                          <<CGAL::to_double(global_vertex_list[f_list[i].f2].y()) <<" "
                          <<CGAL::to_double(global_vertex_list[f_list[i].f2].z()) << endl;
-
 
                     cout << (K2::Triangle_3(global_vertex_list[f_list[i].f0],
                                             global_vertex_list[f_list[i].f1],
@@ -2145,18 +2149,16 @@ thread7 st i
                                                       is_vertex_useful[f_list[i].f1],
                                                       1});
 
-
-
-
             }
             else {
 #ifdef DEBUG
                 fprintf(file6, "f %d %d %d\n", is_vertex_useful[f_list[i].f0] + 1, is_vertex_useful[f_list[i].f1] + 1,
                         is_vertex_useful[f_list[i].f2] + 1);
 #endif
-//                t_list.push_back(K2::Triangle_3(global_vertex_list[f_list[i].f0],
-//                                                global_vertex_list[f_list[i].f1],
-//                                                global_vertex_list[f_list[i].f2]));
+
+                t_list.push_back(K2::Triangle_3(global_vertex_list[f_list[i].f0],
+                                                global_vertex_list[f_list[i].f1],
+                                                global_vertex_list[f_list[i].f2]));
 
 
 //                check_manifold[get_pair(f_list[i].f0,f_list[i].f1)].push_back(f_list[i].f2);
@@ -2277,6 +2279,11 @@ thread7 st i
         }
     }
 
+    for (auto i: origin_face_list) {
+        t_list.push_back(i);
+    }
+    Tree all_aabb(t_list.begin(),t_list.end());
+
 
     //vector<K2::Point_3>final_vertex_useful_point_d = final_vertex_useful_point;
 //    sort(final_vertex_useful_point_d.begin(),final_vertex_useful_point_d.end(),[&](const K2::Point_3 &a,const K2::Point_3 &b){
@@ -2332,6 +2339,8 @@ thread7 st i
     vector<vector<int> > each_hole;
     queue<int>hole_q;
     int debug_hole_cnt = 1;
+    Tree dtree(t_list.begin(),t_list.end());
+
     for(auto iter : hole_mp){
         int v0 = iter.first.first;
         int v1 = iter.first.second;
@@ -2380,7 +2389,6 @@ thread7 st i
     fprintf(file6,"#*********\n");
 #endif
     for(int i=0;i<each_hole.size();i++) {
-
         if(each_hole[i].size() == 3) {
 #ifdef DEBUG
             fprintf(file6, "f %d %d %d\n", is_vertex_useful[each_hole[i][0]] + 1, is_vertex_useful[each_hole[i][1]] + 1,
@@ -2396,6 +2404,7 @@ thread7 st i
                              final_vertex_useful_point[is_vertex_useful[each_hole[i][2]]]
             );
             if(t.squared_area() <= face_avg/1000000)
+           // if(t.squared_area() <= 1000000)
                 final_face_list.emplace_back(vector<int>{is_vertex_useful[each_hole[i][0]],
                                                          is_vertex_useful[each_hole[i][1]],
                                                          is_vertex_useful[each_hole[i][2]],
@@ -2418,7 +2427,7 @@ thread7 st i
                 //origin_face_tree
             }
             vector<vector<int> > ret;
-            fix_hole(each_hole[i],position,&origin_face_tree,ret);
+            fix_hole(each_hole[i],position,&all_aabb,ret);
             cout <<"ret.size():" <<ret.size() << endl;
             for(int j=0;j<ret.size();j++){
                 if(ret[j].size() == 3){
@@ -2426,6 +2435,7 @@ thread7 st i
                                      final_vertex_useful_point[is_vertex_useful[ret[j][1]]],
                                      final_vertex_useful_point[is_vertex_useful[ret[j][2]]]
                     );
+                    //if(t.squared_area() <= 1000000)
                     if(t.squared_area() <= face_avg/1000000)
                         final_face_list.emplace_back(vector<int>{is_vertex_useful[ret[j][0]],
                                                                  is_vertex_useful[ret[j][1]],
