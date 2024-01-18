@@ -66,7 +66,7 @@
 
 int check_resolution = 3;
 using namespace std;
-#define DEBUG
+//#define DEBUG
 
 int main(int argc, char* argv[]) {
 //    data_analyze();
@@ -2337,7 +2337,7 @@ thread7 st i
 //    cout <<"dtree success"<< endl;
 
     // exit(0);
-    map<int,vector<int> >hole_line;
+    map<int,vector<int> > hole_line;
     vector<vector<int> > each_hole;
     queue<int>hole_q;
     int debug_hole_cnt = 1;
