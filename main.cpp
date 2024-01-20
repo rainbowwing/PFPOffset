@@ -66,7 +66,7 @@
 
 int check_resolution = 3;
 using namespace std;
-//#define DEBUG
+#define DEBUG
 
 int main(int argc, char* argv[]) {
 //    data_analyze();
@@ -171,7 +171,25 @@ int main(int argc, char* argv[]) {
         auto v2 = mesh->fast_iGameVertex[mesh->fast_iGameFace[MeshKernel::iGameFaceHandle(i)].vh(2)];
         auto tmp = (v0 + v1 + v2)/3;
         if(mesh->fast_iGameFace[MeshKernel::iGameFaceHandle(i)].move_dist <= 0){// deal Illegal input
-            mesh->fast_iGameFace[MeshKernel::iGameFaceHandle(i)].move_dist = default_move;
+
+            //mesh->fast_iGameFace[MeshKernel::iGameFaceHandle(i)].move_dist = default_move;
+            double rate = (tmp.x() - mesh->BBoxMin.x())/(mesh->BBoxMax.x() - mesh->BBoxMin.x());
+
+
+//            if(rate<0.25){
+//                rate = 0;
+//            }
+//            else if(rate<0.5){
+//                rate = 0.25;
+//            }
+//            else if(rate<0.75){
+//                rate = 0.50;
+//            }
+//            else {
+//                rate = 0.75;
+//            }
+            mesh->fast_iGameFace[MeshKernel::iGameFaceHandle(i)].move_dist = (rate*8+0.1)*default_move;
+
             cout << i <<" is: "<< mesh->fast_iGameFace[MeshKernel::iGameFaceHandle(i)].move_dist << endl;
         }
         min_near_limit = min(min_near_limit,mesh->fast_iGameFace[MeshKernel::iGameFaceHandle(i)].move_dist);
@@ -1196,7 +1214,7 @@ int main(int argc, char* argv[]) {
         }
     }
     //exit(0);
-    if(frame_grid_mp.size() > 1500){
+    if(frame_grid_mp.size() > 5000){
         cout <<"len bug"<<": "<<frame_grid_mp.size()<< endl;
         exit(0);
     }
@@ -2013,13 +2031,13 @@ thread7 st i
 
 
     for(int i=0;i<final_vertex_useful_point.size();i++){
-        fprintf(file99,"v %lf %lf %lf\n",CGAL::to_double(final_vertex_useful_point[i].x()),
-                CGAL::to_double(final_vertex_useful_point[i].y()),
-                CGAL::to_double(final_vertex_useful_point[i].z())
+        fprintf(file99,"v %lf %lf %lf\n",CGAL::to_double(final_vertex_useful_point[i].x())+(start_x),
+                CGAL::to_double(final_vertex_useful_point[i].y())+(start_y),
+                CGAL::to_double(final_vertex_useful_point[i].z())+(start_z)
         );
-        fprintf(file88,"v %lf %lf %lf\n",CGAL::to_double(final_vertex_useful_point[i].x()),
-                CGAL::to_double(final_vertex_useful_point[i].y()),
-                CGAL::to_double(final_vertex_useful_point[i].z())
+        fprintf(file88,"v %lf %lf %lf\n",CGAL::to_double(final_vertex_useful_point[i].x())+(start_x),
+                CGAL::to_double(final_vertex_useful_point[i].y())+(start_y),
+                CGAL::to_double(final_vertex_useful_point[i].z())+(start_z)
         );
     }
 
