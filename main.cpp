@@ -188,7 +188,7 @@ int main(int argc, char* argv[]) {
 //            else {
 //                rate = 0.75;
 //            }611678
-            mesh->fast_iGameFace[MeshKernel::iGameFaceHandle(i)].move_dist = (rate*1.9+0.1)*default_move;
+          //  mesh->fast_iGameFace[MeshKernel::iGameFaceHandle(i)].move_dist = (rate*1.9+0.1)*default_move;
 
             cout << i <<" is: "<< mesh->fast_iGameFace[MeshKernel::iGameFaceHandle(i)].move_dist << endl;
         }
