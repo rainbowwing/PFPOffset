@@ -9,10 +9,10 @@
 DEFINE_int32(m, 1,
              "This arg is a integer means result mode which value can be chose in 1,2. \n mode 1 is use ftetwild. \n mode 2 is use tetwild.");
 
-DEFINE_double(l, 1.01,
+DEFINE_double(l, 1.3,
               "This arg is a double which value indicates how many times the maximum offset distance is the ideal offset distance.");
 
-DEFINE_double(s, 0.99,
+DEFINE_double(s, 0.9,
               "This arg is a double which value indicates how many times the minimum offset distance is the ideal offset distance.");
 DEFINE_int32(t, 12, "thread num please set this value depend the cpu of you device.");
 DEFINE_string(f, "", "file name, it must be like *.obj2 or *.obj");

@@ -28,6 +28,8 @@ vector<int> get_sub_state(int state,int face_list_size){
     dfs(state,face_list_size,0);
     return ret;
 }
+
+
 vector<MeshKernel::iGameVertex> run(MeshKernel::iGameVertexHandle vh,vector<MeshKernel::iGameFaceHandle> neighbor_face_list){
 //    if(neighbor_face_list.size()>=21) {
 //        cout << "neighbor_face_list.size()=" <<neighbor_face_list.size() <<">21 : this mesh please do remeshing before" << endl;

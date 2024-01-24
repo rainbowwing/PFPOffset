@@ -173,7 +173,7 @@ int main(int argc, char* argv[]) {
         if(mesh->fast_iGameFace[MeshKernel::iGameFaceHandle(i)].move_dist <= 0){// deal Illegal input
 
             mesh->fast_iGameFace[MeshKernel::iGameFaceHandle(i)].move_dist = default_move;
-            //double rate = (tmp.x() - mesh->BBoxMin.x())/(mesh->BBoxMax.x() - mesh->BBoxMin.x());
+            double rate = (tmp.x() - mesh->BBoxMin.x())/(mesh->BBoxMax.x() - mesh->BBoxMin.x());
 
 
 //            if(rate<0.25){
@@ -187,8 +187,8 @@ int main(int argc, char* argv[]) {
 //            }
 //            else {
 //                rate = 0.75;
-//            }
-            //mesh->fast_iGameFace[MeshKernel::iGameFaceHandle(i)].move_dist = (rate*8+0.1)*default_move;
+//            }611678
+            mesh->fast_iGameFace[MeshKernel::iGameFaceHandle(i)].move_dist = (rate*1.9+0.1)*default_move;
 
             cout << i <<" is: "<< mesh->fast_iGameFace[MeshKernel::iGameFaceHandle(i)].move_dist << endl;
         }
