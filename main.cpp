@@ -416,11 +416,7 @@ int main(int argc, char* argv[]) {
 //        }
 //    }
    //exit(0);
-    for(int i=0;i<mesh->FaceSize();i++){
-        coverage_field_list.push_back(CoverageField(MeshKernel::iGameFaceHandle(i)));
 
-    }
-    auto polygon_clock = std::chrono::high_resolution_clock::now();
     std::list<K2::Triangle_3>origin_face_list;
     for(int i=0;i<mesh->FaceSize();i++){
 //                K2::Point_3 v0(mesh->fast_iGameVertex[mesh->fast_iGameFace[i].vh(0)].x(),
@@ -444,6 +440,12 @@ int main(int argc, char* argv[]) {
 
     Tree origin_face_tree(origin_face_list.begin(),origin_face_list.end());
 
+    for(int i=0;i<mesh->FaceSize();i++){
+        coverage_field_list.push_back(CoverageField(MeshKernel::iGameFaceHandle(i)));
+        //coverage_field_list.push_back(CoverageField(MeshKernel::iGameFaceHandle(i),&origin_face_tree));
+    }
+
+    auto polygon_clock = std::chrono::high_resolution_clock::now();
 
 
     int pre_cnt = 0;
