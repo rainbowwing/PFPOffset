@@ -416,7 +416,6 @@ struct CoverageField {
 
     CoverageField(MeshKernel::iGameFaceHandle fh) {
 
-
         x_min = CGAL::to_double(origin_mesh_vertices[mesh->fast_iGameFace[fh].vh(0)].x());
         y_min = CGAL::to_double(origin_mesh_vertices[mesh->fast_iGameFace[fh].vh(0)].y());
         z_min = CGAL::to_double(origin_mesh_vertices[mesh->fast_iGameFace[fh].vh(0)].z());
@@ -500,11 +499,7 @@ struct CoverageField {
             return;
         }
 
-
-
         K2::Vector_3 center_vec = {0,0,0};
-
-
 
 //        bound_face_vertex_exact.clear();
 //        mp.clear();
@@ -512,18 +507,19 @@ struct CoverageField {
 //            vector<int>ids;
 //            for (int i = 0; i < 3; i++) {
 //                bool flag = false;
-//                for(int j=0;j<bound_face_vertex_exact.size();j++){
-//                    if(bound_face_vertex_exact[j] == triangle.vertex(i)){
+//                for(int j=0;j<bound_face_vertex_exact.size();j++) {
+//                    if(bound_face_vertex_exact[j] == triangle.vertex(i)) {
 //                        flag = true;
 //                        ids.push_back(j);
 //                        break;
 //                    }
 //                }
-//                if(!flag){
+//                if(!flag) {
 //                    ids.push_back(bound_face_vertex_exact.size());
 //                    bound_face_vertex_exact.push_back(triangle.vertex(i));
 //                }
 //            }
+//            if(ids.size()!=3)exit(0);
 //            int v0_id = ids[0];
 //            int v1_id = ids[1];
 //            int v2_id = ids[2];
