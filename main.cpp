@@ -187,7 +187,7 @@ int main(int argc, char* argv[]) {
 //            }
 //            else {
 //                rate = 0.75;
-//            }611678
+//            }
           //  mesh->fast_iGameFace[MeshKernel::iGameFaceHandle(i)].move_dist = (rate*1.9+0.1)*default_move;
 
             cout << i <<" is: "<< mesh->fast_iGameFace[MeshKernel::iGameFaceHandle(i)].move_dist << endl;
@@ -441,8 +441,8 @@ int main(int argc, char* argv[]) {
     Tree origin_face_tree(origin_face_list.begin(),origin_face_list.end());
 
     for(int i=0;i<mesh->FaceSize();i++){
+        //coverage_field_list.push_back(CoverageField(MeshKernel::iGameFaceHandle(i)));
         coverage_field_list.push_back(CoverageField(MeshKernel::iGameFaceHandle(i)));
-        //coverage_field_list.push_back(CoverageField(MeshKernel::iGameFaceHandle(i),&origin_face_tree));
     }
 
     auto polygon_clock = std::chrono::high_resolution_clock::now();
@@ -1189,7 +1189,7 @@ int main(int argc, char* argv[]) {
     for (int face_id = 0; face_id < fsize; face_id++) {
         if (face_id % 1000 == 0)
             printf("%d/%d\n", face_id, fsize);
-        if(!coverage_field_list[face_id].useful)continue;
+        if(!coverage_field_list[face_id].useful) continue;
         MeshKernel::iGameVertex min_point(coverage_field_list[face_id].x_min,
                                           coverage_field_list[face_id].y_min,
                                           coverage_field_list[face_id].z_min
