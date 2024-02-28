@@ -425,35 +425,35 @@ struct CoverageField {
         y_max = CGAL::to_double(origin_mesh_vertices[mesh->fast_iGameFace[fh].vh(0)].y());
         z_max = CGAL::to_double(origin_mesh_vertices[mesh->fast_iGameFace[fh].vh(0)].z());
 
-        bound_face_vertex_exact.emplace_back(origin_mesh_vertices[mesh->fast_iGameFace[fh].vh(0)]);
+        bound_face_vertex_exact_record.emplace_back(origin_mesh_vertices[mesh->fast_iGameFace[fh].vh(0)]);
 
-        bound_face_vertex_exact.emplace_back(origin_mesh_vertices[mesh->fast_iGameFace[fh].vh(1)]);
+        bound_face_vertex_exact_record.emplace_back(origin_mesh_vertices[mesh->fast_iGameFace[fh].vh(1)]);
 
-        bound_face_vertex_exact.emplace_back(origin_mesh_vertices[mesh->fast_iGameFace[fh].vh(2)]);
+        bound_face_vertex_exact_record.emplace_back(origin_mesh_vertices[mesh->fast_iGameFace[fh].vh(2)]);
         K2::Triangle_3 origin_tri(
-                bound_face_vertex_exact[0],
-                bound_face_vertex_exact[1],
-                bound_face_vertex_exact[2]
+                bound_face_vertex_exact_record[0],
+                bound_face_vertex_exact_record[1],
+                bound_face_vertex_exact_record[2]
         );
 
         for(auto v: field_move_vertices[mesh->fast_iGameFace[fh].vh(0)])
-            bound_face_vertex_exact.push_back(v);
+            bound_face_vertex_exact_record.push_back(v);
         for(auto v: field_move_vertices[mesh->fast_iGameFace[fh].vh(1)])
-            bound_face_vertex_exact.push_back(v);
+            bound_face_vertex_exact_record.push_back(v);
         for(auto v: field_move_vertices[mesh->fast_iGameFace[fh].vh(2)])
-            bound_face_vertex_exact.push_back(v);
+            bound_face_vertex_exact_record.push_back(v);
 
 
 
         map<K2::Point_3 ,int> mp;
-        for(int i=0;i<bound_face_vertex_exact.size();i++) {
-            x_min = min(CGAL::to_double(bound_face_vertex_exact[i].x()),x_min);
-            y_min = min(CGAL::to_double(bound_face_vertex_exact[i].y()),y_min);
-            z_min = min(CGAL::to_double(bound_face_vertex_exact[i].z()),z_min);
-            x_max = max(CGAL::to_double(bound_face_vertex_exact[i].x()),x_max);
-            y_max = max(CGAL::to_double(bound_face_vertex_exact[i].y()),y_max);
-            z_max = max(CGAL::to_double(bound_face_vertex_exact[i].z()),z_max);
-            mp[bound_face_vertex_exact[i]] = i;
+        for(int i=0;i<bound_face_vertex_exact_record.size();i++) {
+            x_min = min(CGAL::to_double(bound_face_vertex_exact_record[i].x()),x_min);
+            y_min = min(CGAL::to_double(bound_face_vertex_exact_record[i].y()),y_min);
+            z_min = min(CGAL::to_double(bound_face_vertex_exact_record[i].z()),z_min);
+            x_max = max(CGAL::to_double(bound_face_vertex_exact_record[i].x()),x_max);
+            y_max = max(CGAL::to_double(bound_face_vertex_exact_record[i].y()),y_max);
+            z_max = max(CGAL::to_double(bound_face_vertex_exact_record[i].z()),z_max);
+            mp[bound_face_vertex_exact_record[i]] = i;
         }
 
         double x_delta = ((x_max - x_min)/50);
@@ -482,7 +482,7 @@ struct CoverageField {
         useful = true;
 
         Delaunay3DK2 dt;
-        dt.insert(bound_face_vertex_exact.begin(), bound_face_vertex_exact.end());
+        dt.insert(bound_face_vertex_exact_record.begin(), bound_face_vertex_exact_record.end());
         std::vector<K2::Triangle_3> surface_triangles;
         for (auto fit = dt.finite_cells_begin(); fit != dt.finite_cells_end(); ++fit) {
             for (int i = 0; i < 4; ++i) {
@@ -503,6 +503,43 @@ struct CoverageField {
 
 
         K2::Vector_3 center_vec = {0,0,0};
+
+
+
+//        bound_face_vertex_exact.clear();
+//        mp.clear();
+//        for (const auto& triangle : surface_triangles) {
+//            vector<int>ids;
+//            for (int i = 0; i < 3; i++) {
+//                bool flag = false;
+//                for(int j=0;j<bound_face_vertex_exact.size();j++){
+//                    if(bound_face_vertex_exact[j] == triangle.vertex(i)){
+//                        flag = true;
+//                        ids.push_back(j);
+//                        break;
+//                    }
+//                }
+//                if(!flag){
+//                    ids.push_back(bound_face_vertex_exact.size());
+//                    bound_face_vertex_exact.push_back(triangle.vertex(i));
+//                }
+//            }
+//            int v0_id = ids[0];
+//            int v1_id = ids[1];
+//            int v2_id = ids[2];
+//            bound_face_id.push_back({v0_id, v1_id, v2_id});
+//            bound_face_sampling_point.push_back(get_sampling_point(triangle));
+//            bound_face_sampling_point_state.emplace_back(bound_face_sampling_point.rbegin()->size(),0);
+//            center_vec += (centroid(K2::Triangle_3(bound_face_vertex_exact[v0_id],
+//                                                   bound_face_vertex_exact[v1_id],
+//                                                   bound_face_vertex_exact[v2_id])) - K2::Point_3(0,0,0)) ;
+//        }
+
+
+        for(int i=0;i<bound_face_vertex_exact_record.size();i++){
+            bound_face_vertex_exact.push_back(bound_face_vertex_exact_record[i]);
+            mp[bound_face_vertex_exact[i]] = i;
+        }
         for (const auto& triangle : surface_triangles) {
             int v0_id = mp[(triangle.vertex(0))];
             int v1_id = mp[(triangle.vertex(1))];
@@ -514,8 +551,10 @@ struct CoverageField {
                                                    bound_face_vertex_exact[v1_id],
                                                    bound_face_vertex_exact[v2_id])) - K2::Point_3(0,0,0)) ;
         }
-        center =  K2::Point_3(0,0,0) + (center_vec / surface_triangles.size());
 
+
+//        center =  K2::Point_3(0,0,0) + (center_vec / surface_triangles.size());
+        center =  K2::Point_3(0,0,0) + (center_vec / surface_triangles.size());
         std::vector<std::vector<std::size_t> > faces_list;
 
         for (auto i: bound_face_id) {
@@ -531,7 +570,7 @@ struct CoverageField {
         inside_ptr = new CGAL::Side_of_triangle_mesh<CGAL::Polyhedron_3<K2>, K2>(*poly);
 
     }
-
+///Users/rainbowwing/CLionProjects/Thicken2/occ6/SM_Map01_Build_battery_bldg_ext_7_OccluderGen_1000.000000_458.obj
 
 public:
     bool in_field(K2::Point_3 v) {
