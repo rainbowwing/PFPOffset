@@ -66,7 +66,7 @@
 
 int check_resolution = 3;
 using namespace std;
-#define DEBUG
+//#define DEBUG
 
 int main(int argc, char* argv[]) {
 //    data_analyze();
@@ -792,18 +792,18 @@ int main(int argc, char* argv[]) {
                             int id = face_to_field.find(item.second->id())->second;
                             if (const K2::Point_3 *p = boost::get<K2::Point_3>(&(item.first))) {
                                 if(*p == check_point)continue;
-                                if(field_cnt[id].count(*p)){
+                                if(field_cnt[id].count(*p)) {
                                     field_error.insert(id);
                                 }
                                 else
                                     field_cnt[id].insert(*p);
                             }
-                            else{
+                            else {
                                 field_error.insert(id);
                             }
                         }
 
-                        for(const auto& it : field_cnt){
+                        for(const auto& it : field_cnt) {
                             if(!field_error.count(it.first) && it.second.size() % 2 == 1) {
                                 return true;
                             }
