@@ -4,8 +4,10 @@
 
 #ifndef THICKEN2_COVERAGEFIELD_H
 #define THICKEN2_COVERAGEFIELD_H
+#include <random>
 struct CoverageField {
     vector<K2::Point_3 > bound_face_vertex_exact;
+    vector<K2::Point_3 > bound_face_vertex_exact_debug;
     vector<K2::Point_3 > bound_face_vertex_exact_record;
     vector<vector<int> > bound_face_id;
     vector<vector<K2::Point_3> > bound_face_sampling_point;
@@ -501,41 +503,14 @@ struct CoverageField {
 
         K2::Vector_3 center_vec = {0,0,0};
 
-//        bound_face_vertex_exact.clear();
-//        mp.clear();
-//        for (const auto& triangle : surface_triangles) {
-//            vector<int>ids;
-//            for (int i = 0; i < 3; i++) {
-//                bool flag = false;
-//                for(int j=0;j<bound_face_vertex_exact.size();j++) {
-//                    if(bound_face_vertex_exact[j] == triangle.vertex(i)) {
-//                        flag = true;
-//                        ids.push_back(j);
-//                        break;
-//                    }
-//                }
-//                if(!flag) {
-//                    ids.push_back(bound_face_vertex_exact.size());
-//                    bound_face_vertex_exact.push_back(triangle.vertex(i));
-//                }
-//            }
-//            if(ids.size()!=3)exit(0);
-//            int v0_id = ids[0];
-//            int v1_id = ids[1];
-//            int v2_id = ids[2];
-//            bound_face_id.push_back({v0_id, v1_id, v2_id});
-//            bound_face_sampling_point.push_back(get_sampling_point(triangle));
-//            bound_face_sampling_point_state.emplace_back(bound_face_sampling_point.rbegin()->size(),0);
-//            center_vec += (centroid(K2::Triangle_3(bound_face_vertex_exact[v0_id],
-//                                                   bound_face_vertex_exact[v1_id],
-//                                                   bound_face_vertex_exact[v2_id])) - K2::Point_3(0,0,0)) ;
-//        }
-
-
+        mp.clear();
         for(int i=0;i<bound_face_vertex_exact_record.size();i++){
-            bound_face_vertex_exact.push_back(bound_face_vertex_exact_record[i]);
-            mp[bound_face_vertex_exact[i]] = i;
+            if(!mp.count(bound_face_vertex_exact_record[i])){
+                mp[bound_face_vertex_exact_record[i]] =  bound_face_vertex_exact.size();
+                bound_face_vertex_exact.push_back(bound_face_vertex_exact_record[i]);
+            }
         }
+
         for (const auto& triangle : surface_triangles) {
             int v0_id = mp[(triangle.vertex(0))];
             int v1_id = mp[(triangle.vertex(1))];
@@ -547,6 +522,21 @@ struct CoverageField {
                                                    bound_face_vertex_exact[v1_id],
                                                    bound_face_vertex_exact[v2_id])) - K2::Point_3(0,0,0)) ;
         }
+
+//        swap(bound_face_vertex_exact_debug,bound_face_vertex_exact);
+//        for (const auto& triangle : surface_triangles) {
+//            int v0_id = mp2[(triangle.vertex(0))];
+//            int v1_id = mp2[(triangle.vertex(1))];
+//            int v2_id = mp2[(triangle.vertex(2))];
+//            bound_face_id.push_back({v0_id, v1_id, v2_id});
+//            bound_face_sampling_point.push_back(get_sampling_point(triangle));
+//            bound_face_sampling_point_state.emplace_back(bound_face_sampling_point.rbegin()->size(),0);
+//            center_vec += (centroid(K2::Triangle_3(bound_face_vertex_exact[v0_id],
+//                                                   bound_face_vertex_exact[v1_id],
+//                                                   bound_face_vertex_exact[v2_id])) - K2::Point_3(0,0,0)) ;
+//        }
+
+
 
 
 //        center =  K2::Point_3(0,0,0) + (center_vec / surface_triangles.size());
@@ -566,7 +556,7 @@ struct CoverageField {
         inside_ptr = new CGAL::Side_of_triangle_mesh<CGAL::Polyhedron_3<K2>, K2>(*poly);
 
     }
-///Users/rainbowwing/CLionProjects/Thicken2/occ6/SM_Map01_Build_battery_bldg_ext_7_OccluderGen_1000.000000_458.obj
+
 
 public:
     bool in_field(K2::Point_3 v) {
@@ -622,7 +612,7 @@ public:
             x_max = max(CGAL::to_double(bound_face_vertex_exact[i].x()),x_max);
             y_max = max(CGAL::to_double(bound_face_vertex_exact[i].y()),y_max);
             z_max = max(CGAL::to_double(bound_face_vertex_exact[i].z()),z_max);
-            // mp[bound_face_vertex_exact[i]] = i;
+            mp[bound_face_vertex_exact[i]] = i;
         }
 
         double x_delta = ((x_max - x_min)/50);
@@ -701,7 +691,7 @@ public:
                         }
                     }
 
-                    if(0){
+                    if(vs.size() || vt.size()){
                         vt.push_back(tri.vertex(0));
                         vt.push_back(tri.vertex(1));
                         vt.push_back(tri.vertex(2));
@@ -729,30 +719,19 @@ public:
             useful  = false;
             return;
         }
-        bound_face_vertex_exact.clear();
-        mp.clear();
+
         K2::Vector_3 center_vec = {0,0,0};
         for (const auto& triangle : surface_triangles) {
-            vector<int>ids;
             for (int i = 0; i < 3; i++) {
-                bool flag = false;
-                for(int j=0;j<bound_face_vertex_exact.size();j++){
-                    if(bound_face_vertex_exact[j] == triangle.vertex(i)){
-                        flag = true;
-                        ids.push_back(j);
-                        break;
-                    }
-                }
-                if(!flag){
-                    ids.push_back(bound_face_vertex_exact.size());
+                if(!mp.count(triangle.vertex(i))) {
+                    mp[triangle.vertex(i)] = bound_face_vertex_exact.size();
                     bound_face_vertex_exact.push_back(triangle.vertex(i));
                 }
             }
 
-
-            int v0_id = ids[0];
-            int v1_id = ids[1];
-            int v2_id = ids[2];
+            int v0_id = mp[triangle.vertex(0)];
+            int v1_id = mp[triangle.vertex(1)];
+            int v2_id = mp[triangle.vertex(2)];
 
             bound_face_id.push_back({v0_id, v1_id, v2_id});
             bound_face_sampling_point.push_back(get_sampling_point(triangle));
@@ -763,25 +742,17 @@ public:
         }
 
         for (const auto& triangle : surface_triangles_not_sub) {
-            vector<int>ids;
+
             for (int i = 0; i < 3; i++) {
-                bool flag = false;
-                for(int j=0;j<bound_face_vertex_exact.size();j++){
-                    if(bound_face_vertex_exact[j] == triangle.vertex(i)){
-                        flag = true;
-                        ids.push_back(j);
-                        break;
-                    }
-                }
-                if(!flag){
-                    ids.push_back(bound_face_vertex_exact.size());
+                if(!mp.count(triangle.vertex(i))) {
+                    mp[triangle.vertex(i)] = bound_face_vertex_exact.size();
                     bound_face_vertex_exact.push_back(triangle.vertex(i));
                 }
             }
 
-            int v0_id = ids[0];
-            int v1_id = ids[1];
-            int v2_id = ids[2];
+            int v0_id = mp[triangle.vertex(0)];
+            int v1_id = mp[triangle.vertex(1)];
+            int v2_id = mp[triangle.vertex(2)];
 
             bound_face_id_not_sub.push_back({v0_id, v1_id, v2_id});
         }
@@ -792,11 +763,11 @@ public:
 
         for (auto i: bound_face_id) {
             faces_list.push_back({std::size_t(i[0]), std::size_t(i[1]), std::size_t(i[2])});
-//            if(origin_face_tree->squared_distance(bound_face_vertex_exact[i[0]])==CGAL::Epeck::FT(0)||
-//                    origin_face_tree->squared_distance(bound_face_vertex_exact[i[1]])==CGAL::Epeck::FT(0) ||
-//                    origin_face_tree->squared_distance(bound_face_vertex_exact[i[2]])==CGAL::Epeck::FT(0)
-//          ) {
-            if(0) {
+            if(origin_face_tree->squared_distance(bound_face_vertex_exact[i[0]])==CGAL::Epeck::FT(0) &&
+                    origin_face_tree->squared_distance(bound_face_vertex_exact[i[1]])==CGAL::Epeck::FT(0) &&
+                    origin_face_tree->squared_distance(bound_face_vertex_exact[i[2]])==CGAL::Epeck::FT(0)
+            ) {
+            //if(0) {
 //            if(origin_tri.has_on(bound_face_vertex_exact[i[0]]) &&
 //                    origin_tri.has_on(bound_face_vertex_exact[i[1]]) &&
 //                    origin_tri.has_on(bound_face_vertex_exact[i[2]])

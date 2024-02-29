@@ -442,7 +442,7 @@ int main(int argc, char* argv[]) {
 
     for(int i=0;i<mesh->FaceSize();i++){
         //coverage_field_list.push_back(CoverageField(MeshKernel::iGameFaceHandle(i)));
-        coverage_field_list.push_back(CoverageField(MeshKernel::iGameFaceHandle(i)));
+        coverage_field_list.push_back(CoverageField(MeshKernel::iGameFaceHandle(i),&origin_face_tree));
     }
 
     auto polygon_clock = std::chrono::high_resolution_clock::now();
