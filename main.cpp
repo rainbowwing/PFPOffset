@@ -442,8 +442,51 @@ int main(int argc, char* argv[]) {
 
     for(int i=0;i<mesh->FaceSize();i++){
         //coverage_field_list.push_back(CoverageField(MeshKernel::iGameFaceHandle(i)));
-        coverage_field_list.push_back(CoverageField(MeshKernel::iGameFaceHandle(i),&origin_face_tree));
+        coverage_field_list.emplace_back();
     }
+
+
+
+
+
+
+
+
+    std::vector <std::shared_ptr<std::thread> > coverage_thread_pool(thread_num);
+    for(int i=0;i<thread_num;i++) {
+        coverage_thread_pool[i] = make_shared<std::thread>([&](int now_id) {
+            for (int j = 0; j < mesh->FaceSize(); j++) {
+                //for (int i = 524; i < 525; i++) {
+                if (j % thread_num != now_id)continue;
+                if (j % 20 == 0)
+                    cout << "coverage_thread_pool: " << j << "/"<<mesh->FaceSize()<< endl;
+                coverage_field_list[j] = CoverageField(MeshKernel::iGameFaceHandle(j),&origin_face_tree);
+            }
+        }, i);
+    }
+    for(int i=0;i<thread_num;i++)
+        coverage_thread_pool[i]->join();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     auto polygon_clock = std::chrono::high_resolution_clock::now();
 
@@ -640,14 +683,14 @@ int main(int argc, char* argv[]) {
         }
     }
     //X: 局部采样删除法
-    if(1){
+    if(0){ // 这里的bug，这里是所有采样点都在内部，就直接删了的逻辑，本质是需要修改的
         std::vector <std::shared_ptr<std::thread> > find_near(thread_num);
         for(int i=0;i<thread_num;i++) {
             find_near[i] = make_shared<std::thread>([&](int now_id) {
                 list<K2::Triangle_3> aabb_tree_face_list;
                 map<unsigned long long ,int>aabb_tree_mp;
                 for(int i=0;i<mesh->FaceSize();i++){
-                    for(int j=0;j<coverage_field_list[i].bound_face_id.size();j++){
+                    for(int j=0;j<coverage_field_list[i].bound_face_id.size();j++) {
                         K2::Triangle_3 tri(coverage_field_list[i].bound_face_vertex_exact[coverage_field_list[i].bound_face_id[j][0]],
                                            coverage_field_list[i].bound_face_vertex_exact[coverage_field_list[i].bound_face_id[j][1]],
                                            coverage_field_list[i].bound_face_vertex_exact[coverage_field_list[i].bound_face_id[j][2]]);
@@ -659,7 +702,7 @@ int main(int argc, char* argv[]) {
                 for (int i = 0; i < mesh->FaceSize(); i++) {
                     if (i % thread_num != now_id)continue;
                     cout <<"find near:"<<i<<":" <<mesh->FaceSize() << endl;
-                    std::list< Tree::Intersection_and_primitive_id<K2::Triangle_3>::Type> intersections;
+                    std::list< Tree::Intersection_and_primitive_id<K2::Triangle_3>::Type > intersections;
                     aabb_tree.all_intersections(coverage_field_list[i].iso_cuboid_3,std::back_inserter(intersections));
                     for(auto item : intersections) {
                         auto iter = aabb_tree_mp.find(item.second->id());
@@ -870,13 +913,13 @@ int main(int argc, char* argv[]) {
                         K2::Triangle_3 tri_this(coverage_field_list[i].bound_face_vertex_exact[coverage_field_list[i].bound_face_id[j][0]],
                             coverage_field_list[i].bound_face_vertex_exact[coverage_field_list[i].bound_face_id[j][1]],
                             coverage_field_list[i].bound_face_vertex_exact[coverage_field_list[i].bound_face_id[j][2]]);
-                        if(check_inner_vertex_all(coverage_field_list[i].bound_face_sampling_point[j],tri_this)){ // 这里是决定到底全部删除，还是全部留下的逻辑所在之处
+                        if(check_inner_vertex_all(coverage_field_list[i].bound_face_sampling_point[j],tri_this)) { // 这里是决定到底全部删除，还是全部留下的逻辑所在之处
                             for(int k=0;k<coverage_field_list[i].bound_face_sampling_point[j].size();k++){
                                 coverage_field_list[i].bound_face_sampling_point_state[j][k] = -1;
                             }
                         }
                         else{
-                            for(int k=0;k<coverage_field_list[i].bound_face_sampling_point[j].size();k++){
+                            for(int k=0;k<coverage_field_list[i].bound_face_sampling_point[j].size();k++) {
                                 if(coverage_field_list[i].bound_face_sampling_point_state[j][k]!=-1 && ret[coverage_field_list[i].bound_face_sampling_point_state[j][k]])
                                     coverage_field_list[i].bound_face_sampling_point_state[j][k] = 0;
                                 else
@@ -984,6 +1027,239 @@ int main(int argc, char* argv[]) {
 //        }
         cout <<"find near show "<< endl;
     }
+
+
+    //X：这里是利用凸包的性质进行操作的
+    if(1){ // 这里的bug，这里是所有采样点都在内部，就直接删了的逻辑，本质是需要修改的
+        std::vector <std::shared_ptr<std::thread> > find_near(thread_num);
+        for(int i=0;i<thread_num;i++) {
+            find_near[i] = make_shared<std::thread>([&](int now_id) {
+                list<K2::Triangle_3> aabb_tree_face_list;
+                map<unsigned long long ,int>aabb_tree_mp;
+                for(int i=0;i<mesh->FaceSize();i++){
+                    for(int j=0;j<coverage_field_list[i].bound_face_id.size();j++) {
+                        K2::Triangle_3 tri(coverage_field_list[i].bound_face_vertex_exact[coverage_field_list[i].bound_face_id[j][0]],
+                                           coverage_field_list[i].bound_face_vertex_exact[coverage_field_list[i].bound_face_id[j][1]],
+                                           coverage_field_list[i].bound_face_vertex_exact[coverage_field_list[i].bound_face_id[j][2]]);
+                        aabb_tree_face_list.push_back(tri);
+                        aabb_tree_mp[tri.id()] = i;
+                    }
+                }
+                Tree aabb_tree(aabb_tree_face_list.begin(),aabb_tree_face_list.end());
+                for (int i = 0; i < mesh->FaceSize(); i++) {
+                    if (i % thread_num != now_id)continue;
+                    cout <<"find near:"<<i<<":" <<mesh->FaceSize() << endl;
+                    std::list< Tree::Intersection_and_primitive_id<K2::Triangle_3>::Type > intersections;
+                    aabb_tree.all_intersections(coverage_field_list[i].iso_cuboid_3,std::back_inserter(intersections));
+                    for(auto item : intersections) {
+                        auto iter = aabb_tree_mp.find(item.second->id());
+                        if(iter->second != i)
+                            coverage_intersection[i].insert(iter->second);
+                    }
+                }
+            },i);
+        }
+        for(int i=0;i<thread_num;i++)
+            find_near[i]->join();
+
+        // 这里统一算一波绕数
+        std::mutex winding_num_mutex;
+        vector<K2::Point_3 > winding_vertex;
+        std::vector <std::shared_ptr<std::thread> > arrange_winding(thread_num);
+        for(int i=0;i<thread_num;i++) {
+            arrange_winding[i] = make_shared<std::thread>([&](int now_id) {
+                for (int i = 0; i < mesh->FaceSize(); i++) {
+                    if (i % thread_num != now_id)continue;
+                    if(!coverage_field_list[i].useful)continue;
+                    cout <<"sample check "<< i <<"//"<<mesh->FaceSize()<<endl;
+                    for(int j=0;j<coverage_field_list[i].bound_face_id.size();j++) {
+                        if ((coverage_field_list[i].bound_face_id[j][0] >= 3 ||
+                             coverage_field_list[i].bound_face_id[j][1] >= 3 ||
+                             coverage_field_list[i].bound_face_id[j][2] >= 3)) {
+                            for(int k=0;k<coverage_field_list[i].bound_face_sampling_point[j].size();k++) {
+                                K2::Point_3 sample = coverage_field_list[i].bound_face_sampling_point[j][k];
+                                if(CGAL::approximate_sqrt(origin_face_tree.squared_distance(sample)) <= CGAL::Epeck::FT(min_near_limit)){
+                                    coverage_field_list[i].bound_face_sampling_point_state[j][k] = -1;
+                                    //cout <<"-300:occur: " <<origin_face_tree.squared_distance(centroid(K2::Triangle_3(v0,v1,v2))) <<" "<< min_near_limit << " "<<default_move<<endl;
+                                }
+                                else {
+                                    std::unique_lock<std::mutex> lock(winding_num_mutex);
+                                    coverage_field_list[i].bound_face_sampling_point_state[j][k] = winding_vertex.size();
+                                    winding_vertex.push_back(coverage_field_list[i].bound_face_sampling_point[j][k]);
+                                    //这里不加mutex 没办法求绕数，那么直接不用omp了，还是继续手写吧
+                                }
+                            }
+                        }
+                        else{
+                            coverage_field_list[i].bound_face_useful[j] = 0;
+                        }
+                    }
+                }
+            }, i);
+        }
+        for(int i=0;i<thread_num;i++)
+            arrange_winding[i]->join();
+
+
+
+
+        vector<int> ret  = winding_num(winding_vertex);
+
+
+
+        std::vector <std::shared_ptr<std::thread> > near_delete(thread_num);
+        for(int i=0;i<thread_num;i++) {
+            near_delete[i] = make_shared<std::thread>([&](int now_id) {
+                for (int i = 0; i < mesh->FaceSize(); i++) {
+                    if (i % thread_num != now_id)continue;
+                    if(!coverage_field_list[i].useful)continue;
+                    cout <<"cal near: "<< i <<":"<< mesh->FaceSize()<<endl;
+                    // coverage_field_list[i].self_face_delete_flag = true;
+                    list<K2::Triangle_3>neighbor_face;
+                    map<unsigned long long ,int> face_to_field;
+                    for(auto neighbor_id: coverage_intersection[i]){
+                        if(!coverage_field_list[neighbor_id].useful)continue;
+                        if(neighbor_id == i)continue;
+                        for (int k = 0; k < coverage_field_list[neighbor_id].bound_face_id.size(); k++) {
+                            K2::Triangle_3 tri_this(coverage_field_list[neighbor_id].bound_face_vertex_exact[coverage_field_list[neighbor_id].bound_face_id[k][0]],
+                                                    coverage_field_list[neighbor_id].bound_face_vertex_exact[coverage_field_list[neighbor_id].bound_face_id[k][1]],
+                                                    coverage_field_list[neighbor_id].bound_face_vertex_exact[coverage_field_list[neighbor_id].bound_face_id[k][2]]
+                            );
+
+                            neighbor_face.push_back(tri_this);
+                            face_to_field[tri_this.id()] = neighbor_id;
+                        }
+                    }
+                    Tree aabb_local(neighbor_face.begin(),neighbor_face.end());
+
+
+                    function<bool(vector<K2::Point_3>vv,K2::Triangle_3)>check_inner_vertex_all = [&](vector<K2::Point_3>vv ,K2::Triangle_3 tri){
+                        K2::Point_3 v0 = tri.vertex(0);
+                        K2::Point_3 v1 = tri.vertex(1);
+                        K2::Point_3 v2 = tri.vertex(2);
+                        K2::Vector_3 d1 = (v1 - v0)/2;
+                        K2::Vector_3 d2 = (v2 - v0)/2;
+//                        cout <<"xxxxxxxxxxxx"<<endl;
+//                        cout <<"v "<<v0<<endl;
+//                        cout <<"v "<<v1<<endl;
+//                        cout <<"v "<<v2<<endl;
+//                        cout <<"f 1 2 3"<<endl;
+
+
+                        //cout << check_point<< endl;
+                        for(auto neighbor_id: coverage_intersection[i]) {
+                            int cnt = 0;
+                            if (!coverage_field_list[neighbor_id].useful)continue;
+                            if(neighbor_id == i)continue;
+                            for(auto check_point : vv) {
+                                auto side = coverage_field_list[neighbor_id].bounded_side(check_point);
+                                if (side == CGAL::ON_BOUNDED_SIDE) {
+                                    cnt++;
+                                }
+                                if (side == CGAL::ON_BOUNDARY) {
+                                    if (tri.supporting_plane().oriented_side(coverage_field_list[i].center) !=
+                                        tri.supporting_plane().oriented_side(coverage_field_list[neighbor_id].center) &&
+                                        tri.supporting_plane().oriented_side(coverage_field_list[i].center) +
+                                        tri.supporting_plane().oriented_side(coverage_field_list[neighbor_id].center) ==
+                                        0) {
+                                        cnt++;
+                                    }
+                                }
+                            }
+                            if(cnt == vv.size())return true;
+                        }
+                        return false;
+                    };
+
+                    for(int j=0;j<coverage_field_list[i].bound_face_id.size();j++) {
+                        K2::Triangle_3 tri_this(coverage_field_list[i].bound_face_vertex_exact[coverage_field_list[i].bound_face_id[j][0]],
+                                                coverage_field_list[i].bound_face_vertex_exact[coverage_field_list[i].bound_face_id[j][1]],
+                                                coverage_field_list[i].bound_face_vertex_exact[coverage_field_list[i].bound_face_id[j][2]]);
+                        if(check_inner_vertex_all({coverage_field_list[i].bound_face_vertex_exact[coverage_field_list[i].bound_face_id[j][0]],
+                                                   coverage_field_list[i].bound_face_vertex_exact[coverage_field_list[i].bound_face_id[j][1]],
+                                                   coverage_field_list[i].bound_face_vertex_exact[coverage_field_list[i].bound_face_id[j][2]]},tri_this)) { // 这里是决定到底全部删除，还是全部留下的逻辑所在之处
+                            coverage_field_list[i].bound_face_useful[j] = 0;
+                            cout <<"select occur 0 "<< endl;
+                        }
+                    }
+                }
+            },i);
+        }
+
+        for(int i=0;i<thread_num;i++)
+            near_delete[i]->join();
+
+//        FILE *file44 = fopen( (input_filename + "_check_resolution_delete.obj").c_str(), "w");
+//        FILE *file54 = fopen( (input_filename + "_check_resolution_reserver.obj").c_str(), "w");
+#ifdef DEBUG
+        ofstream fsip((input_filename + "_check_resolution_delete.obj").c_str());
+        ofstream fsop((input_filename + "_check_resolution_reserver.obj").c_str());
+        for(int i=0;i<mesh->FaceSize();i++) {
+            for (int j = 0; j < coverage_field_list[i].bound_face_id.size(); j++) {
+                for(int k=0;k<coverage_field_list[i].bound_face_sampling_point[j].size();k++){
+                    cout << coverage_field_list[i].bound_face_sampling_point_state[j][k] << endl;
+                    if(coverage_field_list[i].bound_face_sampling_point_state[j][k]==-1 || coverage_field_list[i].bound_face_useful[j]!=1 ) {
+                        fsip <<"v "<< coverage_field_list[i].bound_face_sampling_point[j][k].x()+start_x << " "
+                             << coverage_field_list[i].bound_face_sampling_point[j][k].y()+start_y << " "
+                             << coverage_field_list[i].bound_face_sampling_point[j][k].z()+start_z << endl;
+                    }
+                    else{
+                        fsop  <<"v "<< coverage_field_list[i].bound_face_sampling_point[j][k].x()+start_x << " "
+                             << coverage_field_list[i].bound_face_sampling_point[j][k].y()+start_y << " "
+                             << coverage_field_list[i].bound_face_sampling_point[j][k].z()+start_z << endl;
+                    }
+                }
+            }
+        }
+#endif
+
+//        int cnt44 = 1;
+//        int cnt54 = 1;
+//        for(int i=0;i<mesh->FaceSize();i++) {
+//            for (int k = 0; k < coverage_field_list[i].bound_face_id.size(); k++) {
+//                if(!coverage_field_list[i].bound_face_useful[k]) {
+//
+//                    K2::Triangle_3 tri_this(
+//                            coverage_field_list[i].bound_face_vertex_exact[coverage_field_list[i].bound_face_id[k][0]],
+//                            coverage_field_list[i].bound_face_vertex_exact[coverage_field_list[i].bound_face_id[k][1]],
+//                            coverage_field_list[i].bound_face_vertex_exact[coverage_field_list[i].bound_face_id[k][2]]
+//                    );
+//                    fprintf(file44, "v %lf %lf %lf\n", CGAL::to_double(tri_this.vertex(0).x()),
+//                            CGAL::to_double(tri_this.vertex(0).y()),
+//                            CGAL::to_double(tri_this.vertex(0).z()));
+//                    fprintf(file44, "v %lf %lf %lf\n", CGAL::to_double(tri_this.vertex(1).x()),
+//                            CGAL::to_double(tri_this.vertex(1).y()),
+//                            CGAL::to_double(tri_this.vertex(1).z()));
+//                    fprintf(file44, "v %lf %lf %lf\n", CGAL::to_double(tri_this.vertex(2).x()),
+//                            CGAL::to_double(tri_this.vertex(2).y()),
+//                            CGAL::to_double(tri_this.vertex(2).z()));
+//                    fprintf(file44, "f %d %d %d\n", cnt44, cnt44 + 1, cnt44 + 2);
+//                    cnt44 += 3;
+//                }
+//                else{
+//                    K2::Triangle_3 tri_this(
+//                            coverage_field_list[i].bound_face_vertex_exact[coverage_field_list[i].bound_face_id[k][0]],
+//                            coverage_field_list[i].bound_face_vertex_exact[coverage_field_list[i].bound_face_id[k][1]],
+//                            coverage_field_list[i].bound_face_vertex_exact[coverage_field_list[i].bound_face_id[k][2]]
+//                    );
+//                    fprintf(file54, "v %lf %lf %lf\n", CGAL::to_double(tri_this.vertex(0).x()),
+//                            CGAL::to_double(tri_this.vertex(0).y()),
+//                            CGAL::to_double(tri_this.vertex(0).z()));
+//                    fprintf(file54, "v %lf %lf %lf\n", CGAL::to_double(tri_this.vertex(1).x()),
+//                            CGAL::to_double(tri_this.vertex(1).y()),
+//                            CGAL::to_double(tri_this.vertex(1).z()));
+//                    fprintf(file54, "v %lf %lf %lf\n", CGAL::to_double(tri_this.vertex(2).x()),
+//                            CGAL::to_double(tri_this.vertex(2).y()),
+//                            CGAL::to_double(tri_this.vertex(2).z()));
+//                    fprintf(file54, "f %d %d %d\n", cnt54, cnt54 + 1, cnt54 + 2);
+//                    cnt54 += 3;
+//                }
+//            }
+//        }
+        cout <<"find near show "<< endl;
+    }
+
+
     auto speed_clock = std::chrono::high_resolution_clock::now();
     ofstream fsd(input_filename+"_find_delete.obj");
     ofstream fsl(input_filename+"_find_last.obj");

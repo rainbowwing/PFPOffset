@@ -565,6 +565,7 @@ public:
             return true;
         return false;
     }
+    CoverageField(){}
 
     CoverageField(MeshKernel::iGameFaceHandle fh, Tree * origin_face_tree) {
         bound_face_vertex_exact.clear();
