@@ -523,23 +523,7 @@ struct CoverageField {
                                                    bound_face_vertex_exact[v2_id])) - K2::Point_3(0,0,0)) ;
         }
 
-//        swap(bound_face_vertex_exact_debug,bound_face_vertex_exact);
-//        for (const auto& triangle : surface_triangles) {
-//            int v0_id = mp2[(triangle.vertex(0))];
-//            int v1_id = mp2[(triangle.vertex(1))];
-//            int v2_id = mp2[(triangle.vertex(2))];
-//            bound_face_id.push_back({v0_id, v1_id, v2_id});
-//            bound_face_sampling_point.push_back(get_sampling_point(triangle));
-//            bound_face_sampling_point_state.emplace_back(bound_face_sampling_point.rbegin()->size(),0);
-//            center_vec += (centroid(K2::Triangle_3(bound_face_vertex_exact[v0_id],
-//                                                   bound_face_vertex_exact[v1_id],
-//                                                   bound_face_vertex_exact[v2_id])) - K2::Point_3(0,0,0)) ;
-//        }
 
-
-
-
-//        center =  K2::Point_3(0,0,0) + (center_vec / surface_triangles.size());
         center =  K2::Point_3(0,0,0) + (center_vec / surface_triangles.size());
         std::vector<std::vector<std::size_t> > faces_list;
 

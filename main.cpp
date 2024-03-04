@@ -1072,7 +1072,7 @@ int main(int argc, char* argv[]) {
                     if (i % thread_num != now_id)continue;
                     if(!coverage_field_list[i].useful)continue;
                     cout <<"sample check "<< i <<"//"<<mesh->FaceSize()<<endl;
-                    for(int j=0;j<coverage_field_list[i].bound_face_id.size();j++) {
+                    for(int j=0;j < coverage_field_list[i].bound_face_id.size();j++) {
                         if ((coverage_field_list[i].bound_face_id[j][0] >= 3 ||
                              coverage_field_list[i].bound_face_id[j][1] >= 3 ||
                              coverage_field_list[i].bound_face_id[j][2] >= 3)) {
@@ -1086,7 +1086,7 @@ int main(int argc, char* argv[]) {
                                     std::unique_lock<std::mutex> lock(winding_num_mutex);
                                     coverage_field_list[i].bound_face_sampling_point_state[j][k] = winding_vertex.size();
                                     winding_vertex.push_back(coverage_field_list[i].bound_face_sampling_point[j][k]);
-                                    //这里不加mutex 没办法求绕数，那么直接不用omp了，还是继续手写吧
+                                   
                                 }
                             }
                         }
@@ -3355,6 +3355,10 @@ swapon /tmp/swapfile
 # 设置扩展的swap分区为自动挂载，这一步不做，swapoff和swapon的-a对这个文件swap分区不起效
 echo /tmp/swapfile swap swap defaults 0 0 >> /etc/fstab
 
+
+for f in *.stl; do
+ assimp export "$f" "${f%.stl}.obj"
+done
  */
 
 
