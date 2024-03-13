@@ -523,7 +523,6 @@ struct CoverageField {
                                                    bound_face_vertex_exact[v2_id])) - K2::Point_3(0,0,0)) ;
         }
 
-
         center =  K2::Point_3(0,0,0) + (center_vec / surface_triangles.size());
         std::vector<std::vector<std::size_t> > faces_list;
 

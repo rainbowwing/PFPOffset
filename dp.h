@@ -58,7 +58,7 @@ vector<MeshKernel::iGameVertex> run(MeshKernel::iGameVertexHandle vh,vector<Mesh
         bool succ = false;
         double exceed_dist = 0;
         double self_value = 1e100;
-        for(int times=0;times<2;times++) { //避免osqp求解器的不稳定性,多尝试几次
+        for(int times=0;times<1;times++) { //避免osqp求解器的不稳定性,多尝试几次
             MeshKernel::iGameVertex v_new = do_quadratic_error_metric_check(vh, local_neighbor_face_list, succ,
                                                                             exceed_dist);
             if (succ) {
@@ -145,6 +145,7 @@ vector<MeshKernel::iGameVertex> solve_by_dp(MeshKernel::iGameVertexHandle vh,vec
     vector<MeshKernel::iGameFaceHandle> neighbor_face_list_tmp = neighbor_face_list;
     //cout <<"determins " <<neighbor_face_list.size() <<":"<<avg_edge_limit / 1000<< endl;
     neighbor_face_list.clear();
+
     for(int i=0;i<neighbor_face_list_tmp.size();i++){
         //cout <<"************************************" << endl;
         MeshKernel::iGameFaceHandle f = neighbor_face_list[i];
@@ -205,13 +206,53 @@ vector<MeshKernel::iGameVertex> solve_by_dp(MeshKernel::iGameVertexHandle vh,vec
     if(neighbor_face_list.empty()){
         return {};
     }
+    DSU dsu;
+    vector<K2::Vector_3> face_normal;
+    for(int i=0;i<neighbor_face_list.size();i++) {
+        MeshKernel::iGameFaceHandle f = neighbor_face_list[i];
+        K2::Vector_3 normal_k2 = K2::Triangle_3 (K2::Point_3(iGameVertex_to_Point_K2(mesh->fast_iGameVertex[mesh->fast_iGameFace[f].vh(0)])),
+                                                 K2::Point_3(iGameVertex_to_Point_K2(mesh->fast_iGameVertex[mesh->fast_iGameFace[f].vh(1)])),
+                                                 K2::Point_3(iGameVertex_to_Point_K2(mesh->fast_iGameVertex[mesh->fast_iGameFace[f].vh(2)]))
+        ).supporting_plane().orthogonal_vector();
+
+        normal_k2 /= CGAL::approximate_sqrt(normal_k2.squared_length());
+        face_normal.push_back(normal_k2);
+    }
+    if(face_normal.size() > 15) {
+        int cnt = face_normal.size();
+        priority_queue<pair<double,pair<int,int> > > q;
+        for(int i=0;i<face_normal.size();i++){
+            for(int j=i+1;j<face_normal.size();j++){
+                q.push({CGAL::to_double(face_normal[i]*face_normal[j]),{i,j}});
+            }
+        }
+        while(cnt > 15 && !q.empty()){
+            pair<int,int> now = q.top().second;
+            q.pop();
+            if(dsu.find_root(now.first) != dsu.find_root(now.second)){
+                dsu.join(now.first,now.second);
+                cnt--;
+            }
+        }
+        cnt = 0;
+        for(int i = 0;i<neighbor_face_list.size();i++){
+            if(dsu.find_root(i) == i){
+                neighbor_face_list[++cnt] = neighbor_face_list[i];
+            }
+        }
+        neighbor_face_list.resize(cnt);
+    }
+
+
 
     //cout << vh << endl;
-    if(neighbor_face_list.size()<=10) {
+    if(neighbor_face_list.size()<=15) {
         //cout <<"?? now : " << neighbor_face_list.size() << endl;
         return run(vh,neighbor_face_list);
     }
     else{
+        cout <<"bigggg"<< endl;
+        exit(0);
         //cout<<"1-ring size: "<< neighbor_face_list.size() <<" meeting limit 16 do random subdivide"<< endl;
         int s = (int)neighbor_face_list.size();
         int cnt = ((int)neighbor_face_list.size() - 1)/8 + 1;
