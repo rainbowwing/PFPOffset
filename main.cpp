@@ -220,63 +220,147 @@ int main(int argc, char* argv[]) {
 
     cout <<"st do_quadratic_error_metric" << endl;
 
-//    std::vector <std::shared_ptr<std::thread> > build_neighbor(thread_num);
-//    for(int i=0;i<thread_num;i++) {
-//        //for (int i = 50; i < 51; i++) {
-//        build_neighbor[i] = make_shared<std::thread>([&](int now_id) {
-//            std::list<K2::Triangle_3> tri_list;
-//            std::unordered_map<unsigned long long ,int> mp;
-//            for (int i = 0; i < mesh->FaceSize(); i++) {
-//                auto v0 = mesh->fast_iGameVertex[mesh->fast_iGameFace[MeshKernel::iGameFaceHandle(i)].vh(0)];
-//                auto v1 = mesh->fast_iGameVertex[mesh->fast_iGameFace[MeshKernel::iGameFaceHandle(i)].vh(1)];
-//                auto v2 = mesh->fast_iGameVertex[mesh->fast_iGameFace[MeshKernel::iGameFaceHandle(i)].vh(2)];
-//                K2::Triangle_3 tri(iGameVertex_to_Point_K2(v0),
-//                                   iGameVertex_to_Point_K2(v1),
-//                                   iGameVertex_to_Point_K2(v2)
-//                );
-//                mp[tri.id()] = i;
-//                tri_list.push_back(tri);
+
+    for (int i = 0; i < mesh->VertexSize(); i++) {
+        map<int,set<int> >edge;
+        set<int> neigh_v;
+        for(auto j : mesh->FastNeighborFhOfVertex_[i]){
+            set<MeshKernel::iGameVertexHandle> tmp{mesh->fast_iGameFace[j].vh(0),
+                                                   mesh->fast_iGameFace[j].vh(1),
+                                                   mesh->fast_iGameFace[j].vh(2)};
+            if(tmp.erase(MeshKernel::iGameVertexHandle(i))==0)puts("erase error"),exit(0);
+            MeshKernel::iGameVertexHandle v0 = *tmp.begin();
+            MeshKernel::iGameVertexHandle v1 = *tmp.rbegin();
+            neigh_v.insert(v0);
+            neigh_v.insert(v1);
+            edge[v0].insert(v1);
+            edge[v1].insert(v0);
+        }
+//        for(auto nei : neigh_v){
+//            cout << "nei" << nei << endl;
+//        }
+//        for(auto st : edge){
+//            for(auto en : st.second){
+//                cout <<"edge:" << st.first <<"->"<< en << endl;
 //            }
-//            Tree aabb(tri_list.begin(),tri_list.end());
-//            for (int i = 0; i < mesh->VertexSize(); i++) {
-//                if (i % thread_num != now_id)continue;
-//                if (i % 20 == 0)
-//                    cout << "build near: " << i << "/"<<mesh->VertexSize()<< endl;
-//                CGAL::Epeck::FT r(min_bbox_len/1000);
-//                std::list<Primitive> intersected_primitives;
-//                std::list< Tree::Intersection_and_primitive_id<K2::Triangle_3>::Type> intersections;
-//                K2::Point_3 this_vertex = iGameVertex_to_Point_K2(mesh->fast_iGameVertex[i]);
-////                cout << coverage_field_list[i].bbox_min <<" "<< coverage_field_list[i].bbox_max<<endl;
-////                CGAL::Epeck::FT xx = coverage_field_list[i].bbox_min.x();
-////                cout << xx - CGAL::Epeck::FT(0.05) << endl;
-//                K2::Iso_cuboid_3 bbox2(
-//                        this_vertex.x() - r,
-//                        this_vertex.y() - r,
-//                        this_vertex.z() - r,
-//                        this_vertex.x() + r,
-//                        this_vertex.y() + r,
-//                        this_vertex.z() + r
-//                );
-//                aabb.all_intersections(bbox2,std::back_inserter(intersections));
-//                cout << "intersectionssize:"<< intersections.size() << endl;
-//                for(auto item : intersections) {
-////                    cout <<"v " <<item.second->vertex(0) << endl;
-////                    cout <<"v " <<item.second->vertex(1) << endl;
-////                    cout <<"v " <<item.second->vertex(2) << endl;
-//                    auto iter = mp.find(item.second->id());
-//                    if(iter == mp.end()) exit(0);// 异常错误
-//                    mesh->FastNeighborFhOfVertex_[i].insert(MeshKernel::iGameFaceHandle(iter->second));
-//                }
-//            }
-//        }, i);
-//    }
-//
-//    for(int i=0;i<thread_num;i++)
-//        build_neighbor[i]->join();
+//        }
+        // 这里错了
+        //exit(0);
+        bool flag = true;
+        // for 每一个点找寻存在loop
+        for(auto nei : neigh_v){ // debug 这里
+            set<int>visit;
+            int pos = *edge[nei].begin();
+            int pre = nei;
+            int step = 0;
+            while(pos != -1){
+                int pos_old = pos;
+                visit.insert(pos_old);
+                pos = -1;
+                for(auto next_to : edge[pos_old]){
+                    if(next_to == nei){
+                        if(step == 0)continue;
+                        else{
+                          //  cout <<  step <<"step "<< endl;
+
+                            step = -1;
+                            break;
+                        }
+                    }
+                    if(visit.count(next_to) == 0){
+                        pos = next_to;
+                        break;
+                    }
+                }
+                if(step == -1)break;
+                step++;
+            }
+            if(step != -1)
+                flag = false;
+        }
+        if(!flag) {
+
+
+            //这里增加
+            cout <<"error"<<endl;
+            //AABB search
+        }
+        else{ //这里检查退化的性质
+
+
+
+            //cout <<"ok"<<endl;
+        }
+       // exit(0);
+        // check degenerate
+
+    }
+
+
+    exit(0);
+    std::vector <std::shared_ptr<std::thread> > build_neighbor(thread_num);
+    for(int i=0;i<thread_num;i++) {
+        //for (int i = 50; i < 51; i++) {
+        build_neighbor[i] = make_shared<std::thread>([&](int now_id) {
+            std::list<K2::Triangle_3> tri_list;
+            std::unordered_map<unsigned long long ,int> mp;
+            for (int i = 0; i < mesh->FaceSize(); i++) {
+                auto v0 = mesh->fast_iGameVertex[mesh->fast_iGameFace[MeshKernel::iGameFaceHandle(i)].vh(0)];
+                auto v1 = mesh->fast_iGameVertex[mesh->fast_iGameFace[MeshKernel::iGameFaceHandle(i)].vh(1)];
+                auto v2 = mesh->fast_iGameVertex[mesh->fast_iGameFace[MeshKernel::iGameFaceHandle(i)].vh(2)];
+                K2::Triangle_3 tri(iGameVertex_to_Point_K2(v0),
+                                   iGameVertex_to_Point_K2(v1),
+                                   iGameVertex_to_Point_K2(v2)
+                );
+                mp[tri.id()] = i;
+                tri_list.push_back(tri);
+            }
+            Tree aabb(tri_list.begin(),tri_list.end());
+            for (int i = 0; i < mesh->VertexSize(); i++) {
+                if (i % thread_num != now_id)continue;
+                if (i % 20 == 0)
+                    cout << "build near: " << i << "/"<<mesh->VertexSize()<< endl;
+
+
+
+
+
+
+                CGAL::Epeck::FT r(min_bbox_len/10000);
+                std::list<Primitive> intersected_primitives;
+                std::list< Tree::Intersection_and_primitive_id<K2::Triangle_3>::Type> intersections;
+                K2::Point_3 this_vertex = iGameVertex_to_Point_K2(mesh->fast_iGameVertex[i]);
+//                cout << coverage_field_list[i].bbox_min <<" "<< coverage_field_list[i].bbox_max<<endl;
+//                CGAL::Epeck::FT xx = coverage_field_list[i].bbox_min.x();
+//                cout << xx - CGAL::Epeck::FT(0.05) << endl;
+                K2::Iso_cuboid_3 bbox2(
+                        this_vertex.x() - r,
+                        this_vertex.y() - r,
+                        this_vertex.z() - r,
+                        this_vertex.x() + r,
+                        this_vertex.y() + r,
+                        this_vertex.z() + r
+                );
+                aabb.all_intersections(bbox2,std::back_inserter(intersections));
+                cout << "intersectionssize:"<< intersections.size() << endl;
+                for(auto item : intersections) {
+//                    cout <<"v " <<item.second->vertex(0) << endl;
+//                    cout <<"v " <<item.second->vertex(1) << endl;
+//                    cout <<"v " <<item.second->vertex(2) << endl;
+                    auto iter = mp.find(item.second->id());
+                    if(iter == mp.end()) exit(0);// 异常错误
+                    mesh->FastNeighborFhOfVertex_[i].insert(MeshKernel::iGameFaceHandle(iter->second));
+                }
+            }
+        }, i);
+    }
+
+    for(int i=0;i<thread_num;i++)
+        build_neighbor[i]->join();
     for (int i = 0; i < mesh->VertexSize(); i++) {
         cout << i <<" "<< mesh->FastNeighborFhOfVertex_[i].size() << endl;
     }
-
+    vector<vector<MeshKernel::iGameFaceHandle> >replace_neighbor(mesh->VertexSize());
    // exit(0);
     for(int i =0;i< mesh->FastNeighborFhOfVertex_.size();i++){
         for(auto j : mesh->FastNeighborFhOfVertex_[i]) {
@@ -296,7 +380,57 @@ int main(int argc, char* argv[]) {
         }
     }
 
-
+//    for (int i = 0; i < mesh->VertexSize(); i++) {
+//        map<int,set<int> >edge;
+//        set<int> neigh_v;
+//        for(auto j : mesh->FastNeighborFhOfVertex_[i]){
+//            set<MeshKernel::iGameVertexHandle> tmp{mesh->fast_iGameFace[j].vh(0),
+//                                               mesh->fast_iGameFace[j].vh(1),
+//                                               mesh->fast_iGameFace[j].vh(2)};
+//            if(tmp.erase(MeshKernel::iGameVertexHandle(i))==0)puts("erase error"),exit(0);
+//            MeshKernel::iGameVertexHandle v0 = *tmp.begin();
+//            MeshKernel::iGameVertexHandle v1 = *tmp.end();
+//            neigh_v.insert(v0);
+//            neigh_v.insert(v1);
+//            edge[v0].insert(v1);
+//            edge[v1].insert(v0);
+//        }
+//        bool flag = true;
+//        // for 每一个点找寻存在loop
+//        for(auto nei : neigh_v){ // debug 这里
+//            set<int>visit;
+//            int pos = *edge[nei].begin();
+//            int pre = nei;
+//            int step = 0;
+//            while(pos != -1){
+//                int pos_old = pos;
+//                visit.insert(pos_old);
+//                pos = -1;
+//                for(auto next_to : edge[pos]){
+//                    if(next_to == nei){
+//                        if(step == 0)continue;
+//                        else{
+//                            step = -1;
+//                            break;
+//                        }
+//                    }
+//                    if(visit.count(next_to) == 0){
+//                        pos = next_to;
+//                        break;
+//                    }
+//                }
+//                step++;
+//            }
+//            if(step == -1)
+//                flag = false;
+//        }
+//        if(!flag) {
+//            //AABB search
+//        }
+//        // check degenerate
+//
+//    }
+    exit(0);
     merge_limit.resize(mesh->VertexSize());
 
 
@@ -446,12 +580,6 @@ int main(int argc, char* argv[]) {
     }
 
 
-
-
-
-
-
-
     std::vector <std::shared_ptr<std::thread> > coverage_thread_pool(thread_num);
     for(int i=0;i<thread_num;i++) {
         coverage_thread_pool[i] = make_shared<std::thread>([&](int now_id) {
@@ -466,24 +594,6 @@ int main(int argc, char* argv[]) {
     }
     for(int i=0;i<thread_num;i++)
         coverage_thread_pool[i]->join();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
