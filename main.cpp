@@ -225,139 +225,8 @@ int main(int argc, char* argv[]) {
 //        find_other_face[make_pair(mesh->fast_iGameFace[i].vh(1),mesh->fast_iGameFace[i].vh(2))].push_back({mesh->fast_iGameFace[i].vh(0),MeshKernel::iGameFaceHandle(i)});
 //        find_other_face[make_pair(mesh->fast_iGameFace[i].vh(2),mesh->fast_iGameFace[i].vh(0))].push_back({mesh->fast_iGameFace[i].vh(1),MeshKernel::iGameFaceHandle(i)});
 //    }
-    vector<vector<MeshKernel::iGameFaceHandle> >replace_neighbor(mesh->VertexSize());
-    for (int i = 0; i < mesh->VertexSize(); i++) {
-        map<int,set<int> >edge;
-        set<int> neigh_v;
-        bool is_neighbor_degenerate = false;
-        for(auto j : mesh->FastNeighborFhOfVertex_[i]){
-            set<MeshKernel::iGameVertexHandle> tmp{mesh->fast_iGameFace[j].vh(0),
-                                                   mesh->fast_iGameFace[j].vh(1),
-                                                   mesh->fast_iGameFace[j].vh(2)};
-            if(tmp.erase(MeshKernel::iGameVertexHandle(i))==0)puts("erase error"),exit(0);
-            MeshKernel::iGameVertexHandle v0 = *tmp.begin();
-            MeshKernel::iGameVertexHandle v1 = *tmp.rbegin();
-            neigh_v.insert(v0);
-            neigh_v.insert(v1);
-            edge[v0].insert(v1);
-            edge[v1].insert(v0);
-            is_neighbor_degenerate |= K2::Triangle_3 (iGameVertex_to_Point_K2(mesh->fast_iGameVertex[mesh->fast_iGameFace[j].vh(0)]),
-                                                      iGameVertex_to_Point_K2(mesh->fast_iGameVertex[mesh->fast_iGameFace[j].vh(1)]),
-                                                      iGameVertex_to_Point_K2(mesh->fast_iGameVertex[mesh->fast_iGameFace[j].vh(2)])
-                            ).is_degenerate();
-            // 这里用于退化检查
-//            K2::Segment_3 s0(iGameVertex_to_Point_K2(mesh->fast_iGameVertex[mesh->fast_iGameFace[j].vh(0)]),
-//                             iGameVertex_to_Point_K2(mesh->fast_iGameVertex[mesh->fast_iGameFace[j].vh(1)]));
-//            K2::Segment_3 s1(iGameVertex_to_Point_K2(mesh->fast_iGameVertex[mesh->fast_iGameFace[j].vh(1)]),
-//                             iGameVertex_to_Point_K2(mesh->fast_iGameVertex[mesh->fast_iGameFace[j].vh(2)]));
-//            K2::Segment_3 s2(iGameVertex_to_Point_K2(mesh->fast_iGameVertex[mesh->fast_iGameFace[j].vh(2)]),
-//                             iGameVertex_to_Point_K2(mesh->fast_iGameVertex[mesh->fast_iGameFace[j].vh(0)]));
-//            vector<K2::Segment_3> sort_s{s0,s1,s2};
-//            sort(sort_s.begin(),sort_s.end(),[&](const K2::Segment_3& x,const K2::Segment_3& y){
-//                return x.squared_length() < y.squared_length();
-//            });
-//            auto l0 = CGAL::approximate_sqrt(sort_s[0].squared_length());
-//            auto l1 = CGAL::approximate_sqrt(sort_s[1].squared_length());
-//            auto l2 = CGAL::approximate_sqrt(sort_s[2].squared_length());
-//
-//            if(l0 + l1 < l2 *1.001 || ){
-//                is_neighbor_degenerate = true;
-//
-////                if(K2::Segment_3(iGameVertex_to_Point_K2(mesh->fast_iGameVertex[v0]),
-////                                 iGameVertex_to_Point_K2(mesh->fast_iGameVertex[v1])).squared_length() ==
-////                        sort_s[2].squared_length()){
-////                    for(auto other :find_other_face[{v0,v1}]){
-////                        if(other.first != MeshKernel::iGameVertexHandle(i)){
-////                            degenerate_opposite.push_back(other.second);
-////                            cout <<"********************" << endl;
-////                            cout << CGAL::approximate_sqrt(sort_s[0].squared_length()) << endl;
-////                            cout << CGAL::approximate_sqrt(sort_s[1].squared_length()) << endl;
-////                            cout << CGAL::approximate_sqrt(sort_s[2].squared_length()) << endl;
-////                            cout <<"v "<<mesh->fast_iGameVertex[mesh->fast_iGameFace[j].vh(0)].x()<<" "
-////                            <<mesh->fast_iGameVertex[mesh->fast_iGameFace[j].vh(0)].y()<<" "
-////                            << mesh->fast_iGameVertex[mesh->fast_iGameFace[j].vh(0)].z()<< endl;
-////                            cout<<"v " <<mesh->fast_iGameVertex[mesh->fast_iGameFace[j].vh(1)].x()<<" "
-////                                 <<mesh->fast_iGameVertex[mesh->fast_iGameFace[j].vh(1)].y()<<" "
-////                                 << mesh->fast_iGameVertex[mesh->fast_iGameFace[j].vh(1)].z()<< endl;
-////                            cout<<"v " <<mesh->fast_iGameVertex[mesh->fast_iGameFace[j].vh(2)].x()<<" "
-////                                 <<mesh->fast_iGameVertex[mesh->fast_iGameFace[j].vh(2)].y()<<" "
-////                                 << mesh->fast_iGameVertex[mesh->fast_iGameFace[j].vh(2)].z()<< endl;
-////                            cout <<"f 1 2 3"<< endl;
-////                            cout<<"v " <<mesh->fast_iGameVertex[mesh->fast_iGameFace[other.second].vh(0)].x()<<" "
-////                                 <<mesh->fast_iGameVertex[mesh->fast_iGameFace[other.second].vh(0)].y()<<" "
-////                                 << mesh->fast_iGameVertex[mesh->fast_iGameFace[other.second].vh(0)].z()<< endl;
-////                            cout<<"v " <<mesh->fast_iGameVertex[mesh->fast_iGameFace[other.second].vh(1)].x()<<" "
-////                                 <<mesh->fast_iGameVertex[mesh->fast_iGameFace[other.second].vh(1)].y()<<" "
-////                                 << mesh->fast_iGameVertex[mesh->fast_iGameFace[other.second].vh(1)].z()<< endl;
-////                            cout<<"v " <<mesh->fast_iGameVertex[mesh->fast_iGameFace[other.second].vh(2)].x()<<" "
-////                                 <<mesh->fast_iGameVertex[mesh->fast_iGameFace[other.second].vh(2)].y()<<" "
-////                                 << mesh->fast_iGameVertex[mesh->fast_iGameFace[other.second].vh(2)].z()<< endl;
-////                            cout <<"f 4 5 6"<< endl;
-////                            cout <<"********************" << endl;
-////                        }
-////                    }
-////                }
-//            }
-        }
-//        for(auto nei : neigh_v){
-//            cout << "nei" << nei << endl;
-//        }
-//        for(auto st : edge){
-//            for(auto en : st.second){
-//                cout <<"edge:" << st.first <<"->"<< en << endl;
-//            }
-//        }
-        // 这里错了
-        //exit(0);
-        bool flag = true;
-        // for 每一个点找寻存在loop
-        for(auto nei : neigh_v){ // debug 这里
-            set<int>visit;
-            int pos = *edge[nei].begin();
-            int pre = nei;
-            int step = 0;
-            while(pos != -1){
-                int pos_old = pos;
-                visit.insert(pos_old);
-                pos = -1;
-                for(auto next_to : edge[pos_old]){
-                    if(next_to == nei){
-                        if(step == 0)continue;
-                        else{
-                          //  cout <<  step <<"step "<< endl;
+    //vector<vector<MeshKernel::iGameFaceHandle> >replace_neighbor(mesh->VertexSize());
 
-                            step = -1;
-                            break;
-                        }
-                    }
-                    if(visit.count(next_to) == 0){
-                        pos = next_to;
-                        break;
-                    }
-                }
-                if(step == -1)break;
-                step++;
-            }
-            if(step != -1)
-                flag = false;
-        }
-
-        if(!flag || is_neighbor_degenerate) {
-            //这里增加
-            cout <<"error"<<endl;
-            //AABB search
-        }
-        else{ //这里检查退化的性质
-
-            //cout <<"ok"<<endl;
-        }
-       // exit(0);
-        // check degenerate
-
-    }
-
-
-    exit(0);
     std::vector <std::shared_ptr<std::thread> > build_neighbor(thread_num);
     for(int i=0;i<thread_num;i++) {
         //for (int i = 50; i < 51; i++) {
@@ -378,15 +247,73 @@ int main(int argc, char* argv[]) {
             Tree aabb(tri_list.begin(),tri_list.end());
             for (int i = 0; i < mesh->VertexSize(); i++) {
                 if (i % thread_num != now_id)continue;
-                if (i % 20 == 0)
-                    cout << "build near: " << i << "/"<<mesh->VertexSize()<< endl;
+//                if (i % 20 == 0)
+//                    cout << "build near: " << i << "/"<<mesh->VertexSize()<< endl;
+
+                map<int,set<int> >edge;
+                set<int> neigh_v;
+                bool is_neighbor_degenerate = false;
+                for(auto j : mesh->FastNeighborFhOfVertex_[i]) {
+                    set<MeshKernel::iGameVertexHandle> tmp{mesh->fast_iGameFace[j].vh(0),
+                                                           mesh->fast_iGameFace[j].vh(1),
+                                                           mesh->fast_iGameFace[j].vh(2)};
+                    if(tmp.erase(MeshKernel::iGameVertexHandle(i))==0)puts("erase error"),exit(0);
+                    MeshKernel::iGameVertexHandle v0 = *tmp.begin();
+                    MeshKernel::iGameVertexHandle v1 = *tmp.rbegin();
+                    neigh_v.insert(v0);
+                    neigh_v.insert(v1);
+                    edge[v0].insert(v1);
+                    edge[v1].insert(v0);
+                    is_neighbor_degenerate |= K2::Triangle_3 (iGameVertex_to_Point_K2(mesh->fast_iGameVertex[mesh->fast_iGameFace[j].vh(0)]),
+                                                              iGameVertex_to_Point_K2(mesh->fast_iGameVertex[mesh->fast_iGameFace[j].vh(1)]),
+                                                              iGameVertex_to_Point_K2(mesh->fast_iGameVertex[mesh->fast_iGameFace[j].vh(2)])
+                    ).is_degenerate();
+                }
+
+                bool flag = true;
+                // for 每一个点找寻存在loop
+                for(auto nei : neigh_v){ // debug 这里
+                    set<int>visit;
+                    int pos = *edge[nei].begin();
+                    int pre = nei;
+                    int step = 0;
+                    while(pos != -1){
+                        int pos_old = pos;
+                        visit.insert(pos_old);
+                        pos = -1;
+                        for(auto next_to : edge[pos_old]){
+                            if(next_to == nei){
+                                if(step == 0)continue;
+                                else{
+                                    //  cout <<  step <<"step "<< endl;
+
+                                    step = -1;
+                                    break;
+                                }
+                            }
+                            if(visit.count(next_to) == 0){
+                                pos = next_to;
+                                break;
+                            }
+                        }
+                        if(step == -1)break;
+                        step++;
+                    }
+                    if(step != -1)
+                        flag = false;
+                }
+
+                if(!flag || is_neighbor_degenerate) {
+                    //这里增加
+                    cout <<"need aabb build:"<< i << endl;
+                    //AABB search
+                }
+                else{ //这里检查退化的性质
+                    continue;
+                }
 
 
-
-
-
-
-                CGAL::Epeck::FT r(min_bbox_len/10000);
+                CGAL::Epeck::FT r(min_bbox_len/100000);
                 std::list<Primitive> intersected_primitives;
                 std::list< Tree::Intersection_and_primitive_id<K2::Triangle_3>::Type> intersections;
                 K2::Point_3 this_vertex = iGameVertex_to_Point_K2(mesh->fast_iGameVertex[i]);
@@ -417,9 +344,9 @@ int main(int argc, char* argv[]) {
 
     for(int i=0;i<thread_num;i++)
         build_neighbor[i]->join();
-    for (int i = 0; i < mesh->VertexSize(); i++) {
-        cout << i <<" "<< mesh->FastNeighborFhOfVertex_[i].size() << endl;
-    }
+//    for (int i = 0; i < mesh->VertexSize(); i++) {
+//        cout << i <<" "<< mesh->FastNeighborFhOfVertex_[i].size() << endl;
+//    }
 
    // exit(0);
     for(int i =0;i< mesh->FastNeighborFhOfVertex_.size();i++){
